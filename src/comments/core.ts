@@ -1,4 +1,4 @@
-import type { AstWithComments, CommentRange, RawComment } from './types.js';
+import type { AstWithComments, CommentRange, RawComment } from '../shared/types.js';
 
 export function collectComments(ast: unknown): RawComment[] {
   const candidate = ast as AstWithComments;

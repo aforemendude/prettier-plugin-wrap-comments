@@ -1,14 +1,14 @@
-import { wrapBlockComment } from './block-comments.js';
-import { collectComments, toCommentRange } from './comments.js';
+import { wrapBlockComment } from './block.js';
+import { collectComments, toCommentRange } from './core.js';
 import {
   areAdjacentLineComments,
   isStandaloneLineComment,
   shouldSkipLineComment,
   wrapLineCommentGroup,
-} from './line-comments.js';
-import { getTabWidth } from './options.js';
-import { applyReplacements, getColumnAt } from './text.js';
-import type { CommentRange, Replacement, WrapOptions } from './types.js';
+} from './line.js';
+import { getTabWidth } from '../shared/options.js';
+import { applyReplacements, getColumnAt } from '../shared/text.js';
+import type { CommentRange, Replacement, WrapOptions } from '../shared/types.js';
 
 export async function wrapComments<T>(text: string, ast: T, options: WrapOptions): Promise<string> {
   const comments = collectComments(ast)

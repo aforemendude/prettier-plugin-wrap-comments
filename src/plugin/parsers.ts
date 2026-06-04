@@ -2,7 +2,7 @@ import type { Parser, Plugin } from 'prettier';
 import * as babelPlugin from 'prettier/plugins/babel';
 import * as typescriptPlugin from 'prettier/plugins/typescript';
 
-import { wrapComments } from './wrap-comments.js';
+import { wrapComments } from '../comments/wrap.js';
 
 const parserNames = ['babel', 'babel-ts', 'typescript'] as const;
 

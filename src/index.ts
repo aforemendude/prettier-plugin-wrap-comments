@@ -1,7 +1,7 @@
 import type { Plugin } from 'prettier';
 import * as estreePlugin from 'prettier/plugins/estree';
 
-import { buildParsers } from './parsers.js';
+import { buildParsers } from './plugin/parsers.js';
 
 const parsers = buildParsers();
 const printers = estreePlugin.printers;

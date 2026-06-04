@@ -1,8 +1,14 @@
-import { isDirectiveComment, normalizeBlockCommentBody } from './comments.js';
-import { formatMarkdownLines } from './markdown.js';
-import { getAvailableContentWidth, getPrintWidth, getTabWidth } from './options.js';
-import { getColumnAt, getColumns, getLinePrefix, getPreferredNewline, isStandaloneBlockComment } from './text.js';
-import type { CommentRange, Replacement, WrapOptions } from './types.js';
+import { isDirectiveComment, normalizeBlockCommentBody } from './core.js';
+import { formatMarkdownLines } from '../shared/markdown.js';
+import { getAvailableContentWidth, getPrintWidth, getTabWidth } from '../shared/options.js';
+import {
+  getColumnAt,
+  getColumns,
+  getLinePrefix,
+  getPreferredNewline,
+  isStandaloneBlockComment,
+} from '../shared/text.js';
+import type { CommentRange, Replacement, WrapOptions } from '../shared/types.js';
 
 export async function wrapBlockComment(
   text: string,

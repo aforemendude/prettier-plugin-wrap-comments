@@ -1,8 +1,8 @@
-import { isDirectiveComment, normalizeLineCommentBody } from './comments.js';
-import { formatMarkdownLines } from './markdown.js';
-import { getAvailableContentWidth, getTabWidth } from './options.js';
-import { getColumnAt, getContinuationIndent, getLinePrefix, getPreferredNewline } from './text.js';
-import type { CommentRange, Replacement, WrapOptions } from './types.js';
+import { isDirectiveComment, normalizeLineCommentBody } from './core.js';
+import { formatMarkdownLines } from '../shared/markdown.js';
+import { getAvailableContentWidth, getTabWidth } from '../shared/options.js';
+import { getColumnAt, getContinuationIndent, getLinePrefix, getPreferredNewline } from '../shared/text.js';
+import type { CommentRange, Replacement, WrapOptions } from '../shared/types.js';
 
 export async function wrapLineCommentGroup(
   text: string,
