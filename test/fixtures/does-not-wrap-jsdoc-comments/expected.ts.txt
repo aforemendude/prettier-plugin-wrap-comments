@@ -1,0 +1,4 @@
+/**
+ * This JSDoc line is intentionally long and should remain a single documentation comment line because the plugin only wraps non-Javadoc comments.
+ */
+function demo() {}

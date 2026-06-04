@@ -1,0 +1,4 @@
+function demo() {
+  // This sentence should wrap around the nested indentation and stay under the configured width while preserving **markdown** emphasis.
+  return 1;
+}

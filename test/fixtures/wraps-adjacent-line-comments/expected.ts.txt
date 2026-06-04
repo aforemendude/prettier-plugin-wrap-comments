@@ -1,0 +1,5 @@
+// This paragraph starts on one commented line and
+// continues on the next commented line so that
+// markdown can reflow it together. It also keeps the
+// text wrapped at the configured print width.
+const value = 1;

@@ -1,0 +1,8 @@
+if (ready) {
+  /*
+   * This block comment should become a star-prefixed
+   * block and wrap with the nested indentation included
+   * in the available width calculation.
+   */
+  run();
+}

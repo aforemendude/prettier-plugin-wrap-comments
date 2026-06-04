@@ -1,0 +1,2 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- this long directive must stay on one line because wrapping it can change tooling behavior
+const value: any = 1;
