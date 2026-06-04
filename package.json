@@ -33,12 +33,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/aforemendude/prettier-plugin-wrap-comments.git"
+    "url": "git+https://github.com/aforemendude/prettier-plugin-wrap-comments.git"
   },
   "bugs": {
     "url": "https://github.com/aforemendude/prettier-plugin-wrap-comments/issues"
   },
-  "homepage": "https://github.com/aforemendude/prettier-plugin-wrap-comments#readme",
+  "homepage": "https://github.com/aforemendude/prettier-plugin-wrap-comments",
   "peerDependencies": {
     "prettier": ">=3.0.0"
   },
