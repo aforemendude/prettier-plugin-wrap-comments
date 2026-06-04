@@ -213,3 +213,7 @@ Suggested fixes:
 - Add targeted fixtures for the bug repros above.
 - Add a small idempotence assertion for each fixture.
 - Add at least one `babel-ts` fixture if that parser remains advertised.
+
+### Low: README.md is out of date
+
+The README file is out of date.
