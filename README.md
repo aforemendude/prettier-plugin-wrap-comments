@@ -1,8 +1,7 @@
 # prettier-plugin-wrap-comments
 
-A Prettier plugin that wraps non-JSDoc JavaScript and TypeScript comments as
-Markdown. It uses the comment marker's real column to calculate the available
-content width, so nested comments wrap more narrowly than top-level comments.
+A Prettier plugin that wraps non-JSDoc JavaScript and TypeScript comments as Markdown. It uses the comment marker's real
+column to calculate the available content width, so nested comments wrap more narrowly than top-level comments.
 
 ## Install
 
@@ -28,9 +27,8 @@ npx prettier . --write
 
 ## Behavior
 
-The plugin wraps standalone `//` and `/* ... */` comments before Prettier
-parses the file, then delegates formatting to Prettier's built-in JavaScript
-and TypeScript parsers.
+The plugin wraps standalone `//` and `/* ... */` comments before Prettier parses the file, then delegates formatting to
+Prettier's built-in JavaScript and TypeScript parsers.
 
 ```ts
 function example() {
@@ -48,11 +46,9 @@ JSDoc comments are left unchanged:
  */
 ```
 
-Tooling directives such as `eslint-disable`, `@ts-expect-error`,
-`prettier-ignore`, source maps, and TypeScript triple-slash directives are also
-left untouched so their meaning is not changed. Trailing comments after code are
-also left unchanged because Prettier repositions continuation comments after
-parsing.
+Tooling directives such as `eslint-disable`, `@ts-expect-error`, `prettier-ignore`, source maps, and TypeScript
+triple-slash directives are also left untouched so their meaning is not changed. Trailing comments after code are also
+left unchanged because Prettier repositions continuation comments after parsing.
 
 ## Supported Parsers
 

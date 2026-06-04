@@ -1,17 +1,17 @@
-import assert from "node:assert/strict";
-import test from "node:test";
-import { format } from "prettier";
-import plugin from "../dist/index.js";
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { format } from 'prettier';
+import plugin from '../dist/index.js';
 
 async function formatTypeScript(source, printWidth = 48) {
   return format(source, {
-    parser: "typescript",
+    parser: 'typescript',
     plugins: [plugin],
     printWidth,
   });
 }
 
-test("wraps line comments using the available width after indentation", async () => {
+test('wraps line comments using the available width after indentation', async () => {
   const output = await formatTypeScript(
     `function demo() {
   // This sentence should wrap around the nested indentation and stay under the configured width while preserving **markdown** emphasis.
@@ -21,9 +21,7 @@ test("wraps line comments using the available width after indentation", async ()
     52,
   );
 
-  const commentLines = output
-    .split("\n")
-    .filter((line) => line.trimStart().startsWith("//"));
+  const commentLines = output.split('\n').filter((line) => line.trimStart().startsWith('//'));
 
   assert.ok(commentLines.length > 1);
   assert.equal(
@@ -31,12 +29,12 @@ test("wraps line comments using the available width after indentation", async ()
     true,
   );
   assert.equal(
-    commentLines.every((line) => line.startsWith("  //")),
+    commentLines.every((line) => line.startsWith('  //')),
     true,
   );
 });
 
-test("wraps adjacent line comments as one markdown document", async () => {
+test('wraps adjacent line comments as one markdown document', async () => {
   const output = await formatTypeScript(
     `// This paragraph starts on one commented line and continues on the next commented line so that markdown can reflow it together.
 // It also keeps the text wrapped at the configured print width.
@@ -45,9 +43,7 @@ const value = 1;
     54,
   );
 
-  const commentLines = output
-    .split("\n")
-    .filter((line) => line.startsWith("//"));
+  const commentLines = output.split('\n').filter((line) => line.startsWith('//'));
 
   assert.ok(commentLines.length > 2);
   assert.equal(
@@ -56,7 +52,7 @@ const value = 1;
   );
 });
 
-test("wraps non-JSDoc block comments", async () => {
+test('wraps non-JSDoc block comments', async () => {
   const output = await formatTypeScript(
     `if (ready) {
   /* This block comment should become a star-prefixed block and wrap with the nested indentation included in the available width calculation. */
@@ -69,18 +65,18 @@ test("wraps non-JSDoc block comments", async () => {
   assert.match(output, /  \/\*\n   \* This block comment should become/u);
   assert.equal(
     output
-      .split("\n")
-      .filter((line) => line.includes("*") && !line.includes("*/"))
+      .split('\n')
+      .filter((line) => line.includes('*') && !line.includes('*/'))
       .every((line) => line.length <= 56),
     true,
   );
 });
 
-test("does not wrap trailing line comments", async () => {
+test('does not wrap trailing line comments', async () => {
   const source = `const value = 1; // This trailing comment should stay on one line because Prettier repositions continuation comments after parsing.
 `;
   const output = await formatTypeScript(source, 56);
-  const commentLines = output.split("\n").filter((line) => line.includes("//"));
+  const commentLines = output.split('\n').filter((line) => line.includes('//'));
 
   assert.equal(commentLines.length, 1);
   assert.match(
@@ -89,7 +85,7 @@ test("does not wrap trailing line comments", async () => {
   );
 });
 
-test("does not wrap JSDoc comments", async () => {
+test('does not wrap JSDoc comments', async () => {
   const source = `/**
  * This JSDoc line is intentionally long and should remain a single documentation comment line because the plugin only wraps non-Javadoc comments.
  */
@@ -97,13 +93,10 @@ function demo() {}
 `;
   const output = await formatTypeScript(source, 56);
 
-  assert.match(
-    output,
-    /This JSDoc line is intentionally long and should remain a single documentation comment line/u,
-  );
+  assert.match(output, /This JSDoc line is intentionally long and should remain a single documentation comment line/u);
 });
 
-test("does not wrap functional directive comments", async () => {
+test('does not wrap functional directive comments', async () => {
   const source = `// eslint-disable-next-line @typescript-eslint/no-explicit-any -- this long directive must stay on one line because wrapping it can change tooling behavior
 const value: any = 1;
 `;

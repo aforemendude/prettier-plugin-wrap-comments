@@ -1,4 +1,4 @@
-import type { AstWithComments, CommentRange, RawComment } from "./types.js";
+import type { AstWithComments, CommentRange, RawComment } from './types.js';
 
 export function collectComments(ast: unknown): RawComment[] {
   const candidate = ast as AstWithComments;
@@ -14,13 +14,9 @@ export function collectComments(ast: unknown): RawComment[] {
   return [];
 }
 
-export function toCommentRange(
-  comment: RawComment,
-  text: string,
-): CommentRange | undefined {
+export function toCommentRange(comment: RawComment, text: string): CommentRange | undefined {
   const range = Array.isArray(comment.range) ? comment.range : undefined;
-  const start =
-    numberOrUndefined(comment.start) ?? numberOrUndefined(range?.[0]);
+  const start = numberOrUndefined(comment.start) ?? numberOrUndefined(range?.[0]);
   const end = numberOrUndefined(comment.end) ?? numberOrUndefined(range?.[1]);
 
   if (start === undefined || end === undefined || start >= end) {
@@ -29,21 +25,21 @@ export function toCommentRange(
 
   const rawStart = text.slice(start, start + 3);
 
-  if (rawStart.startsWith("//")) {
-    return { end, kind: "line", start };
+  if (rawStart.startsWith('//')) {
+    return { end, kind: 'line', start };
   }
 
-  if (rawStart.startsWith("/*")) {
-    return { end, kind: "block", start };
+  if (rawStart.startsWith('/*')) {
+    return { end, kind: 'block', start };
   }
 
-  if (typeof comment.type === "string") {
-    if (comment.type.includes("Line")) {
-      return { end, kind: "line", start };
+  if (typeof comment.type === 'string') {
+    if (comment.type.includes('Line')) {
+      return { end, kind: 'line', start };
     }
 
-    if (comment.type.includes("Block")) {
-      return { end, kind: "block", start };
+    if (comment.type.includes('Block')) {
+      return { end, kind: 'block', start };
     }
   }
 
@@ -51,43 +47,43 @@ export function toCommentRange(
 }
 
 export function normalizeLineCommentBody(rawBody: string): string {
-  if (rawBody.trim() === "") {
-    return "";
+  if (rawBody.trim() === '') {
+    return '';
   }
 
-  return rawBody.replace(/^[ \t]?/, "").replace(/[ \t]+$/u, "");
+  return rawBody.replace(/^[ \t]?/, '').replace(/[ \t]+$/u, '');
 }
 
 export function normalizeBlockCommentBody(rawComment: string): string {
-  const body = rawComment.slice(2, -2).replace(/\r\n?/g, "\n");
-  const lines = body.split("\n");
+  const body = rawComment.slice(2, -2).replace(/\r\n?/g, '\n');
+  const lines = body.split('\n');
 
   if (lines.length === 1) {
     return lines[0].trim();
   }
 
-  while (lines.length > 0 && lines[0].trim() === "") {
+  while (lines.length > 0 && lines[0].trim() === '') {
     lines.shift();
   }
 
-  while (lines.length > 0 && lines[lines.length - 1].trim() === "") {
+  while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
     lines.pop();
   }
 
   return lines
     .map((line) => {
-      const withoutIndent = line.replace(/^[ \t]*/u, "");
+      const withoutIndent = line.replace(/^[ \t]*/u, '');
 
-      if (!withoutIndent.startsWith("*")) {
-        return withoutIndent.replace(/[ \t]+$/u, "");
+      if (!withoutIndent.startsWith('*')) {
+        return withoutIndent.replace(/[ \t]+$/u, '');
       }
 
       return withoutIndent
         .slice(1)
-        .replace(/^[ \t]?/u, "")
-        .replace(/[ \t]+$/u, "");
+        .replace(/^[ \t]?/u, '')
+        .replace(/[ \t]+$/u, '');
     })
-    .join("\n");
+    .join('\n');
 }
 
 export function isDirectiveComment(body: string): boolean {
@@ -97,5 +93,5 @@ export function isDirectiveComment(body: string): boolean {
 }
 
 function numberOrUndefined(value: unknown): number | undefined {
-  return typeof value === "number" ? value : undefined;
+  return typeof value === 'number' ? value : undefined;
 }

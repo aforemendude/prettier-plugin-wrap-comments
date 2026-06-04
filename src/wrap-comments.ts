@@ -1,20 +1,16 @@
-import { wrapBlockComment } from "./block-comments.js";
-import { collectComments, toCommentRange } from "./comments.js";
+import { wrapBlockComment } from './block-comments.js';
+import { collectComments, toCommentRange } from './comments.js';
 import {
   areAdjacentLineComments,
   isStandaloneLineComment,
   shouldSkipLineComment,
   wrapLineCommentGroup,
-} from "./line-comments.js";
-import { getTabWidth } from "./options.js";
-import { applyReplacements, getColumnAt } from "./text.js";
-import type { CommentRange, Replacement, WrapOptions } from "./types.js";
+} from './line-comments.js';
+import { getTabWidth } from './options.js';
+import { applyReplacements, getColumnAt } from './text.js';
+import type { CommentRange, Replacement, WrapOptions } from './types.js';
 
-export async function wrapComments<T>(
-  text: string,
-  ast: T,
-  options: WrapOptions,
-): Promise<string> {
+export async function wrapComments<T>(text: string, ast: T, options: WrapOptions): Promise<string> {
   const comments = collectComments(ast)
     .map((comment) => toCommentRange(comment, text))
     .filter((comment): comment is CommentRange => comment !== undefined)
@@ -30,7 +26,7 @@ export async function wrapComments<T>(
   for (let index = 0; index < comments.length; index += 1) {
     const comment = comments[index];
 
-    if (comment.kind === "block") {
+    if (comment.kind === 'block') {
       const replacement = await wrapBlockComment(text, comment, options);
 
       if (replacement !== undefined) {
@@ -40,10 +36,7 @@ export async function wrapComments<T>(
       continue;
     }
 
-    if (
-      !isStandaloneLineComment(text, comment) ||
-      shouldSkipLineComment(text, comment)
-    ) {
+    if (!isStandaloneLineComment(text, comment) || shouldSkipLineComment(text, comment)) {
       continue;
     }
 
@@ -53,12 +46,11 @@ export async function wrapComments<T>(
       const nextComment = comments[index + 1];
 
       if (
-        nextComment.kind !== "line" ||
+        nextComment.kind !== 'line' ||
         !isStandaloneLineComment(text, nextComment) ||
         shouldSkipLineComment(text, nextComment) ||
         !areAdjacentLineComments(text, group[group.length - 1], nextComment) ||
-        getColumnAt(text, comment.start, tabWidth) !==
-          getColumnAt(text, nextComment.start, tabWidth)
+        getColumnAt(text, comment.start, tabWidth) !== getColumnAt(text, nextComment.start, tabWidth)
       ) {
         break;
       }

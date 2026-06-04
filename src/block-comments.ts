@@ -1,18 +1,8 @@
-import { isDirectiveComment, normalizeBlockCommentBody } from "./comments.js";
-import { formatMarkdownLines } from "./markdown.js";
-import {
-  getAvailableContentWidth,
-  getPrintWidth,
-  getTabWidth,
-} from "./options.js";
-import {
-  getColumnAt,
-  getColumns,
-  getLinePrefix,
-  getPreferredNewline,
-  isStandaloneBlockComment,
-} from "./text.js";
-import type { CommentRange, Replacement, WrapOptions } from "./types.js";
+import { isDirectiveComment, normalizeBlockCommentBody } from './comments.js';
+import { formatMarkdownLines } from './markdown.js';
+import { getAvailableContentWidth, getPrintWidth, getTabWidth } from './options.js';
+import { getColumnAt, getColumns, getLinePrefix, getPreferredNewline, isStandaloneBlockComment } from './text.js';
+import type { CommentRange, Replacement, WrapOptions } from './types.js';
 
 export async function wrapBlockComment(
   text: string,
@@ -21,35 +11,23 @@ export async function wrapBlockComment(
 ): Promise<Replacement | undefined> {
   const raw = text.slice(comment.start, comment.end);
 
-  if (raw.startsWith("/**")) {
+  if (raw.startsWith('/**')) {
     return undefined;
   }
 
   const markdown = normalizeBlockCommentBody(raw);
 
-  if (markdown.trim() === "" || isDirectiveComment(markdown)) {
+  if (markdown.trim() === '' || isDirectiveComment(markdown)) {
     return undefined;
   }
 
   const tabWidth = getTabWidth(options);
   const markerColumn = getColumnAt(text, comment.start, tabWidth);
   const availableWidth = getAvailableContentWidth(options, markerColumn + 3);
-  const formattedLines = await formatMarkdownLines(
-    markdown,
-    availableWidth,
-    options,
-  );
-  const replacementText = buildBlockReplacement(
-    text,
-    comment,
-    formattedLines,
-    options,
-  );
+  const formattedLines = await formatMarkdownLines(markdown, availableWidth, options);
+  const replacementText = buildBlockReplacement(text, comment, formattedLines, options);
 
-  if (
-    replacementText === undefined ||
-    replacementText === text.slice(comment.start, comment.end)
-  ) {
+  if (replacementText === undefined || replacementText === text.slice(comment.start, comment.end)) {
     return undefined;
   }
 
@@ -68,13 +46,10 @@ function buildBlockReplacement(
 ): string | undefined {
   const tabWidth = getTabWidth(options);
   const markerColumn = getColumnAt(text, comment.start, tabWidth);
-  const singleLine = `/* ${formattedLines.join(" ")} */`;
+  const singleLine = `/* ${formattedLines.join(' ')} */`;
   const singleLineWidth = getColumns(singleLine, tabWidth);
 
-  if (
-    formattedLines.length === 1 &&
-    markerColumn + singleLineWidth <= getPrintWidth(options)
-  ) {
+  if (formattedLines.length === 1 && markerColumn + singleLineWidth <= getPrintWidth(options)) {
     return singleLine;
   }
 
@@ -84,9 +59,7 @@ function buildBlockReplacement(
 
   const newline = getPreferredNewline(text, options);
   const indent = getLinePrefix(text, comment.start);
-  const body = formattedLines
-    .map((line) => `${indent} *${line.length === 0 ? "" : ` ${line}`}`)
-    .join(newline);
+  const body = formattedLines.map((line) => `${indent} *${line.length === 0 ? '' : ` ${line}`}`).join(newline);
 
   return `/*${newline}${body}${newline}${indent} */`;
 }
