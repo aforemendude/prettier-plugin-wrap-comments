@@ -1,0 +1,52 @@
+{
+  "name": "prettier-plugin-wrap-comments",
+  "version": "0.1.0",
+  "description": "A Prettier plugin that wraps non-JSDoc JavaScript and TypeScript comments as Markdown.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "npm test",
+    "format": "prettier . --write",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run check",
+    "test": "npm run build && node --test test/*.test.mjs"
+  },
+  "keywords": [
+    "prettier",
+    "prettier-plugin",
+    "comments",
+    "markdown",
+    "typescript"
+  ],
+  "author": "aforemendude",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/aforemendude/prettier-plugin-wrap-comments.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aforemendude/prettier-plugin-wrap-comments/issues"
+  },
+  "homepage": "https://github.com/aforemendude/prettier-plugin-wrap-comments#readme",
+  "peerDependencies": {
+    "prettier": ">=3.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.3",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
