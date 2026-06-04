@@ -1,0 +1,3 @@
+function demo() {
+  const value = 1; // This trailing comment should move above the statement and wrap using the statement indentation when the original line exceeds the configured print width.
+}

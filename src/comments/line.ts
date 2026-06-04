@@ -1,7 +1,15 @@
 import { isDirectiveComment, normalizeLineCommentBody } from './core.js';
 import { formatMarkdownLines } from '../shared/markdown.js';
-import { getAvailableContentWidth, getTabWidth } from '../shared/options.js';
-import { getColumnAt, getContinuationIndent, getLinePrefix, getPreferredNewline } from '../shared/text.js';
+import { getAvailableContentWidth, getPrintWidth, getTabWidth } from '../shared/options.js';
+import {
+  getColumnAt,
+  getColumns,
+  getContinuationIndent,
+  getLineEnd,
+  getLinePrefix,
+  getLineStart,
+  getPreferredNewline,
+} from '../shared/text.js';
 import type { CommentRange, Replacement, WrapOptions } from '../shared/types.js';
 
 export async function wrapLineCommentGroup(
@@ -49,6 +57,47 @@ export async function wrapLineCommentGroup(
   };
 }
 
+export async function wrapTrailingLineComment(
+  text: string,
+  comment: CommentRange,
+  options: WrapOptions,
+): Promise<Replacement | undefined> {
+  if (isTrailingLineCommentWithinPrintWidth(text, comment, options)) {
+    return undefined;
+  }
+
+  const lineStart = getLineStart(text, comment.start);
+  const lineEnd = getLineEnd(text, comment.end);
+  const linePrefix = text.slice(lineStart, comment.start);
+  const codeText = linePrefix.replace(/[ \t]+$/u, '');
+
+  if (codeText.trim() === '') {
+    return undefined;
+  }
+
+  const body = normalizeLineCommentBody(text.slice(comment.start + 2, comment.end));
+
+  if (body.trim() === '') {
+    return undefined;
+  }
+
+  const tabWidth = getTabWidth(options);
+  const indent = getLineIndent(linePrefix);
+  const availableWidth = getAvailableContentWidth(options, getColumns(indent, tabWidth) + 3);
+  const formattedLines = await formatMarkdownLines(body, availableWidth, options);
+  const newline = getPreferredNewline(text, options);
+  const leadingCommentText = formattedLines
+    .map((line) => `${indent}${line.length === 0 ? '//' : `// ${line}`}`)
+    .join(newline);
+  const replacementText = `${leadingCommentText}${newline}${codeText}`;
+
+  return {
+    end: lineEnd,
+    start: lineStart,
+    text: replacementText,
+  };
+}
+
 export function shouldSkipLineComment(text: string, comment: CommentRange): boolean {
   const raw = text.slice(comment.start, comment.end);
 
@@ -65,4 +114,17 @@ export function isStandaloneLineComment(text: string, comment: CommentRange): bo
 
 export function areAdjacentLineComments(text: string, previous: CommentRange, next: CommentRange): boolean {
   return /^(?:\r\n|\n|\r)[ \t]*$/u.test(text.slice(previous.end, next.start));
+}
+
+function isTrailingLineCommentWithinPrintWidth(text: string, comment: CommentRange, options: WrapOptions): boolean {
+  const tabWidth = getTabWidth(options);
+  const lineStart = getLineStart(text, comment.start);
+  const lineEnd = getLineEnd(text, comment.end);
+  const lineText = text.slice(lineStart, lineEnd).replace(/[ \t]+$/u, '');
+
+  return getColumns(lineText, tabWidth) <= getPrintWidth(options);
+}
+
+function getLineIndent(linePrefix: string): string {
+  return /^[ \t]*/u.exec(linePrefix)?.[0] ?? '';
 }

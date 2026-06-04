@@ -30,7 +30,7 @@
   ],
   "license": "MIT",
   "main": "./dist/index.js",
-  "name": "prettier-plugin-wrap-comments",
+  "name": "@aforemendude/prettier-plugin-wrap-comments",
   "peerDependencies": {
     "prettier": ">=3.0.0"
   },

@@ -7,7 +7,7 @@ import { format } from 'prettier';
 import plugin from '../dist/index.js';
 
 const expectedFixtureFiles = ['config.json.txt', 'expected.ts.txt', 'original.ts.txt'];
-const expectedTestCount = 6;
+const expectedTestCount = 7;
 const fixtureRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures');
 
 const fixtureDirectories = (await readdir(fixtureRoot, { withFileTypes: true }))

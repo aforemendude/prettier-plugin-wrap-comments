@@ -47,8 +47,9 @@ JSDoc comments are left unchanged:
 ```
 
 Tooling directives such as `eslint-disable`, `@ts-expect-error`, `prettier-ignore`, source maps, and TypeScript
-triple-slash directives are also left untouched so their meaning is not changed. Trailing comments after code are also
-left unchanged because Prettier repositions continuation comments after parsing.
+triple-slash directives are also left untouched so their meaning is not changed. Trailing comments after code stay in
+place when the full line fits the configured print width. If the line is too long, the comment is moved above the code
+and wrapped there.
 
 ## Supported Parsers
 

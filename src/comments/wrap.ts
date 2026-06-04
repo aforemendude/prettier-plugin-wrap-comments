@@ -5,6 +5,7 @@ import {
   isStandaloneLineComment,
   shouldSkipLineComment,
   wrapLineCommentGroup,
+  wrapTrailingLineComment,
 } from './line.js';
 import { getTabWidth } from '../shared/options.js';
 import { applyReplacements, getColumnAt } from '../shared/text.js';
@@ -40,7 +41,17 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
       continue;
     }
 
-    if (!isStandaloneLineComment(text, comment) || shouldSkipLineComment(text, comment)) {
+    if (shouldSkipLineComment(text, comment)) {
+      continue;
+    }
+
+    if (!isStandaloneLineComment(text, comment)) {
+      const replacement = await wrapTrailingLineComment(text, comment, options);
+
+      if (replacement !== undefined) {
+        replacements.push(replacement);
+      }
+
       continue;
     }
 
