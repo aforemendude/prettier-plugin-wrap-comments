@@ -42,7 +42,7 @@
     "url": "git+https://github.com/aforemendude/prettier-plugin-wrap-comments.git"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "rm -rf dist && tsc -p tsconfig.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepack": "npm run verify",
