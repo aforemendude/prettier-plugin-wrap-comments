@@ -4,11 +4,28 @@ import type { Replacement, WrapOptions } from './types.js';
 export function applyReplacements(text: string, replacements: Replacement[]): string {
   let result = text;
 
-  for (const replacement of [...replacements].sort((left, right) => right.start - left.start)) {
+  for (const replacement of getNonOverlappingReplacements(replacements).sort(
+    (left, right) => right.start - left.start,
+  )) {
     result = result.slice(0, replacement.start) + replacement.text + result.slice(replacement.end);
   }
 
   return result;
+}
+
+function getNonOverlappingReplacements(replacements: Replacement[]): Replacement[] {
+  return [...replacements]
+    .sort((left, right) => left.start - right.start || right.end - left.end)
+    .reduce<Replacement[]>((accepted, replacement) => {
+      const previous = accepted.at(-1);
+
+      if (previous === undefined || previous.end <= replacement.start) {
+        accepted.push(replacement);
+        return accepted;
+      }
+
+      return accepted;
+    }, []);
 }
 
 export function getPreferredNewline(text: string, options: WrapOptions): string {
