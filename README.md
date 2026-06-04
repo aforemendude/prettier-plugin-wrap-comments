@@ -22,7 +22,7 @@ Add the plugin to your Prettier config:
 Then run Prettier normally:
 
 ```sh
-npx prettier . --write
+npx prettier --write .
 ```
 
 ## Behavior
