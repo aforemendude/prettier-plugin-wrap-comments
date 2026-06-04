@@ -86,10 +86,51 @@ export function normalizeBlockCommentBody(rawComment: string): string {
     .join('\n');
 }
 
+const PRAGMA_DIRECTIVE_COMMENT_PATTERNS: readonly RegExp[] = [
+  /^@(?:__NO_SIDE_EFFECTS__|__PURE__|license|preserve)\b/u,
+  /^@(?:jsx|jsxImportSource)\b/u,
+  /^@(?:ts-check|ts-expect-error|ts-ignore|ts-nocheck)\b/u,
+  /^[@#]__PURE__\b/u,
+];
+
+const SOURCE_MAP_DIRECTIVE_COMMENT_PATTERNS: readonly RegExp[] = [/^#\s*sourceMappingURL=/u, /^sourceMappingURL=/u];
+
+const TOOL_DIRECTIVE_COMMENT_PATTERNS: readonly RegExp[] = [
+  /^biome-ignore\b/u,
+  /^c8\b/u,
+  /^deno-lint-ignore\b/u,
+  /^eslint\b/u,
+  /^eslint-/u,
+  /^exported\b/u,
+  /^globals?\b/u,
+  /^istanbul\b/u,
+  /^jshint\b/u,
+  /^nyc\b/u,
+  /^oxlint\b/u,
+  /^prettier-ignore\b/u,
+  /^prettier-ignore-start\b/u,
+  /^prettier-ignore-end\b/u,
+  /^stylelint\b/u,
+  /^tslint\b/u,
+  /^v8\b/u,
+  /^vite-ignore\b/u,
+];
+
+const BUNDLER_DIRECTIVE_COMMENT_PATTERNS: readonly RegExp[] = [
+  /^webpack(?:ChunkName|Exclude|Ignore|Include|Mode|Prefetch|Preload)\b/u,
+];
+
+const DIRECTIVE_COMMENT_PATTERNS: readonly RegExp[] = [
+  ...PRAGMA_DIRECTIVE_COMMENT_PATTERNS,
+  ...SOURCE_MAP_DIRECTIVE_COMMENT_PATTERNS,
+  ...TOOL_DIRECTIVE_COMMENT_PATTERNS,
+  ...BUNDLER_DIRECTIVE_COMMENT_PATTERNS,
+];
+
 export function isDirectiveComment(body: string): boolean {
-  return /^(?:@(?:__NO_SIDE_EFFECTS__|__PURE__|jsx|jsxImportSource|license|preserve|ts-check|ts-expect-error|ts-ignore|ts-nocheck)\b|#\s*sourceMappingURL=|[@#]__PURE__\b|biome-ignore\b|c8\b|deno-lint-ignore\b|eslint\b|eslint-|exported\b|globals?\b|istanbul\b|jshint\b|nyc\b|oxlint\b|prettier-ignore\b|prettier-ignore-start\b|prettier-ignore-end\b|sourceMappingURL=|stylelint\b|tslint\b|v8\b|vite-ignore\b|webpack(?:ChunkName|Exclude|Ignore|Include|Mode|Prefetch|Preload)\b)/u.test(
-    body.trimStart(),
-  );
+  const normalizedBody = body.trimStart();
+
+  return DIRECTIVE_COMMENT_PATTERNS.some((pattern) => pattern.test(normalizedBody));
 }
 
 function isBlankLine(line: string | undefined): boolean {
