@@ -42,9 +42,10 @@
     "build": "tsc -p tsconfig.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepack": "npm run build",
-    "prepublishOnly": "npm install && npm run format:check && npm run test",
-    "test": "npm run build && node --test test/*.test.mjs"
+    "prepack": "npm run verify",
+    "prepublishOnly": "npm run verify",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "verify": "npm install && npm run format:check && npm run test"
   },
   "type": "module",
   "types": "./dist/index.d.ts",
