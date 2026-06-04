@@ -59,14 +59,14 @@ export function normalizeBlockCommentBody(rawComment: string): string {
   const lines = body.split('\n');
 
   if (lines.length === 1) {
-    return lines[0].trim();
+    return lines[0]?.trim() ?? '';
   }
 
-  while (lines.length > 0 && lines[0].trim() === '') {
+  while (isBlankLine(lines[0])) {
     lines.shift();
   }
 
-  while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+  while (isBlankLine(lines.at(-1))) {
     lines.pop();
   }
 
@@ -90,6 +90,10 @@ export function isDirectiveComment(body: string): boolean {
   return /^(?:@(?:__NO_SIDE_EFFECTS__|__PURE__|jsx|jsxImportSource|license|preserve|ts-check|ts-expect-error|ts-ignore|ts-nocheck)\b|#\s*sourceMappingURL=|[@#]__PURE__\b|biome-ignore\b|c8\b|deno-lint-ignore\b|eslint\b|eslint-|exported\b|globals?\b|istanbul\b|jshint\b|nyc\b|oxlint\b|prettier-ignore\b|prettier-ignore-start\b|prettier-ignore-end\b|sourceMappingURL=|stylelint\b|tslint\b|v8\b|vite-ignore\b|webpack(?:ChunkName|Exclude|Ignore|Include|Mode|Prefetch|Preload)\b)/u.test(
     body.trimStart(),
   );
+}
+
+function isBlankLine(line: string | undefined): boolean {
+  return line !== undefined && line.trim() === '';
 }
 
 function numberOrUndefined(value: unknown): number | undefined {

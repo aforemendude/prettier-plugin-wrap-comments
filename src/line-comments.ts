@@ -9,6 +9,13 @@ export async function wrapLineCommentGroup(
   comments: CommentRange[],
   options: WrapOptions,
 ): Promise<Replacement | undefined> {
+  const firstComment = comments[0];
+
+  if (firstComment === undefined) {
+    return undefined;
+  }
+
+  const lastComment = comments.at(-1) ?? firstComment;
   const bodyLines = comments.map((comment) => normalizeLineCommentBody(text.slice(comment.start + 2, comment.end)));
 
   if (bodyLines.every((line) => line.trim() === '')) {
@@ -16,11 +23,11 @@ export async function wrapLineCommentGroup(
   }
 
   const tabWidth = getTabWidth(options);
-  const markerColumn = getColumnAt(text, comments[0].start, tabWidth);
+  const markerColumn = getColumnAt(text, firstComment.start, tabWidth);
   const availableWidth = getAvailableContentWidth(options, markerColumn + 3);
   const formattedLines = await formatMarkdownLines(bodyLines.join('\n'), availableWidth, options);
   const newline = getPreferredNewline(text, options);
-  const continuationIndent = getContinuationIndent(text, comments[0].start, markerColumn, options);
+  const continuationIndent = getContinuationIndent(text, firstComment.start, markerColumn, options);
   const replacementText = formattedLines
     .map((line, index) => {
       const commentText = line.length === 0 ? '//' : `// ${line}`;
@@ -28,8 +35,8 @@ export async function wrapLineCommentGroup(
       return index === 0 ? commentText : `${newline}${continuationIndent}${commentText}`;
     })
     .join('');
-  const start = comments[0].start;
-  const end = comments[comments.length - 1].end;
+  const start = firstComment.start;
+  const end = lastComment.end;
 
   if (replacementText === text.slice(start, end)) {
     return undefined;

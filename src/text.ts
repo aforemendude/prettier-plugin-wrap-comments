@@ -92,15 +92,19 @@ export function isStandaloneBlockComment(text: string, comment: { end: number; s
 export function trimBlankEdges(markdown: string): string {
   const lines = markdown.split('\n');
 
-  while (lines.length > 0 && lines[0].trim() === '') {
+  while (isBlankLine(lines[0])) {
     lines.shift();
   }
 
-  while (lines.length > 0 && lines[lines.length - 1].trim() === '') {
+  while (isBlankLine(lines.at(-1))) {
     lines.pop();
   }
 
   return lines.join('\n');
+}
+
+function isBlankLine(line: string | undefined): boolean {
+  return line !== undefined && line.trim() === '';
 }
 
 function makeIndent(column: number, options: WrapOptions): string {

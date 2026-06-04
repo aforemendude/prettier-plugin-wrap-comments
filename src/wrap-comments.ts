@@ -26,6 +26,10 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
   for (let index = 0; index < comments.length; index += 1) {
     const comment = comments[index];
 
+    if (comment === undefined) {
+      continue;
+    }
+
     if (comment.kind === 'block') {
       const replacement = await wrapBlockComment(text, comment, options);
 
@@ -41,21 +45,27 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
     }
 
     const group = [comment];
+    let previousComment = comment;
 
     while (index + 1 < comments.length) {
       const nextComment = comments[index + 1];
+
+      if (nextComment === undefined) {
+        break;
+      }
 
       if (
         nextComment.kind !== 'line' ||
         !isStandaloneLineComment(text, nextComment) ||
         shouldSkipLineComment(text, nextComment) ||
-        !areAdjacentLineComments(text, group[group.length - 1], nextComment) ||
+        !areAdjacentLineComments(text, previousComment, nextComment) ||
         getColumnAt(text, comment.start, tabWidth) !== getColumnAt(text, nextComment.start, tabWidth)
       ) {
         break;
       }
 
       group.push(nextComment);
+      previousComment = nextComment;
       index += 1;
     }
 
