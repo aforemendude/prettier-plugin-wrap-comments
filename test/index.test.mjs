@@ -27,12 +27,12 @@ for (const fixtureName of fixtureDirectories) {
     const fixtureDirectory = path.join(fixtureRoot, fixtureName);
     const fixtureFiles = (await readdir(fixtureDirectory)).sort();
     const extension = getFixtureExtension(fixtureFiles);
-    const expectedFixtureFiles = [`config.json.txt`, `expected.${extension}.txt`, `original.${extension}.txt`].sort();
+    const expectedFixtureFiles = [`config.json`, `expected.${extension}.txt`, `original.${extension}.txt`].sort();
 
     assert.deepEqual(fixtureFiles, expectedFixtureFiles);
 
     const [configText, original, expected] = await Promise.all([
-      readFile(path.join(fixtureDirectory, 'config.json.txt'), 'utf8'),
+      readFile(path.join(fixtureDirectory, 'config.json'), 'utf8'),
       readFile(path.join(fixtureDirectory, `original.${extension}.txt`), 'utf8'),
       readFile(path.join(fixtureDirectory, `expected.${extension}.txt`), 'utf8'),
     ]);

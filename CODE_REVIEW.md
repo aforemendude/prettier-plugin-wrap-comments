@@ -14,41 +14,6 @@ Verification performed:
 
 ## Findings
 
-### High: overlapping replacements can corrupt valid source
-
-Affected code:
-
-- `src/comments/wrap.ts:34-53` collects block and trailing line comment replacements independently.
-- `src/comments/block.ts:55-60` can rewrite inline block comments when the normalized single-line form fits.
-- `src/comments/line.ts:94-98` replaces the entire original source line when moving a long trailing line comment.
-- `src/shared/text.ts:4-9` applies replacements by original offsets without checking for overlap.
-
-Valid input can be transformed into invalid preprocessed source when an inline block comment and a long trailing `//`
-comment are on the same line:
-
-```ts
-const value = /*inline block comment*/ 1; // This trailing line comment is long enough to be moved by the plugin.
-```
-
-Observed preprocessed output:
-
-```ts
-// This trailing line comment is long enough to be
-// moved by the plugin.
-const value = /*inline block comment*/ 1;n.
-```
-
-Prettier then throws a syntax error on the transformed text. The root cause is that the inline block replacement expands
-the line before the whole-line trailing-comment replacement is applied, but the whole-line replacement still uses
-offsets from the original source.
-
-Suggested fixes:
-
-- Reject or merge overlapping replacements before calling `applyReplacements`.
-- When a trailing comment replacement covers a whole line, skip any other replacements contained in that line.
-- Consider reparsing wrapped output and falling back to the original text if the plugin made valid input invalid.
-- Add a fixture for inline block plus long trailing line comments.
-
 ### High: directive detection misses important directives and mutates them
 
 Affected code:
