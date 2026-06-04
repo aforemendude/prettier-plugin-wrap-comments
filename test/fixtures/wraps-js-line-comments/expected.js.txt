@@ -1,0 +1,6 @@
+export function demo(value) {
+  // JavaScript files should use the Babel parser and
+  // still wrap regular line comments with markdown
+  // emphasis preserved.
+  return value ?? 1;
+}

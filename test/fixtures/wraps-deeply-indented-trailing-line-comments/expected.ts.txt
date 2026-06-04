@@ -1,0 +1,12 @@
+function demo() {
+  if (outer) {
+    for (const item of items) {
+      if (item.enabled) {
+        // Deeply indented trailing comments should wrap using
+        // the surrounding block indentation when the original
+        // code line exceeds the configured print width.
+        const value = item.value;
+      }
+    }
+  }
+}

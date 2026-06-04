@@ -1,4 +1,4 @@
-# prettier-plugin-wrap-comments
+# @aforemendude/prettier-plugin-wrap-comments
 
 A Prettier plugin that wraps non-JSDoc JavaScript and TypeScript comments as Markdown. It uses the comment marker's real
 column to calculate the available content width, so nested comments wrap more narrowly than top-level comments.
@@ -6,7 +6,7 @@ column to calculate the available content width, so nested comments wrap more na
 ## Install
 
 ```sh
-npm install --save-dev prettier-plugin-wrap-comments prettier
+npm install --save-dev @aforemendude/prettier-plugin-wrap-comments prettier
 ```
 
 ## Use
@@ -15,7 +15,7 @@ Add the plugin to your Prettier config:
 
 ```json
 {
-  "plugins": ["prettier-plugin-wrap-comments"]
+  "plugins": ["@aforemendude/prettier-plugin-wrap-comments"]
 }
 ```
 
@@ -63,3 +63,17 @@ and wrapped there.
 npm install
 npm run check
 ```
+
+## Publishing
+
+The npm package name is `@aforemendude/prettier-plugin-wrap-comments`.
+
+Before publishing, make sure the version in `package.json` has been updated, then run:
+
+```sh
+npm run check
+npm publish --access public
+```
+
+The package scripts already run the important publish checks: `prepublishOnly` runs `npm run check`, and `prepack`
+builds the `dist` files that are included in the published package.
