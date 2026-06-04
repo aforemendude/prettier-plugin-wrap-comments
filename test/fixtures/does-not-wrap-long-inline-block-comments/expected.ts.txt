@@ -1,0 +1,1 @@
+const value = /* This inline block comment is intentionally long enough that it cannot stay within the configured print width after normalization. */ 1;
