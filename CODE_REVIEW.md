@@ -234,24 +234,3 @@ Suggested fixes:
   `npm run verify`.
 - Either add the documented `prepublishOnly` lifecycle hook or update the README to describe the actual `prepack`
   lifecycle.
-
-### Low: `verify` runs `npm install`
-
-Affected code:
-
-- `package.json:50`
-
-`verify` currently runs:
-
-```sh
-npm install && npm run format:check && npm run test
-```
-
-Because `prepack` runs `verify`, packaging performs an install as part of the lifecycle. That can mutate `node_modules`
-or `package-lock.json`, require registry/cache access, and make publishing or dry-run packaging fail in restricted
-environments even after the actual format and test checks pass.
-
-Suggested fixes:
-
-- Remove `npm install` from `verify`.
-- Use `npm ci` as a separate CI/setup step instead of inside a verification or packaging lifecycle script.
