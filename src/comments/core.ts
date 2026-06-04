@@ -87,13 +87,18 @@ export function normalizeBlockCommentBody(rawComment: string): string {
 }
 
 const PRAGMA_DIRECTIVE_COMMENT_PATTERNS: readonly RegExp[] = [
-  /^@(?:__NO_SIDE_EFFECTS__|__PURE__|license|preserve)\b/u,
-  /^@(?:jsx|jsxImportSource)\b/u,
+  /^@(?:license|preserve)\b/u,
+  /^@(?:jsxFrag|jsxImportSource|jsxRuntime|jsx)\b/u,
   /^@(?:ts-check|ts-expect-error|ts-ignore|ts-nocheck)\b/u,
-  /^[@#]__PURE__\b/u,
+  /^[@#]__(?:NO_SIDE_EFFECTS|PURE)__\b/u,
 ];
 
-const SOURCE_MAP_DIRECTIVE_COMMENT_PATTERNS: readonly RegExp[] = [/^#\s*sourceMappingURL=/u, /^sourceMappingURL=/u];
+const SOURCE_MAP_DIRECTIVE_COMMENT_PATTERNS: readonly RegExp[] = [
+  /^[#@][ \t]*sourceMappingURL=/u,
+  /^[#@][ \t]*sourceURL=/u,
+  /^sourceMappingURL=/u,
+  /^sourceURL=/u,
+];
 
 const TOOL_DIRECTIVE_COMMENT_PATTERNS: readonly RegExp[] = [
   /^biome-ignore\b/u,
@@ -131,6 +136,10 @@ export function isDirectiveComment(body: string): boolean {
   const normalizedBody = body.trimStart();
 
   return DIRECTIVE_COMMENT_PATTERNS.some((pattern) => pattern.test(normalizedBody));
+}
+
+export function hasPreserveCommentMarker(rawComment: string): boolean {
+  return rawComment.startsWith('/*!') || rawComment.startsWith('//!');
 }
 
 function isBlankLine(line: string | undefined): boolean {

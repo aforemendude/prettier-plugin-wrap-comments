@@ -1,4 +1,4 @@
-import { isDirectiveComment, normalizeBlockCommentBody } from './core.js';
+import { hasPreserveCommentMarker, isDirectiveComment, normalizeBlockCommentBody } from './core.js';
 import { formatMarkdownLines } from '../shared/markdown.js';
 import { getAvailableContentWidth, getPrintWidth, getTabWidth } from '../shared/options.js';
 import {
@@ -17,7 +17,7 @@ export async function wrapBlockComment(
 ): Promise<Replacement | undefined> {
   const raw = text.slice(comment.start, comment.end);
 
-  if (raw.startsWith('/**')) {
+  if (raw.startsWith('/**') || hasPreserveCommentMarker(raw)) {
     return undefined;
   }
 

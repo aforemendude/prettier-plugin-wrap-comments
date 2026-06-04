@@ -1,15 +1,23 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isDirectiveComment } from '../dist/comments/core.js';
+import { hasPreserveCommentMarker, isDirectiveComment } from '../dist/comments/core.js';
 
 test('recognizes directive comment families', () => {
   const directiveBodies = [
     '@preserve license text',
+    '@jsxFrag Fragment',
     '@jsxImportSource @emotion/react',
+    '@jsxRuntime automatic',
     '@ts-expect-error long reason',
     '# sourceMappingURL=file.js.map',
+    '# sourceURL=file.js',
+    '@ sourceMappingURL=file.js.map',
+    '@ sourceURL=file.js',
     'sourceMappingURL=file.js.map',
+    'sourceURL=file.js',
+    '#__NO_SIDE_EFFECTS__',
     '#__PURE__',
+    '@__NO_SIDE_EFFECTS__',
     '@__PURE__',
     'biome-ignore lint/style/noDefaultExport',
     'c8 ignore next',
@@ -37,7 +45,7 @@ test('recognizes directive comment families', () => {
 
 test('rejects non-directive comments', () => {
   const nonDirectiveBodies = [
-    '@jsxRuntime automatic',
+    '@jsxRuntimeful automatic',
     '@ts-expect-errorful sentence',
     'not a directive eslint-disable-next-line',
     'prettier-ignoreful',
@@ -47,4 +55,11 @@ test('rejects non-directive comments', () => {
   for (const body of nonDirectiveBodies) {
     assert.equal(isDirectiveComment(body), false, body);
   }
+});
+
+test('recognizes preserved comment markers from raw syntax', () => {
+  assert.equal(hasPreserveCommentMarker('/*! @license text */'), true);
+  assert.equal(hasPreserveCommentMarker('//! @license text'), true);
+  assert.equal(hasPreserveCommentMarker('/* ! @license text */'), false);
+  assert.equal(hasPreserveCommentMarker('// ! @license text'), false);
 });

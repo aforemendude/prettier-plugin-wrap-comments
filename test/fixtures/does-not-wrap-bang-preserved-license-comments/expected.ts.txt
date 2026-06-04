@@ -1,0 +1,5 @@
+/*! @license VeryLongLibraryName copyright text that should remain a bang-preserved license comment for minifiers. */
+export const blockValue = 1;
+
+//! @license VeryLongLibraryName copyright text that should remain a bang-preserved license comment for minifiers.
+export const lineValue = 2;

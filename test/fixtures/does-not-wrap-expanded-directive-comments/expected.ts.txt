@@ -1,0 +1,6 @@
+//# sourceURL=really-long-generated-source-url-that-should-stay-directive.js
+//@ sourceMappingURL=legacy-map-directive-that-should-remain-byte-compatible.js.map
+// @jsxRuntime automatic this directive carries long text that should remain unchanged by comment wrapping.
+// @jsxFrag Fragment this directive carries long text that should remain unchanged by comment wrapping.
+/*# sourceURL=really-long-generated-block-source-url-that-should-stay-directive.js */
+const x = /*#__NO_SIDE_EFFECTS__*/ f();
