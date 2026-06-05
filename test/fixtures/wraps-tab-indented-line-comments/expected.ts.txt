@@ -1,0 +1,9 @@
+function demo(enabled: boolean) {
+	if (enabled) {
+		// Tab indented comments should wrap
+		// using visual columns even when
+		// indentation uses tabs instead of
+		// spaces.
+		return value;
+	}
+}
