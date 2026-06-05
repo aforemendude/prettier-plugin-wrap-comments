@@ -30,9 +30,6 @@ The existing fixtures cover the basic happy paths, but they do not cover the cas
 - The supported `babel-ts` parser path.
 - Idempotence, for example `format(format(input)) === format(input)`.
 
-The hard-coded `expectedTestCount` in `test/index.test.mjs:9` is useful as a fixture guard, but it also makes adding new
-fixtures a two-step update.
-
 Suggested fixes:
 
 - Add targeted fixtures for the bug repros above.
