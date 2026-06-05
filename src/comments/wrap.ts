@@ -15,13 +15,13 @@ import {
 } from './line.js';
 import { getTabWidth } from '../shared/options.js';
 import { applyReplacements, getColumnAt, isStandaloneBlockComment } from '../shared/text.js';
-import type { CommentRange, Replacement, WrapOptions } from '../shared/types.js';
+import type { CommentRange, RawComment, Replacement, WrapOptions } from '../shared/types.js';
+
+const NEUTRALIZED_PRETTIER_IGNORE_COMMENT = 'prettier-ignore wrap-comments';
 
 export async function wrapComments<T>(text: string, ast: T, options: WrapOptions): Promise<string> {
-  const comments = collectComments(ast)
-    .map((comment) => toCommentRange(comment, text))
-    .filter((comment): comment is CommentRange => comment !== undefined)
-    .sort((left, right) => left.start - right.start);
+  const commentEntries = collectSortedCommentEntries(ast, text);
+  const comments = commentEntries.map((entry) => entry.range);
 
   if (comments.length === 0) {
     return text;
@@ -38,7 +38,7 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
     }
 
     if (comment.kind === 'block') {
-      if (isPrettierIgnoredBlockComment(text, comments, index)) {
+      if (isPrettierIgnoredBlockComment(text, commentEntries, index)) {
         continue;
       }
 
@@ -100,9 +100,36 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
   return applyReplacements(text, replacements);
 }
 
-function isPrettierIgnoredBlockComment(text: string, comments: CommentRange[], index: number): boolean {
-  const comment = comments[index];
-  const previousComment = comments[index - 1];
+export function neutralizePrettierIgnoreForIgnoredBlockComments<T>(text: string, ast: T): T {
+  const comments = collectSortedCommentEntries(ast, text);
+
+  for (let index = 0; index < comments.length; index += 1) {
+    const entry = comments[index];
+    const previousEntry = comments[index - 1];
+
+    if (entry !== undefined && previousEntry !== undefined && isPrettierIgnoredBlockComment(text, comments, index)) {
+      previousEntry.raw.value = NEUTRALIZED_PRETTIER_IGNORE_COMMENT;
+    }
+  }
+
+  return ast;
+}
+
+type CommentEntry = {
+  range: CommentRange;
+  raw: RawComment;
+};
+
+function collectSortedCommentEntries<T>(ast: T, text: string): CommentEntry[] {
+  return collectComments(ast)
+    .map((raw) => ({ range: toCommentRange(raw, text), raw }))
+    .filter((entry): entry is CommentEntry => entry.range !== undefined)
+    .sort((left, right) => left.range.start - right.range.start);
+}
+
+function isPrettierIgnoredBlockComment(text: string, comments: CommentEntry[], index: number): boolean {
+  const comment = comments[index]?.range;
+  const previousComment = comments[index - 1]?.range;
 
   if (comment === undefined || comment.kind !== 'block' || previousComment === undefined) {
     return false;

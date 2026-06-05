@@ -2,13 +2,18 @@ import type { Parser, Plugin } from 'prettier';
 import * as babelPlugin from 'prettier/plugins/babel';
 import * as typescriptPlugin from 'prettier/plugins/typescript';
 
-import { wrapComments } from '../comments/wrap.js';
+import { neutralizePrettierIgnoreForIgnoredBlockComments, wrapComments } from '../comments/wrap.js';
 
 const parserNames = ['babel', 'babel-ts', 'typescript'] as const;
 
 function wrapParser<T>(parser: Parser<T>): Parser<T> {
   return {
     ...parser,
+    async parse(text, options) {
+      const ast = await parser.parse(text, options);
+
+      return neutralizePrettierIgnoreForIgnoredBlockComments(text, ast);
+    },
     async preprocess(text, options) {
       const preprocessed = parser.preprocess === undefined ? text : await parser.preprocess(text, options);
 
