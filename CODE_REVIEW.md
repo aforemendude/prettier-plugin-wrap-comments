@@ -84,45 +84,10 @@ Suggested fix: let `collectPrettierIgnoredLineRanges` accept standalone block co
 `prettier-ignore`, not only line comments. Add fixtures for block-form ignore before a statement with an overlong
 trailing line comment and before a nested block containing comments.
 
-### Medium: unprefixed `*` Markdown bullets in block comments lose their bullet markers
-
-`normalizeBlockCommentBody` strips a leading `*` from every nonblank multiline block-comment line after indentation
-removal (`src/comments/core.ts:73`). That works for star-prefixed block comment decoration, but it also strips real
-Markdown bullet markers in block comments that are not using a decorative prefix.
-
-Repro:
-
-```text
-/*
-* First bullet item with enough text to wrap across lines and stay a Markdown bullet.
-* Second bullet item with enough text to wrap across lines and stay a Markdown bullet.
-*/
-const value = 1;
-```
-
-With `printWidth: 60`, the output becomes a paragraph:
-
-```ts
-/*
- * First bullet item with enough text to wrap across lines
- * and stay a Markdown bullet. Second bullet item with
- * enough text to wrap across lines and stay a Markdown
- * bullet.
- */
-const value = 1;
-```
-
-The same list written with `-` bullets or with explicit decorative prefixes survives. The ambiguous case is a real
-content-loss edge because the plugin advertises Markdown wrapping for block comments.
-
-Suggested fix: only strip decorative leading stars when the block consistently uses a conventional star-prefixed layout,
-or preserve `* ` as content when there is no leading space/decorative indentation before it. Add coverage for unprefixed
-`*` bullets and conventional `* * bullet` star-prefixed bullets.
-
 ## Coverage Gaps To Close
 
 - TypeScript hashbang preservation.
 - Block-form `/* prettier-ignore */` before ignored nodes.
-- Block comments containing unprefixed Markdown `*` bullets.
+- Block comments containing Markdown list.
 - Parser coverage is intentionally limited to `babel`, `babel-ts`, and `typescript`; tests should continue to make that
   explicit if README support remains scoped that way.
