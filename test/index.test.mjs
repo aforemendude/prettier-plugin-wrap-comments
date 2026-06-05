@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { format } from 'prettier';
 import plugin from '../dist/index.js';
 
-const expectedTestCount = 24;
+const expectedTestCount = 28;
 const fixtureRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures');
 const parserByExtension = {
   js: 'babel',

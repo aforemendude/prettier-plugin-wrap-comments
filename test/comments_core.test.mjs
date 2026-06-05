@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { hasPreserveCommentMarker, isDirectiveComment } from '../dist/comments/core.js';
+import { hasPreserveCommentMarker, isDirectiveComment, toCommentRange } from '../dist/comments/core.js';
 import { getColumnAt, getColumns, makeIndent } from '../dist/shared/text.js';
 
 test('recognizes directive comment families', () => {
@@ -63,6 +63,13 @@ test('recognizes preserved comment markers from raw syntax', () => {
   assert.equal(hasPreserveCommentMarker('//! @license text'), true);
   assert.equal(hasPreserveCommentMarker('/* ! @license text */'), false);
   assert.equal(hasPreserveCommentMarker('// ! @license text'), false);
+});
+
+test('does not coerce hashbang metadata into a line comment', () => {
+  const text = '#!/usr/bin/env node\nconsole.log(1);';
+  const hashbangEnd = text.indexOf('\n');
+
+  assert.equal(toCommentRange({ end: hashbangEnd, start: 0, type: 'Line' }, text), undefined);
 });
 
 test('measures tabs with the configured tab width', () => {

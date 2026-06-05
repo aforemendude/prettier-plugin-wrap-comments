@@ -33,16 +33,6 @@ export function toCommentRange(comment: RawComment, text: string): CommentRange 
     return { end, kind: 'block', start };
   }
 
-  if (typeof comment.type === 'string') {
-    if (comment.type.includes('Line')) {
-      return { end, kind: 'line', start };
-    }
-
-    if (comment.type.includes('Block')) {
-      return { end, kind: 'block', start };
-    }
-  }
-
   return undefined;
 }
 

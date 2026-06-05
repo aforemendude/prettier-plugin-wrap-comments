@@ -1,0 +1,8 @@
+function run() {
+  /* prettier-ignore */
+  if (ready) {
+    doWork(  ); // This trailing line comment is very long and should stay inline because the block prettier-ignore protects the whole if statement.
+    /* This standalone block comment is long enough that wrapping would normally reflow it into multiple lines. */
+    finish(  );
+  }
+}

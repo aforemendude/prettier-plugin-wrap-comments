@@ -1,0 +1,2 @@
+/* prettier-ignore */
+const value   =   1; // This trailing line comment is very long and should not move if the block prettier-ignore protects the next statement.

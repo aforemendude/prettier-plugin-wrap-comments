@@ -186,8 +186,7 @@ function collectPrettierIgnoredLineRanges<T>(text: string, ast: T, comments: Com
 
     if (
       comment === undefined ||
-      comment.kind !== 'line' ||
-      !isStandaloneLineComment(text, comment) ||
+      !isStandaloneComment(text, comment) ||
       !isPrettierIgnoreComment(getCommentBody(text, comment))
     ) {
       continue;

@@ -1,0 +1,3 @@
+#!/usr/bin/env node
+// This standalone comment is adjacent to the hashbang and should wrap without merging the hashbang into the paragraph.
+console.log(1);
