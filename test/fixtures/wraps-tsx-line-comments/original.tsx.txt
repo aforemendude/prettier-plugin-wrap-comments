@@ -5,7 +5,7 @@ export function Label({ label }: Props) {
     <span>
       {/* This TSX expression comment should wrap as a standalone comment because the expression braces do not make it inline. */}
       {label /* This TSX expression comment should wrap as a trailing comment because only the expression value appears before it. */}
-      {"abc" + /*inline*/ "123"}
+      {"abc" + /* This inline TSX expression comment should stay unwrapped even though it is long because expression text appears on both sides. */ "123"}
     </span>
   );
 }

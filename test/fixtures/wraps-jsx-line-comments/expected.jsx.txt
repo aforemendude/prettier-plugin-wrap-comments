@@ -18,7 +18,10 @@ export function View() {
           label
         }
       </span>
-      <span>{"abc" + /*inline*/ "123"}</span>
+      <span>
+        {"abc" +
+          /* This inline JSX expression comment should stay unwrapped even though it is long because expression text appears on both sides. */ "123"}
+      </span>
     </section>
   );
 }

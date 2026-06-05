@@ -4,7 +4,7 @@ export function View() {
     <section>
       {/* This JSX expression comment should wrap as a standalone comment because the expression braces do not make it inline. */}
       <span>{label /* This JSX expression comment should wrap as a trailing comment because only the expression value appears before it. */}</span>
-      <span>{"abc" + /*inline*/ "123"}</span>
+      <span>{"abc" + /* This inline JSX expression comment should stay unwrapped even though it is long because expression text appears on both sides. */ "123"}</span>
     </section>
   );
 }
