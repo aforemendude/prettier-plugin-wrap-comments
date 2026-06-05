@@ -77,14 +77,27 @@ if (ready) {
 }
 ```
 
+`prettier-ignore` markers are preserved and affect wrapping only when the marker body is exactly `prettier-ignore`. When
+one of these markers is directly above a standalone block comment, the plugin leaves that block comment unchanged. If
+the block comment is one the plugin would otherwise wrap, the following code still formats normally; if the block
+comment is already skipped by the plugin, such as a JSDoc or directive block, Prettier keeps its normal ignore behavior
+for the following code.
+
+For trailing line comments, a `// prettier-ignore` line can apply to the code line and its inline comment. The plugin
+walks past adjacent standalone comments that it normally leaves alone, such as an `eslint-disable-next-line` directive,
+so an ignored code line's trailing comment remains inline and unchanged. A directive comment by itself does not ignore
+the following code line; without `// prettier-ignore`, an overlong trailing comment below a directive is still moved
+above the statement and wrapped.
+
 The plugin leaves these comments unchanged:
 
 - JSDoc comments that start with `/**`
 - bang-preserved comments that start with `/*!` or `//!`
 - TypeScript-style triple-slash line comments that start with `///`
 - empty comment bodies
-- directive comments such as `@license`, `@preserve`, JSX and TypeScript pragmas, source map directives, `#__PURE__`,
-  `@__PURE__`, lint/coverage/formatter directives, `vite-ignore`, and webpack magic comments
+- `prettier-ignore` markers themselves
+- other directive comments such as `@license`, `@preserve`, JSX and TypeScript pragmas, source map directives,
+  `#__PURE__`, `@__PURE__`, lint/coverage/formatter directives, `vite-ignore`, and webpack magic comments
 
 ## Supported Parsers
 
