@@ -138,6 +138,10 @@ export function isDirectiveComment(body: string): boolean {
   return DIRECTIVE_COMMENT_PATTERNS.some((pattern) => pattern.test(normalizedBody));
 }
 
+export function isPrettierIgnoreComment(body: string): boolean {
+  return body.trim() === 'prettier-ignore';
+}
+
 export function hasPreserveCommentMarker(rawComment: string): boolean {
   return rawComment.startsWith('/*!') || rawComment.startsWith('//!');
 }

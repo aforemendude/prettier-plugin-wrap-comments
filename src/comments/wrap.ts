@@ -1,5 +1,11 @@
 import { wrapBlockComment } from './block.js';
-import { collectComments, toCommentRange } from './core.js';
+import {
+  collectComments,
+  isPrettierIgnoreComment,
+  normalizeBlockCommentBody,
+  normalizeLineCommentBody,
+  toCommentRange,
+} from './core.js';
 import {
   areAdjacentLineComments,
   isStandaloneLineComment,
@@ -8,7 +14,7 @@ import {
   wrapTrailingLineComment,
 } from './line.js';
 import { getTabWidth } from '../shared/options.js';
-import { applyReplacements, getColumnAt } from '../shared/text.js';
+import { applyReplacements, getColumnAt, isStandaloneBlockComment } from '../shared/text.js';
 import type { CommentRange, Replacement, WrapOptions } from '../shared/types.js';
 
 export async function wrapComments<T>(text: string, ast: T, options: WrapOptions): Promise<string> {
@@ -32,6 +38,10 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
     }
 
     if (comment.kind === 'block') {
+      if (isPrettierIgnoredBlockComment(text, comments, index)) {
+        continue;
+      }
+
       const replacement = await wrapBlockComment(text, comment, options);
 
       if (replacement !== undefined) {
@@ -88,4 +98,33 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
   }
 
   return applyReplacements(text, replacements);
+}
+
+function isPrettierIgnoredBlockComment(text: string, comments: CommentRange[], index: number): boolean {
+  const comment = comments[index];
+  const previousComment = comments[index - 1];
+
+  if (comment === undefined || comment.kind !== 'block' || previousComment === undefined) {
+    return false;
+  }
+
+  if (!isStandaloneComment(text, previousComment) || !isAdjacentPreviousComment(text, previousComment, comment)) {
+    return false;
+  }
+
+  return isPrettierIgnoreComment(getCommentBody(text, previousComment));
+}
+
+function isStandaloneComment(text: string, comment: CommentRange): boolean {
+  return comment.kind === 'line' ? isStandaloneLineComment(text, comment) : isStandaloneBlockComment(text, comment);
+}
+
+function isAdjacentPreviousComment(text: string, previousComment: CommentRange, comment: CommentRange): boolean {
+  return /^(?:\r\n|\n|\r)[ \t]*$/u.test(text.slice(previousComment.end, comment.start));
+}
+
+function getCommentBody(text: string, comment: CommentRange): string {
+  const raw = text.slice(comment.start, comment.end);
+
+  return comment.kind === 'line' ? normalizeLineCommentBody(raw.slice(2)) : normalizeBlockCommentBody(raw);
 }

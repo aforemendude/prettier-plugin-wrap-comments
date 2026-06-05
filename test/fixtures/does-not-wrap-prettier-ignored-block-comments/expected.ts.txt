@@ -1,0 +1,5 @@
+if (ready) {
+  // prettier-ignore
+  /* This block comment should stay on one long line because the ignore marker applies to the following comment block. */
+  run();
+}
