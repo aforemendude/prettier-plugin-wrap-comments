@@ -6,11 +6,13 @@ import { fileURLToPath } from 'node:url';
 import { format } from 'prettier';
 import plugin from '../dist/index.js';
 
-const expectedTestCount = 22;
+const expectedTestCount = 24;
 const fixtureRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures');
 const parserByExtension = {
   js: 'babel',
+  jsx: 'babel',
   ts: 'typescript',
+  tsx: 'typescript',
 };
 
 const fixtureDirectories = (await readdir(fixtureRoot, { withFileTypes: true }))
@@ -51,11 +53,11 @@ for (const fixtureName of fixtureDirectories) {
 }
 
 function getFixtureExtension(fixtureFiles) {
-  const originalFixtureFiles = fixtureFiles.filter((file) => /^original\.(?:js|ts)\.txt$/u.test(file));
+  const originalFixtureFiles = fixtureFiles.filter((file) => /^original\.(?:js|jsx|ts|tsx)\.txt$/u.test(file));
 
   assert.equal(originalFixtureFiles.length, 1);
 
-  const match = /^original\.(js|ts)\.txt$/u.exec(originalFixtureFiles[0]);
+  const match = /^original\.(js|jsx|ts|tsx)\.txt$/u.exec(originalFixtureFiles[0]);
 
   assert.ok(match);
 

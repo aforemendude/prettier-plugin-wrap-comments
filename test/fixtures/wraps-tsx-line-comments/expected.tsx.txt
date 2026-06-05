@@ -1,0 +1,11 @@
+type Props = { label: string };
+export function Label({ label }: Props) {
+  // A TSX file should wrap this standalone TypeScript comment
+  // while typed props and JSX syntax remain parseable.
+  return (
+    <span>
+      {/* This TSX expression comment remains in JSX comment form for Prettier to print. */}
+      {label}
+    </span>
+  );
+}

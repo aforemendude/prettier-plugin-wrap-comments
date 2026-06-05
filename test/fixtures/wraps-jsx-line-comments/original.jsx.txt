@@ -1,0 +1,4 @@
+export function View() {
+  // A JSX file should wrap this standalone comment while nearby JSX syntax remains parseable.
+  return <section>{/* This JSX expression comment remains in JSX comment form for Prettier to print. */}<span>Ready</span></section>;
+}
