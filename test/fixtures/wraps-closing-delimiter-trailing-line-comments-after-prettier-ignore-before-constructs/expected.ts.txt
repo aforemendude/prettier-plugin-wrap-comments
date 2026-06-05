@@ -1,0 +1,25 @@
+function demo(enabled: boolean) {
+  // prettier-ignore
+  const config = {
+    enabled,
+  // This comment describes the completed config object
+  // and should still move before the closing
+  // declaration delimiter when prettier-ignore is
+  // before the object.
+  };
+  // prettier-ignore
+  if (enabled) {
+    runTask();
+  // This comment describes the completed conditional
+  // block and should still move before the closing
+  // block delimiter when prettier-ignore is before the
+  // block.
+  }
+  // prettier-ignore
+  runTask(
+    config,
+  // This comment describes the completed function call
+  // and should still move before the closing call
+  // delimiter when prettier-ignore is before the call.
+  );
+}
