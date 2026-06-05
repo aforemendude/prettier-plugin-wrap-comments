@@ -1,0 +1,6 @@
+function demo(enabled: boolean) {
+  // prettier-ignore
+  if (enabled) {
+    runTask(  );   // This comment describes work inside the ignored block and should stay inline because prettier-ignore applies to the containing block.
+  }
+}
