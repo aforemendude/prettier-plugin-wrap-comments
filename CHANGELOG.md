@@ -2,6 +2,15 @@
 
 ---
 
+## v1.0.5 (June 5, 2026)
+
+### Bug Fixes
+
+- Hashbang metadata
+- Block-form Prettier ignore comments
+
+---
+
 ## v1.0.4 (June 5, 2026)
 
 ### Added Features
