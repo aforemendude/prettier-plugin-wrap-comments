@@ -1,6 +1,32 @@
-function demo(enabled: boolean) {
+function demo(enabled: boolean, mode: string) {
   // prettier-ignore
   if (enabled) {
-    runTask(  );   // This comment describes work inside the ignored block and should stay inline because prettier-ignore applies to the containing block.
+    runTask(  );   // This comment describes work inside the ignored conditional block and should stay inline because prettier-ignore applies to the containing block.
+  } else {
+    skipTask(  );   // This comment describes alternate work inside the ignored conditional block and should stay inline because prettier-ignore applies to the containing block.
+  }
+
+  // prettier-ignore
+  for (const item of items) {
+    prepare( item );   // This comment describes preparation inside the ignored loop block and should stay inline because prettier-ignore applies to the containing block.
+    finish(  item  );   // This comment describes cleanup inside the ignored loop block and should stay inline because prettier-ignore applies to the containing block.
+  }
+
+  // prettier-ignore
+  try {
+    runRiskyTask(  );   // This comment describes work inside the ignored try block and should stay inline because prettier-ignore applies to the containing block.
+  } catch (error) {
+    recoverFrom( error );   // This comment describes recovery inside the ignored catch block and should stay inline because prettier-ignore applies to the containing block.
+  } finally {
+    releaseTask(  );   // This comment describes cleanup inside the ignored finally block and should stay inline because prettier-ignore applies to the containing block.
+  }
+
+  // prettier-ignore
+  switch (mode) {
+    case "fast":
+      runFast(  );   // This comment describes work inside the ignored switch case and should stay inline because prettier-ignore applies to the containing block.
+      break;
+    default:
+      runDefault(  );   // This comment describes work inside the ignored switch default and should stay inline because prettier-ignore applies to the containing block.
   }
 }
