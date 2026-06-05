@@ -119,14 +119,6 @@ Suggested fix: only strip decorative leading stars when the block consistently u
 or preserve `* ` as content when there is no leading space/decorative indentation before it. Add coverage for unprefixed
 `*` bullets and conventional `* * bullet` star-prefixed bullets.
 
-## Additional Notes
-
-- `package.json:45` uses `rm -rf dist` in `npm run build`, which is not portable to default Windows shells. This does
-  not affect the current Linux test environment, but it can block contributors or release automation on Windows.
-- `package.json:48` and `package.json:50` make `npm pack`/`npm publish` run `npm install` through `prepack -> verify`.
-  That can mutate lockfile state or fail in offline/read-only-cache environments. Consider separating CI verification
-  from the lifecycle hook, or using `npm ci` in CI instead of `npm install` in `prepack`.
-
 ## Coverage Gaps To Close
 
 - TypeScript hashbang preservation.
