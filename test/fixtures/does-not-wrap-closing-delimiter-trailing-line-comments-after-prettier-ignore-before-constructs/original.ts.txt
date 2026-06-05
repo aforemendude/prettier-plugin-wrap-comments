@@ -1,0 +1,14 @@
+function demo(enabled: boolean) {
+  // prettier-ignore
+  const config = {
+    enabled,
+    };   // This comment describes the completed config object and should stay inline when the ignored object includes this delimiter line.
+  // prettier-ignore
+  if (enabled) {
+    runTask();
+    }   // This comment describes the completed conditional block and should stay inline when the ignored block includes this delimiter line.
+  // prettier-ignore
+  runTask(
+    config,
+    );   // This comment describes the completed function call and should stay inline when the ignored call includes this delimiter line.
+}
