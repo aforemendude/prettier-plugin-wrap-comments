@@ -4,3 +4,10 @@ if (ready) {
   run(    );
   // The line above should be formatted
 }
+
+if (documented) {
+  // prettier-ignore
+  /** This JSDoc comment is already ignored by the plugin, so the ignore marker should keep applying to the following code. */
+  run(    );
+  // The line above should stay ignored
+}

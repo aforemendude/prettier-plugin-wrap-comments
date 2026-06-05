@@ -1,6 +1,8 @@
 import { wrapBlockComment } from './block.js';
 import {
   collectComments,
+  hasPreserveCommentMarker,
+  isDirectiveComment,
   isPrettierIgnoreComment,
   normalizeBlockCommentBody,
   normalizeLineCommentBody,
@@ -14,7 +16,7 @@ import {
   wrapTrailingLineComment,
 } from './line.js';
 import { getTabWidth } from '../shared/options.js';
-import { applyReplacements, getColumnAt, isStandaloneBlockComment } from '../shared/text.js';
+import { applyReplacements, getColumnAt, getLineStart, isStandaloneBlockComment } from '../shared/text.js';
 import type { CommentRange, RawComment, Replacement, WrapOptions } from '../shared/types.js';
 
 const NEUTRALIZED_PRETTIER_IGNORE_COMMENT = 'prettier-ignore wrap-comments';
@@ -56,6 +58,10 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
     }
 
     if (!isStandaloneLineComment(text, comment)) {
+      if (isPrettierIgnoredTrailingLineComment(text, commentEntries, index)) {
+        continue;
+      }
+
       const replacement = await wrapTrailingLineComment(text, comment, options);
 
       if (replacement !== undefined) {
@@ -107,7 +113,12 @@ export function neutralizePrettierIgnoreForIgnoredBlockComments<T>(text: string,
     const entry = comments[index];
     const previousEntry = comments[index - 1];
 
-    if (entry !== undefined && previousEntry !== undefined && isPrettierIgnoredBlockComment(text, comments, index)) {
+    if (
+      entry !== undefined &&
+      previousEntry !== undefined &&
+      isPrettierIgnoredBlockComment(text, comments, index) &&
+      !isBlockCommentNormallyIgnored(text, entry.range)
+    ) {
       previousEntry.raw.value = NEUTRALIZED_PRETTIER_IGNORE_COMMENT;
     }
   }
@@ -142,12 +153,78 @@ function isPrettierIgnoredBlockComment(text: string, comments: CommentEntry[], i
   return isPrettierIgnoreComment(getCommentBody(text, previousComment));
 }
 
+function isPrettierIgnoredTrailingLineComment(text: string, comments: CommentEntry[], index: number): boolean {
+  const comment = comments[index]?.range;
+
+  if (comment === undefined || comment.kind !== 'line' || isStandaloneLineComment(text, comment)) {
+    return false;
+  }
+
+  let cursor = getLineStart(text, comment.start);
+
+  for (let previousIndex = index - 1; previousIndex >= 0; previousIndex -= 1) {
+    const previousComment = comments[previousIndex]?.range;
+
+    if (previousComment !== undefined && previousComment.end > cursor) {
+      continue;
+    }
+
+    if (previousComment === undefined || !isStandaloneComment(text, previousComment)) {
+      return false;
+    }
+
+    if (!isAdjacentCommentBeforeIndex(text, previousComment, cursor)) {
+      return false;
+    }
+
+    const body = getCommentBody(text, previousComment);
+
+    if (previousComment.kind === 'line' && isPrettierIgnoreComment(body)) {
+      return true;
+    }
+
+    if (!isCommentNormallyIgnored(text, previousComment)) {
+      return false;
+    }
+
+    cursor = getLineStart(text, previousComment.start);
+  }
+
+  return false;
+}
+
+function isCommentNormallyIgnored(text: string, comment: CommentRange): boolean {
+  if (comment.kind === 'line') {
+    const raw = text.slice(comment.start, comment.end);
+
+    return shouldSkipLineComment(text, comment) && !isPrettierIgnoreComment(normalizeLineCommentBody(raw.slice(2)));
+  }
+
+  return isBlockCommentNormallyIgnored(text, comment);
+}
+
+function isBlockCommentNormallyIgnored(text: string, comment: CommentRange): boolean {
+  const raw = text.slice(comment.start, comment.end);
+
+  if (raw.startsWith('/**') || hasPreserveCommentMarker(raw)) {
+    return true;
+  }
+
+  const body = normalizeBlockCommentBody(raw);
+
+  return body.trim() === '' || isDirectiveComment(body);
+}
+
 function isStandaloneComment(text: string, comment: CommentRange): boolean {
   return comment.kind === 'line' ? isStandaloneLineComment(text, comment) : isStandaloneBlockComment(text, comment);
 }
 
 function isAdjacentPreviousComment(text: string, previousComment: CommentRange, comment: CommentRange): boolean {
   return /^(?:\r\n|\n|\r)[ \t]*$/u.test(text.slice(previousComment.end, comment.start));
+}
+
+function isAdjacentCommentBeforeIndex(text: string, comment: CommentRange, index: number): boolean {
+  return /^(?:\r\n|\n|\r)[ \t]*$/u.test(text.slice(comment.end, index));
 }
 
 function getCommentBody(text: string, comment: CommentRange): string {

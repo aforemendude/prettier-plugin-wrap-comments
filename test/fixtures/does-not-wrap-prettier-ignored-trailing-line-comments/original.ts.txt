@@ -1,0 +1,3 @@
+// prettier-ignore
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const value: any = call(   "first",    "second"); // This trailing comment should stay inline because prettier-ignore applies to the code line and its inline comment.
