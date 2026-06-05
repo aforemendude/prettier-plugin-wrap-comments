@@ -3,11 +3,13 @@ export function View() {
   // nearby JSX syntax remains parseable.
   return (
     <section>
-      {/*
-       * This JSX expression comment should wrap as a
-       * standalone comment because the expression braces do
-       * not make it inline.
-       */}
+      {
+        /*
+         * This JSX expression comment should wrap as a
+         * standalone comment because the expression braces do
+         * not make it inline.
+         */
+      }
       <span>
         {
           /*

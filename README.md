@@ -77,6 +77,32 @@ if (ready) {
 }
 ```
 
+JSX and TSX expression comments use the expression contents, not the outer React expression braces, to decide whether a
+block comment is standalone, trailing, or inline. A comment-only expression like `{/* ... */}` can wrap as a standalone
+JSX comment. A trailing expression comment like `{label /* ... */}` can move before `label` and wrap. A true inline
+expression comment like `{"abc" + /* ... */ "123"}` is left unchanged when it cannot fit on one line.
+
+<!-- prettier-ignore-start -->
+```tsx
+<span>
+  {
+    /*
+     * This expression comment wraps because the surrounding JSX braces do not
+     * make it inline.
+     */
+  }
+  {
+    /*
+     * This expression comment moved above the expression value because it was
+     * trailing.
+     */
+    label
+  }
+  {'abc' + /* This inline expression comment stays in place. */ '123'}
+</span>
+```
+<!-- prettier-ignore-end -->
+
 `prettier-ignore` markers are preserved and affect wrapping only when the marker body is exactly `prettier-ignore`. When
 one of these markers is directly above a standalone block comment, the plugin leaves that block comment unchanged. If
 the block comment is one the plugin would otherwise wrap, the following code still formats normally; if the block

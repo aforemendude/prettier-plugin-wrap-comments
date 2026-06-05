@@ -4,11 +4,13 @@ export function Label({ label }: Props) {
   // while typed props and JSX syntax remain parseable.
   return (
     <span>
-      {/*
-       * This TSX expression comment should wrap as a standalone
-       * comment because the expression braces do not make it
-       * inline.
-       */}
+      {
+        /*
+         * This TSX expression comment should wrap as a
+         * standalone comment because the expression braces do
+         * not make it inline.
+         */
+      }
       {
         /*
          * This TSX expression comment should wrap as a trailing

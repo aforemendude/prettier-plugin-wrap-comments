@@ -380,7 +380,7 @@ function getJsxExpressionBlockCommentLayout(
   const containerOutputColumn = getJsxExpressionContainerOutputColumn(text, container, tabWidth);
 
   if (expressionTextBeforeComment === '' && expressionTextAfterComment === '') {
-    return { contentColumn: containerOutputColumn + 3, multilineIndent: '', placement: 'standalone' };
+    return { contentColumn: containerOutputColumn + tabWidth + 3, multilineIndent: '', placement: 'standalone' };
   }
 
   if (expressionTextBeforeComment !== '' && expressionTextAfterComment === '') {
