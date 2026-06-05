@@ -3,8 +3,22 @@ export function View() {
   // nearby JSX syntax remains parseable.
   return (
     <section>
-      {/* This JSX expression comment remains in JSX comment form for Prettier to print. */}
-      <span>Ready</span>
+      {/*
+       * This JSX expression comment should wrap as a
+       * standalone comment because the expression braces do
+       * not make it inline.
+       */}
+      <span>
+        {
+          /*
+           * This JSX expression comment should wrap as a
+           * trailing comment because only the expression
+           * value appears before it.
+           */
+          label
+        }
+      </span>
+      <span>{"abc" + /*inline*/ "123"}</span>
     </section>
   );
 }

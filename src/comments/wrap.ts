@@ -1,4 +1,5 @@
 import { wrapBlockComment } from './block.js';
+import type { BlockCommentLayout } from './block.js';
 import {
   collectComments,
   hasPreserveCommentMarker,
@@ -16,7 +17,15 @@ import {
   wrapTrailingLineComment,
 } from './line.js';
 import { getTabWidth } from '../shared/options.js';
-import { applyReplacements, getColumnAt, getLineEnd, getLineStart, isStandaloneBlockComment } from '../shared/text.js';
+import {
+  applyReplacements,
+  getColumnAt,
+  getColumns,
+  getLineEnd,
+  getLinePrefix,
+  getLineStart,
+  isStandaloneBlockComment,
+} from '../shared/text.js';
 import type { CommentRange, RawComment, Replacement, WrapOptions } from '../shared/types.js';
 
 const NEUTRALIZED_PRETTIER_IGNORE_COMMENT = 'prettier-ignore wrap-comments';
@@ -35,6 +44,7 @@ const AST_TRAVERSAL_SKIP_KEYS = new Set([
 export async function wrapComments<T>(text: string, ast: T, options: WrapOptions): Promise<string> {
   const commentEntries = collectSortedCommentEntries(ast, text);
   const comments = commentEntries.map((entry) => entry.range);
+  const jsxExpressionContainers = collectJsxExpressionContainerRanges(ast);
   const ignoredLineRanges = collectPrettierIgnoredLineRanges(text, ast, commentEntries);
 
   if (comments.length === 0) {
@@ -60,9 +70,17 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
         continue;
       }
 
-      const replacement = await wrapBlockComment(text, comment, options);
+      const jsxLayout = getJsxExpressionBlockCommentLayout(text, comment, jsxExpressionContainers, tabWidth);
 
-      if (replacement !== undefined) {
+      if (jsxLayout?.placement === 'inline') {
+        continue;
+      }
+
+      const replacement = await wrapBlockComment(text, comment, options, jsxLayout);
+
+      if (Array.isArray(replacement)) {
+        replacements.push(...replacement);
+      } else if (replacement !== undefined) {
         replacements.push(replacement);
       }
 
@@ -233,6 +251,45 @@ function collectAstNodeRanges(ast: unknown): SourceRange[] {
   }
 }
 
+function collectJsxExpressionContainerRanges(ast: unknown): SourceRange[] {
+  const ranges: SourceRange[] = [];
+  const seen = new Set<object>();
+
+  visit(ast);
+
+  return ranges.sort((left, right) => left.start - right.start || right.end - left.end);
+
+  function visit(value: unknown): void {
+    if (!isRecord(value) || seen.has(value)) {
+      return;
+    }
+
+    seen.add(value);
+
+    if (value['type'] === 'JSXExpressionContainer') {
+      const range = getAstNodeRange(value);
+
+      if (range !== undefined) {
+        ranges.push(range);
+      }
+    }
+
+    for (const [key, child] of Object.entries(value)) {
+      if (AST_TRAVERSAL_SKIP_KEYS.has(key)) {
+        continue;
+      }
+
+      if (Array.isArray(child)) {
+        for (const item of child) {
+          visit(item);
+        }
+      } else {
+        visit(child);
+      }
+    }
+  }
+}
+
 function getAstNodeRange(node: Record<string, unknown>): SourceRange | undefined {
   const start = numberOrUndefined(node['start']) ?? getRangeNumber(node['range'], 0);
   const end = numberOrUndefined(node['end']) ?? getRangeNumber(node['range'], 1);
@@ -304,6 +361,90 @@ function skipWhitespace(text: string, index: number): number {
 
 function isCommentInIgnoredLineRange(comment: CommentRange, ignoredLineRanges: SourceRange[]): boolean {
   return ignoredLineRanges.some((range) => comment.start >= range.start && comment.start < range.end);
+}
+
+function getJsxExpressionBlockCommentLayout(
+  text: string,
+  comment: CommentRange,
+  jsxExpressionContainers: SourceRange[],
+  tabWidth: number,
+): BlockCommentLayout | undefined {
+  const container = getSmallestContainingRange(comment, jsxExpressionContainers);
+
+  if (container === undefined || text[container.start] !== '{' || text[container.end - 1] !== '}') {
+    return undefined;
+  }
+
+  const expressionTextBeforeComment = text.slice(container.start + 1, comment.start).trim();
+  const expressionTextAfterComment = text.slice(comment.end, container.end - 1).trim();
+  const containerOutputColumn = getJsxExpressionContainerOutputColumn(text, container, tabWidth);
+
+  if (expressionTextBeforeComment === '' && expressionTextAfterComment === '') {
+    return { contentColumn: containerOutputColumn + 3, multilineIndent: '', placement: 'standalone' };
+  }
+
+  if (expressionTextBeforeComment !== '' && expressionTextAfterComment === '') {
+    const expressionStart = skipWhitespace(text, container.start + 1);
+    const expressionEnd = trimWhitespaceEnd(text, container.start + 1, comment.start);
+    const removalEnd = Math.min(skipWhitespace(text, comment.end), container.end - 1);
+
+    return {
+      contentColumn: containerOutputColumn + tabWidth + 3,
+      multilineIndent: '',
+      placement: 'trailing',
+      trailingMove: {
+        insertAt: expressionStart,
+        removeEnd: removalEnd,
+        removeStart: expressionEnd,
+      },
+    };
+  }
+
+  return { placement: 'inline' };
+}
+
+function getJsxExpressionContainerOutputColumn(text: string, container: SourceRange, tabWidth: number): number {
+  const linePrefix = getLinePrefix(text, container.start);
+
+  if (/^[ \t]*$/u.test(linePrefix)) {
+    return getColumns(linePrefix, tabWidth);
+  }
+
+  const lineIndent = /^[ \t]*/u.exec(linePrefix)?.[0] ?? '';
+
+  return getColumns(lineIndent, tabWidth) + tabWidth;
+}
+
+function trimWhitespaceEnd(text: string, start: number, end: number): number {
+  let cursor = end;
+
+  while (cursor > start) {
+    const character = text[cursor - 1];
+
+    if (character === undefined || !/\s/u.test(character)) {
+      break;
+    }
+
+    cursor -= 1;
+  }
+
+  return cursor;
+}
+
+function getSmallestContainingRange(comment: CommentRange, ranges: SourceRange[]): SourceRange | undefined {
+  let containingRange: SourceRange | undefined;
+
+  for (const range of ranges) {
+    if (comment.start <= range.start || comment.end >= range.end) {
+      continue;
+    }
+
+    if (containingRange === undefined || range.end - range.start < containingRange.end - containingRange.start) {
+      containingRange = range;
+    }
+  }
+
+  return containingRange;
 }
 
 function isPrettierIgnoredBlockComment(text: string, comments: CommentEntry[], index: number): boolean {
