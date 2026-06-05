@@ -1,0 +1,6 @@
+type FeatureConfig = {
+  enabled: boolean;
+};
+
+// The babel-ts parser path should wrap this standalone TypeScript comment so parser coverage does not only exercise the typescript parser.
+export const config: FeatureConfig = { enabled: true };

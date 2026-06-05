@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { format } from 'prettier';
 import plugin from '../dist/index.js';
 
-const expectedTestCount = 20;
+const expectedTestCount = 21;
 const fixtureRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures');
 const parserByExtension = {
   js: 'babel',
@@ -37,13 +37,16 @@ for (const fixtureName of fixtureDirectories) {
       readFile(path.join(fixtureDirectory, `expected.${extension}.txt`), 'utf8'),
     ]);
     const config = JSON.parse(configText);
-    const output = await format(original, {
+    const options = {
       parser: parserByExtension[extension],
       plugins: [plugin],
       ...config,
-    });
+    };
+    const output = await format(original, options);
+    const repeatedOutput = await format(output, options);
 
     assert.equal(output, expected);
+    assert.equal(repeatedOutput, output);
   });
 }
 

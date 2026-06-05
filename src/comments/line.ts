@@ -9,6 +9,7 @@ import {
   getLinePrefix,
   getLineStart,
   getPreferredNewline,
+  makeIndent,
 } from '../shared/text.js';
 import type { CommentRange, Replacement, WrapOptions } from '../shared/types.js';
 
@@ -61,7 +62,7 @@ export async function wrapTrailingLineComment(
   text: string,
   comment: CommentRange,
   options: WrapOptions,
-): Promise<Replacement | undefined> {
+): Promise<Replacement[] | undefined> {
   if (isTrailingLineCommentWithinPrintWidth(text, comment, options)) {
     return undefined;
   }
@@ -82,20 +83,27 @@ export async function wrapTrailingLineComment(
   }
 
   const tabWidth = getTabWidth(options);
-  const indent = getLineIndent(linePrefix);
+  const indent = getTrailingCommentIndent(codeText, linePrefix, options);
   const availableWidth = getAvailableContentWidth(options, getColumns(indent, tabWidth) + 3);
   const formattedLines = await formatMarkdownLines(body, availableWidth, options);
   const newline = getPreferredNewline(text, options);
   const leadingCommentText = formattedLines
     .map((line) => `${indent}${line.length === 0 ? '//' : `// ${line}`}`)
     .join(newline);
-  const replacementText = `${leadingCommentText}${newline}${codeText}`;
+  const codeEnd = lineStart + codeText.length;
 
-  return {
-    end: lineEnd,
-    start: lineStart,
-    text: replacementText,
-  };
+  return [
+    {
+      end: lineStart,
+      start: lineStart,
+      text: `${leadingCommentText}${newline}`,
+    },
+    {
+      end: lineEnd,
+      start: codeEnd,
+      text: '',
+    },
+  ];
 }
 
 export function shouldSkipLineComment(text: string, comment: CommentRange): boolean {
@@ -127,4 +135,20 @@ function isTrailingLineCommentWithinPrintWidth(text: string, comment: CommentRan
 
 function getLineIndent(linePrefix: string): string {
   return /^[ \t]*/u.exec(linePrefix)?.[0] ?? '';
+}
+
+function getTrailingCommentIndent(codeText: string, linePrefix: string, options: WrapOptions): string {
+  const indent = getLineIndent(linePrefix);
+
+  if (!isClosingDelimiterLine(codeText)) {
+    return indent;
+  }
+
+  const tabWidth = getTabWidth(options);
+
+  return makeIndent(getColumns(indent, tabWidth) + tabWidth, options);
+}
+
+function isClosingDelimiterLine(codeText: string): boolean {
+  return /^[ \t]*[\])}]+[\])};,]*[ \t]*$/u.test(codeText);
 }

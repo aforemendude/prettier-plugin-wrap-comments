@@ -1,8 +1,8 @@
 function demo(enabled: boolean) {
   const config = {
     enabled,
-    // This comment describes the completed config object
-    // and intentionally moves before the closing
+    // This comment describes the completed config
+    // object and intentionally moves before the closing
     // declaration delimiter.
   };
   if (enabled) {
@@ -13,8 +13,8 @@ function demo(enabled: boolean) {
   }
   runTask(
     config,
-    // This comment describes the completed function call
-    // and intentionally moves before the closing call
-    // delimiter.
+    // This comment describes the completed function
+    // call and intentionally moves before the closing
+    // call delimiter.
   );
 }

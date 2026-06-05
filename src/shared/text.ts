@@ -19,13 +19,17 @@ function getNonOverlappingReplacements(replacements: Replacement[]): Replacement
     .reduce<Replacement[]>((accepted, replacement) => {
       const previous = accepted.at(-1);
 
-      if (previous === undefined || previous.end <= replacement.start) {
+      if (previous === undefined || !rangesOverlap(previous, replacement)) {
         accepted.push(replacement);
         return accepted;
       }
 
       return accepted;
     }, []);
+}
+
+function rangesOverlap(left: Replacement, right: Replacement): boolean {
+  return left.start < right.end && right.start < left.end;
 }
 
 export function getPreferredNewline(text: string, options: WrapOptions): string {
@@ -124,7 +128,7 @@ function isBlankLine(line: string | undefined): boolean {
   return line !== undefined && line.trim() === '';
 }
 
-function makeIndent(column: number, options: WrapOptions): string {
+export function makeIndent(column: number, options: WrapOptions): string {
   const tabWidth = getTabWidth(options);
 
   if (options.useTabs === true) {

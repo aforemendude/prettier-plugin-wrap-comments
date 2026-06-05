@@ -2,5 +2,5 @@ function demo() {
   // This trailing line comment is long enough to move
   // above the statement while an inline block comment
   // stays on the same source line.
-  const value = /*inline block comment*/ 1;
+  const value = /* inline block comment */ 1;
 }

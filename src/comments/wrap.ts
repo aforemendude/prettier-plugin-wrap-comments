@@ -81,7 +81,7 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
       const replacement = await wrapTrailingLineComment(text, comment, options);
 
       if (replacement !== undefined) {
-        replacements.push(replacement);
+        replacements.push(...replacement);
       }
 
       continue;
