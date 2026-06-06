@@ -12,13 +12,22 @@ export const View = (
     }
     <section
       aria-label={
-        /* This attribute comment stays inline because expression text appears after it even when it is long. */ title
+        /*
+         * This attribute comment should wrap
+         * and move above the attribute
+         * expression value.
+         */
+        title
       }
     >
       <span>
         {
-          /* This leading logical expression comment stays inline because expression text follows it. */ enabled &&
-            value
+          /*
+           * This leading logical expression
+           * comment should wrap and move above
+           * the logical expression value.
+           */
+          enabled && value
         }
       </span>
       <span>

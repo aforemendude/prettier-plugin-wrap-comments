@@ -410,6 +410,25 @@ function getJsxExpressionBlockCommentLayout(
     };
   }
 
+  if (expressionTextBeforeComment === '') {
+    if (isStandaloneBlockComment(text, comment)) {
+      return { placement: 'inline' };
+    }
+
+    const expressionStart = skipWhitespace(text, comment.end);
+
+    return {
+      contentColumn: containerOutputColumn + tabWidth + 3,
+      leadingMove: {
+        removeEnd: expressionStart,
+        removeStart: comment.end,
+      },
+      multilineIndent: '',
+      placement: 'standalone',
+      singleLineSuffixWidth: getColumns(text.slice(comment.end, container.end), tabWidth),
+    };
+  }
+
   return { placement: 'inline' };
 }
 

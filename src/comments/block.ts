@@ -12,6 +12,10 @@ import type { CommentRange, Replacement, WrapOptions } from '../shared/types.js'
 
 export type BlockCommentLayout = {
   contentColumn?: number;
+  leadingMove?: {
+    removeEnd: number;
+    removeStart: number;
+  };
   multilineIndent?: string;
   placement: 'inline' | 'standalone' | 'trailing';
   singleLineSuffixWidth?: number;
@@ -100,6 +104,21 @@ function buildBlockReplacement(
       {
         end: layout.trailingMove.removeEnd,
         start: layout.trailingMove.removeStart,
+        text: '',
+      },
+    ];
+  }
+
+  if (layout.leadingMove !== undefined) {
+    return [
+      {
+        end: comment.end,
+        start: comment.start,
+        text: `${replacementText}${newline}`,
+      },
+      {
+        end: layout.leadingMove.removeEnd,
+        start: layout.leadingMove.removeStart,
         text: '',
       },
     ];

@@ -83,9 +83,10 @@ if (ready) {
 ```
 
 JSX and TSX expression comments use the expression contents, not the outer React expression braces, to decide whether a
-block comment is standalone, trailing, or inline. A comment-only expression like `{/* ... */}` can wrap as a standalone
-JSX comment. A trailing expression comment like `{label /* ... */}` can move before `label` and wrap. A true inline
-expression comment like `{"abc" + /* ... */ "123"}` is left unchanged when it cannot fit on one line.
+block comment is standalone, leading, trailing, or inline. A comment-only expression like `{/* ... */}` can wrap as a
+standalone JSX comment. A leading expression comment like `{/* ... */ label}` can move above `label` and wrap. A
+trailing expression comment like `{label /* ... */}` can move before `label` and wrap. A true inline expression comment
+like `{"abc" + /* ... */ "123"}` is left unchanged when it cannot fit on one line.
 
 <!-- prettier-ignore-start -->
 ```tsx
@@ -95,6 +96,13 @@ expression comment like `{"abc" + /* ... */ "123"}` is left unchanged when it ca
      * This expression comment wraps because the surrounding JSX braces do not
      * make it inline.
      */
+  }
+  {
+    /*
+     * This expression comment moved above the expression value because it was
+     * leading.
+     */
+    label
   }
   {
     /*
