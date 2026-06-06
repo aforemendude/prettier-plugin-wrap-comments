@@ -1,0 +1,30 @@
+function sealed(value: Function) {
+  return value;
+}
+
+// prettier-ignore
+@sealed
+class DecoratedService {
+  // This class field comment is long enough that wrapping would normally split it across several lines.
+  field   =   1;
+}
+
+// prettier-ignore
+export const exportedValue    =   1; // This exported declaration trailing comment should remain inline because prettier-ignore protects the declaration.
+
+class Fields {
+  // prettier-ignore
+  property   =   { value: 1 }; // This class field trailing comment should remain inline because prettier-ignore protects the field.
+}
+
+enum Mode {
+  // prettier-ignore
+  Fast   =   "fast", // This enum member trailing comment should remain inline because prettier-ignore protects the enum member.
+  Slow = "slow",
+}
+
+const options = {
+  // prettier-ignore
+  enabled   :   true, // This object property trailing comment should remain inline because prettier-ignore protects the property.
+  retries: 3,
+};

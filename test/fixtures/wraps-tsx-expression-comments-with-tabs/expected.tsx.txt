@@ -1,0 +1,16 @@
+type Props = {
+	label: string;
+};
+
+export const View = ({ label }: Props) => (
+	<section>
+		{
+			/*
+			 * This tab-indented TSX expression
+			 * comment should wrap using tab-aware
+			 * columns with a non-default tab width.
+			 */
+		}
+		<span>{label}</span>
+	</section>
+);

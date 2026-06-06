@@ -1,0 +1,12 @@
+// eslint-disable-next-line no-console this standalone directive comment should remain unchanged even when it is long.
+console.log("standalone");
+
+const trailing = 1; // eslint-disable-line no-console this trailing directive comment should remain unchanged even when it is long.
+
+/* istanbul ignore next this standalone block directive comment should remain unchanged even when it is long. */
+function skipped() {
+  return "skipped";
+}
+
+const inline = /*#__PURE__*/ factory();
+const imported = import(/* webpackChunkName: "admin" this inline block directive comment should remain unchanged even when it is long. */ "./module");

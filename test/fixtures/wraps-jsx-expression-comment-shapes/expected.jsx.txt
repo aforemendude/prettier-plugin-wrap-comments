@@ -1,0 +1,55 @@
+const enabled = true;
+const title = "Demo";
+
+export const View = (
+  <>
+    {
+      /*
+       * This fragment-level expression comment
+       * should wrap as a standalone JSX
+       * expression comment.
+       */
+    }
+    <section
+      aria-label={
+        /* This attribute comment stays inline because expression text appears after it even when it is long. */ title
+      }
+    >
+      <span>
+        {
+          /* This leading logical expression comment stays inline because expression text follows it. */ enabled &&
+            value
+        }
+      </span>
+      <span>
+        {
+          /*
+           * This logical expression trailing
+           * comment should move before the
+           * expression when it wraps.
+           */
+          enabled && value
+        }
+      </span>
+      <span>
+        {enabled
+          ? value /* This conditional expression inline comment should stay inline because expression text appears on both sides. */
+          : fallback}
+      </span>
+      <span>
+        {items.map((item) => (
+          <strong>
+            {
+              /*
+               * This nested JSX expression comment
+               * should wrap in the nested
+               * container.
+               */
+              item.label
+            }
+          </strong>
+        ))}
+      </span>
+    </section>
+  </>
+);

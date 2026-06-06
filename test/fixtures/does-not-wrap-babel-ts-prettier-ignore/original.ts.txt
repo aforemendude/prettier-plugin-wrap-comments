@@ -1,0 +1,6 @@
+type FeatureConfig = {
+  enabled: boolean;
+};
+
+// prettier-ignore
+export const config: FeatureConfig   =   { enabled: true }; // The babel-ts parser path should leave this trailing line comment inline because prettier-ignore protects the declaration.

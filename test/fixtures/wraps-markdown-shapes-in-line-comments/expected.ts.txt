@@ -1,0 +1,18 @@
+// Here is a fenced code block:
+//
+// ```ts
+// const value = computeVeryLongThing("with input");
+// ```
+//
+// > This blockquote has enough words that it should wrap
+// > while preserving the blockquote marker.
+//
+// Use `inline code` with a
+// [documentation link](https://example.com/docs/wrap-comments)
+// and a long URL
+// https://example.com/really/long/path?with=query#hash.
+//
+// | Column | Description                                                                            |
+// | ------ | -------------------------------------------------------------------------------------- |
+// | Alpha  | This table row has a description that should be preserved through Markdown formatting. |
+const value = 1;

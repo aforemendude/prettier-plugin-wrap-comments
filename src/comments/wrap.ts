@@ -91,6 +91,11 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
       continue;
     }
 
+    if (isPrettierIgnoredStandaloneLineComment(text, commentEntries, index)) {
+      index = getStandaloneLineCommentGroupEndIndex(text, comments, index, tabWidth);
+      continue;
+    }
+
     if (!isStandaloneLineComment(text, comment)) {
       if (isPrettierIgnoredTrailingLineComment(text, commentEntries, index)) {
         continue;
@@ -140,19 +145,19 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
   return applyReplacements(text, replacements);
 }
 
-export function neutralizePrettierIgnoreForIgnoredBlockComments<T>(text: string, ast: T): T {
+export function neutralizePrettierIgnoreForIgnoredComments<T>(text: string, ast: T): T {
   const comments = collectSortedCommentEntries(ast, text);
 
   for (let index = 0; index < comments.length; index += 1) {
     const entry = comments[index];
     const previousEntry = comments[index - 1];
-
-    if (
+    const shouldNeutralize =
       entry !== undefined &&
       previousEntry !== undefined &&
-      isPrettierIgnoredBlockComment(text, comments, index) &&
-      !isBlockCommentNormallyIgnored(text, entry.range)
-    ) {
+      ((isPrettierIgnoredBlockComment(text, comments, index) && !isBlockCommentNormallyIgnored(text, entry.range)) ||
+        (isPrettierIgnoredStandaloneLineComment(text, comments, index) && !shouldSkipLineComment(text, entry.range)));
+
+    if (shouldNeutralize) {
       previousEntry.raw.value = NEUTRALIZED_PRETTIER_IGNORE_COMMENT;
     }
   }
@@ -465,6 +470,63 @@ function isPrettierIgnoredBlockComment(text: string, comments: CommentEntry[], i
   }
 
   return isPrettierIgnoreComment(getCommentBody(text, previousComment));
+}
+
+function isPrettierIgnoredStandaloneLineComment(text: string, comments: CommentEntry[], index: number): boolean {
+  const comment = comments[index]?.range;
+  const previousComment = comments[index - 1]?.range;
+
+  if (
+    comment === undefined ||
+    comment.kind !== 'line' ||
+    !isStandaloneLineComment(text, comment) ||
+    previousComment === undefined ||
+    previousComment.kind !== 'line'
+  ) {
+    return false;
+  }
+
+  if (!isStandaloneComment(text, previousComment) || !isAdjacentPreviousComment(text, previousComment, comment)) {
+    return false;
+  }
+
+  return isPrettierIgnoreComment(getCommentBody(text, previousComment));
+}
+
+function getStandaloneLineCommentGroupEndIndex(
+  text: string,
+  comments: CommentRange[],
+  startIndex: number,
+  tabWidth: number,
+): number {
+  const firstComment = comments[startIndex];
+
+  if (firstComment === undefined) {
+    return startIndex;
+  }
+
+  let endIndex = startIndex;
+  let previousComment = firstComment;
+
+  while (endIndex + 1 < comments.length) {
+    const nextComment = comments[endIndex + 1];
+
+    if (
+      nextComment === undefined ||
+      nextComment.kind !== 'line' ||
+      !isStandaloneLineComment(text, nextComment) ||
+      shouldSkipLineComment(text, nextComment) ||
+      !areAdjacentLineComments(text, previousComment, nextComment) ||
+      getColumnAt(text, firstComment.start, tabWidth) !== getColumnAt(text, nextComment.start, tabWidth)
+    ) {
+      break;
+    }
+
+    previousComment = nextComment;
+    endIndex += 1;
+  }
+
+  return endIndex;
 }
 
 function isPrettierIgnoredTrailingLineComment(text: string, comments: CommentEntry[], index: number): boolean {

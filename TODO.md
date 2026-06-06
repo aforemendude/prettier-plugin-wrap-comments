@@ -19,6 +19,11 @@ Verification run:
 - `npm_config_cache=/tmp/npm-cache npm pack --dry-run --json` passed and included `README.md`, `package.json`, and built
   `dist` files.
 
+Latest verification run:
+
+- 2026-06-06: `npm run test` passed: 67 tests.
+- 2026-06-06: `npm run format:check` passed.
+
 ## Addressed Items
 
 ### 1. Multiline block-comment leading stars are comment formatting
@@ -38,104 +43,51 @@ Coverage added:
 - Block closing delimiter with block-form `prettier-ignore`.
 - Call closing delimiter with block-form `prettier-ignore`.
 
-## Testing Gaps
+### 3. Testing gap coverage pass
 
-### Prettier-ignore behavior
+Fixed. Added representative unit and fixture coverage for the open testing gaps identified in this review.
 
-Existing fixtures cover several important ignore cases, including ignored nodes, trailing line comments, closing
-delimiters with `// prettier-ignore`, and block-form ignores before ordinary code lines and closing delimiters.
+Coverage added:
 
-Missing cases:
+- Direct unit tests for `normalizeBlockCommentBody`.
+- Direct unit tests for `applyReplacements`, including contained overlaps, adjacent replacements, same-offset
+  insertions, out-of-order replacements, and wider-over-nested replacement precedence.
+- Direct unit tests for `getPreferredNewline`.
+- Wrapper-level newline tests for standalone line comments, trailing line comments, and multiline block comments.
+- A direct parser-preprocess failure-mode test confirming invalid source returns unchanged.
+- `prettier-ignore` fixtures for decorated declarations, exported declarations, class fields, enum members, object
+  properties, JSX/TSX subtrees, and standalone line-comment groups.
+- `babel-ts` fixtures for block comments, trailing line comments, and `prettier-ignore`.
+- JSX/TSX fixtures for fragments, nested JSX expression containers, JSX attribute expressions, conditional/logical
+  expression comments, tabs, and non-default `tabWidth`.
+- Markdown fixtures for fenced code blocks, blockquotes, inline code, long URLs, Markdown links, and tables.
+- Directive-preservation fixtures for standalone line comments, trailing line comments, standalone block comments,
+  inline block comments, and JSX expression comments.
 
-- `prettier-ignore` before decorated declarations, exported declarations, class fields, enum members, and object
-  properties.
-- `prettier-ignore` around JSX and TSX trees with nested expression comments.
-- A direct test for the documented parser-preprocess failure mode: invalid source should return unchanged from
-  `preprocess`.
-- A behavior decision and fixture for `prettier-ignore` before standalone line comments, since standalone block comments
-  already get special handling.
+### 4. `prettier-ignore` before standalone line comments
 
-### Parser matrix
+Decision: a line-form `// prettier-ignore` immediately before an eligible standalone line-comment group applies to that
+comment group. The comment group remains source-faithful, and the marker is neutralized during parse so the following
+code still formats normally.
 
-The fixtures exercise:
+Coverage added:
 
-- `babel` through `.js` and `.jsx`
-- `typescript` through `.ts` and `.tsx`
-- `babel-ts` for a line-comment fixture
+- Standalone line-comment fixture proving the comment stays unwrapped.
+- Assertion that the following code line still formats after the marker is consumed by the comment group.
 
-Missing parser coverage:
+## Remaining Testing Follow-ups
 
-- `babel-ts` for block comments.
-- `babel-ts` for trailing line comments.
-- `babel-ts` for `prettier-ignore`.
-- `babel-ts` for JSX/TSX-shaped expression comments if that parser is expected to support them.
+The broad gaps from this review now have representative coverage. Remaining possible follow-ups are policy or exhaustive
+matrix choices rather than confirmed high-priority gaps:
 
-### JSX and TSX expression comments
-
-Current fixtures cover comment-only expressions, trailing expression comments, and true inline expression comments.
-
-Add coverage for:
-
-- Fragments.
-- Nested JSX expression containers.
-- JSX attributes whose expression contains comments.
-- Conditional and logical expressions with leading, trailing, and inline comments.
-- Comments with tabs or non-default `tabWidth` inside JSX.
-- `prettier-ignore` around JSX subtrees containing eligible comments.
-
-### Replacement and offset handling
-
-`applyReplacements` has one regression fixture for overlapping block and trailing comments, but little direct unit
-coverage.
-
-Add unit tests for:
-
-- Contained overlapping replacements.
-- Adjacent replacements that should both apply.
-- Multiple insertions at the same offset.
-- Replacements emitted out of order.
-- A wider replacement that should win over a nested replacement.
-
-### End-of-line handling
-
-README says `endOfLine` is used when rebuilding comments. The tests do not cover this directly.
-
-Add coverage for:
-
-- `endOfLine: "lf"`
-- `endOfLine: "crlf"`
-- `endOfLine: "cr"`
-- `endOfLine: "auto"` with existing CRLF input
-- Standalone line comments, trailing line comments, and multiline block comments for each relevant newline mode
-
-### Markdown shapes
-
-Existing tests mostly cover paragraphs and lists.
-
-Add fixtures for:
-
-- Fenced code blocks.
-- Blockquotes.
-- Inline code.
-- Long URLs.
-- Markdown links.
-- Tables, if table preservation matters.
-- Non-ASCII text and full-width characters if visual column width matters for this plugin.
-
-### Directive preservation
-
-Unit tests cover many directive patterns, but fixture coverage is thinner.
-
-Add fixture coverage for directive comments in these positions:
-
-- Standalone line comments.
-- Trailing line comments.
-- Standalone block comments.
-- Inline block comments.
-- JSX expression comments.
-
-Also consider whether additional common directives should be skipped, such as Flow pragmas or generated-file markers. If
-they should not be skipped, document that.
+- Add an exhaustive end-of-line fixture matrix if byte-level fixture coverage for every `endOfLine` mode and every
+  comment shape is needed. Current unit tests cover newline selection and wrapper-level application.
+- Add non-ASCII and full-width character fixtures if the plugin decides to account for display width beyond JavaScript
+  string columns.
+- Decide whether additional common directives should be skipped, such as Flow pragmas or generated-file markers. If they
+  should not be skipped, document that.
+- Add `babel-ts` JSX/TSX-shaped expression-comment coverage only if `babel-ts` is expected to be a supported JSX/TSX
+  parser surface. Current JSX/TSX fixtures exercise `babel` and `typescript`.
 
 ### Tooling and packaging
 
@@ -150,5 +102,6 @@ Options:
 
 ## Recommended Order
 
-1. Add direct unit tests for normalization and replacement helpers.
-2. Expand parser, JSX/TSX, end-of-line, and directive coverage after the confirmed defects are covered.
+1. Decide whether Flow pragmas or generated-file markers should be skipped or documented as ordinary comments.
+2. Add non-ASCII/full-width fixtures if visual display width becomes part of the plugin's behavior contract.
+3. Add a package-validation script with a writable npm cache if publish validation needs to be environment-independent.

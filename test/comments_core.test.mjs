@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { hasPreserveCommentMarker, isDirectiveComment, toCommentRange } from '../dist/comments/core.js';
+import {
+  hasPreserveCommentMarker,
+  isDirectiveComment,
+  normalizeBlockCommentBody,
+  toCommentRange,
+} from '../dist/comments/core.js';
 
 test('recognizes directive comment families', () => {
   const directiveBodies = [
@@ -69,4 +74,28 @@ test('does not coerce hashbang metadata into a line comment', () => {
   const hashbangEnd = text.indexOf('\n');
 
   assert.equal(toCommentRange({ end: hashbangEnd, start: 0, type: 'Line' }, text), undefined);
+});
+
+test('normalizes multiline block comment formatting markers', () => {
+  assert.equal(
+    normalizeBlockCommentBody(`/*
+ * First line
+ *   - nested item
+ */`),
+    'First line\n  - nested item',
+  );
+});
+
+test('normalizes unstarred multiline block comment indentation', () => {
+  assert.equal(
+    normalizeBlockCommentBody(`/*
+   First line
+     - nested item
+*/`),
+    'First line\n- nested item',
+  );
+});
+
+test('normalizes carriage returns in block comment bodies', () => {
+  assert.equal(normalizeBlockCommentBody('/*\r\n * First line\r\n * Second line\r\n */'), 'First line\nSecond line');
 });

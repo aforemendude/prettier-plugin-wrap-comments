@@ -1,0 +1,6 @@
+if (ready) {
+  // prettier-ignore
+  // This standalone line comment should stay on one long line because the ignore marker applies to the following line comment group.
+  run();
+  // The line above should be formatted
+}

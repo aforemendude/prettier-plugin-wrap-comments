@@ -1,0 +1,8 @@
+export const View = () => (
+  <section>
+    {/* webpackChunkName: "view" this JSX expression directive comment should remain unchanged even when it is long. */}
+    <span>
+      {/* @jsxRuntime automatic this JSX expression directive comment should remain unchanged even when it is long. */}
+    </span>
+  </section>
+);

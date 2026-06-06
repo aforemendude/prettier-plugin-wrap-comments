@@ -1,0 +1,8 @@
+type FeatureConfig = {
+  enabled: boolean;
+};
+
+// The babel-ts parser path should move this very long
+// trailing line comment above the declaration when it
+// overflows.
+export const config: FeatureConfig = { enabled: true };
