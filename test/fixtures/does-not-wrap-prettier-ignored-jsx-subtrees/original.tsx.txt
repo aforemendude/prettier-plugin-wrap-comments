@@ -4,8 +4,8 @@ export function View() {
   return (
     // prettier-ignore
     <section>
-      {label /* This nested expression comment should stay inline because prettier-ignore protects the JSX subtree. */}
-      <span>{/* This comment-only expression should stay on one long line because prettier-ignore protects the JSX subtree. */}</span>
+        {  label /* This nested expression comment should stay inline because prettier-ignore protects the JSX subtree. */}
+      <span  >{/* This comment-only expression should stay on one long line because prettier-ignore protects the JSX subtree. */}</span>
     </section>
   );
 }
