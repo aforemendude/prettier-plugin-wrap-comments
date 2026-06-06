@@ -1,0 +1,11 @@
+declare const label: string;
+export const View = (
+  <div>
+    {
+      /*
+       * 12345678901234567890
+       */
+      label
+    }
+  </div>
+);

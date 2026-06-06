@@ -14,6 +14,7 @@ export type BlockCommentLayout = {
   contentColumn?: number;
   multilineIndent?: string;
   placement: 'inline' | 'standalone' | 'trailing';
+  singleLineSuffixWidth?: number;
   trailingMove?: {
     insertAt: number;
     removeEnd: number;
@@ -75,8 +76,9 @@ function buildBlockReplacement(
   const markerColumn = getColumnAt(text, comment.start, tabWidth);
   const singleLine = `/* ${formattedLines.join(' ')} */`;
   const singleLineWidth = getColumns(singleLine, tabWidth);
+  const singleLineSuffixWidth = layout.singleLineSuffixWidth ?? 0;
 
-  if (formattedLines.length === 1 && markerColumn + singleLineWidth <= getPrintWidth(options)) {
+  if (formattedLines.length === 1 && markerColumn + singleLineWidth + singleLineSuffixWidth <= getPrintWidth(options)) {
     return singleLine;
   }
 

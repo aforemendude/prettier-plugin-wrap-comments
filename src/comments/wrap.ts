@@ -379,7 +379,12 @@ function getJsxExpressionBlockCommentLayout(
   const containerOutputColumn = getJsxExpressionContainerOutputColumn(text, container, tabWidth);
 
   if (expressionTextBeforeComment === '' && expressionTextAfterComment === '') {
-    return { contentColumn: containerOutputColumn + tabWidth + 3, multilineIndent: '', placement: 'standalone' };
+    return {
+      contentColumn: containerOutputColumn + tabWidth + 3,
+      multilineIndent: '',
+      placement: 'standalone',
+      singleLineSuffixWidth: 1,
+    };
   }
 
   if (expressionTextBeforeComment !== '' && expressionTextAfterComment === '') {
@@ -391,6 +396,7 @@ function getJsxExpressionBlockCommentLayout(
       contentColumn: containerOutputColumn + tabWidth + 3,
       multilineIndent: '',
       placement: 'trailing',
+      singleLineSuffixWidth: 1,
       trailingMove: {
         insertAt: expressionStart,
         removeEnd: removalEnd,
