@@ -67,6 +67,11 @@ Non-JSDoc `/* ... */` comments are also normalized as Markdown. A block comment 
 comment fits within `printWidth`; otherwise, only standalone block comments are expanded into star-prefixed blocks. Long
 inline block comments are left unchanged when they cannot fit on one line.
 
+Multiline block comments are normalized as conventional block-comment text before Markdown parsing: leading indentation
+is removed, and a `*` that is the first non-whitespace character on a body line is treated as comment formatting, not
+Markdown content. This also applies to unstarred `/* ... */` blocks, so use line comments when Markdown-significant
+indentation or leading `*` characters must be preserved exactly.
+
 ```ts
 if (ready) {
   /*
@@ -109,11 +114,12 @@ the block comment is one the plugin would otherwise wrap, the following code sti
 comment is already skipped by the plugin, such as a JSDoc or directive block, Prettier keeps its normal ignore behavior
 for the following code.
 
-For trailing line comments, a `// prettier-ignore` line can apply to the code line and its inline comment. The plugin
-walks past adjacent standalone comments that it normally leaves alone, such as an `eslint-disable-next-line` directive,
-so an ignored code line's trailing comment remains inline and unchanged. A directive comment by itself does not ignore
-the following code line; without `// prettier-ignore`, an overlong trailing comment below a directive is still moved
-above the statement and wrapped.
+For trailing line comments, a standalone exact-body `prettier-ignore` marker, written as `// prettier-ignore` or
+`/* prettier-ignore */`, can apply to the code line and its inline comment. The plugin walks past adjacent standalone
+comments that it normally leaves alone, such as an `eslint-disable-next-line` directive, so an ignored code line's
+trailing comment remains inline and unchanged. A directive comment by itself does not ignore the following code line;
+without `prettier-ignore`, an overlong trailing comment below a directive is still moved above the statement and
+wrapped.
 
 The plugin leaves these comments unchanged:
 

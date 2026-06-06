@@ -1,0 +1,14 @@
+function demo(enabled: boolean) {
+  const config = {
+    enabled,
+    /* prettier-ignore */
+    }; // This comment describes the completed config object and should stay inline because block-form prettier-ignore is directly above the closing declaration delimiter.
+  if (enabled) {
+    runTask();
+    /* prettier-ignore */
+    } // This comment describes the completed conditional block and should stay inline because block-form prettier-ignore is directly above the closing block delimiter.
+  runTask(
+    config,
+    /* prettier-ignore */
+    ); // This comment describes the completed function call and should stay inline because block-form prettier-ignore is directly above the closing call delimiter.
+}

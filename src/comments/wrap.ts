@@ -493,7 +493,7 @@ function isPrettierIgnoredTrailingLineComment(text: string, comments: CommentEnt
 
     const body = getCommentBody(text, previousComment);
 
-    if (previousComment.kind === 'line' && isPrettierIgnoreComment(body)) {
+    if (isPrettierIgnoreComment(body)) {
       return true;
     }
 

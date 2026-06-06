@@ -13,174 +13,40 @@ Scope reviewed:
 
 Verification run:
 
-- `npm run test` passed: 40 tests.
+- `npm run test` passed: 43 tests.
 - `npm run format:check` passed.
 - `npm pack --dry-run --json` initially failed because npm tried to write to `/home/sudoer/.npm`.
 - `npm_config_cache=/tmp/npm-cache npm pack --dry-run --json` passed and included `README.md`, `package.json`, and built
   `dist` files.
 
-## Confirmed Bugs
+## Addressed Items
 
-### 1. Unstarred multiline block comments can lose Markdown syntax
+### 1. Multiline block-comment leading stars are comment formatting
 
-Severity: High
+Decision: expected behavior. `normalizeBlockCommentBody` treats a `*` that is the first non-whitespace character on a
+multiline block-comment body line as decorative block-comment formatting, not Markdown content. This behavior is now
+documented in `README.md`.
 
-Affected code:
+### 2. Block-form `prettier-ignore` before closing-delimiter trailing comments
 
-- `src/comments/core.ts:47`
-- `src/comments/core.ts:63`
-- `src/comments/core.ts:67`
+Fixed. Exact-body block-form `/* prettier-ignore */` markers now behave like `// prettier-ignore` markers in the special
+trailing-comment path for closing delimiter lines.
 
-`normalizeBlockCommentBody` strips all leading indentation from every multiline block-comment body line. If the first
-non-whitespace character is `*`, it also treats that character as a decorative block-comment marker. That is correct for
-standard star-prefixed comments such as:
+Coverage added:
 
-```text
-/*
- * Text
- */
-```
-
-It is incorrect for unstarred block comments that use meaningful Markdown indentation or `*` syntax.
-
-Repro:
-
-```text
-/*
-  * first item has a very long description that should keep the markdown bullet marker intact
-  * second item
-*/
-const value = 1;
-```
-
-Actual output:
-
-```text
-/*
- * first item has a very long description
- * that should keep the markdown bullet
- * marker intact second item
- */
-const value = 1;
-```
-
-The Markdown bullet markers are removed, and the two list items collapse into one paragraph.
-
-Other confirmed corruptions:
-
-- An unstarred nested list loses nesting because leading spaces are stripped:
-
-  ```text
-  /*
-  - parent item
-    - nested child item
-  */
-  ```
-
-  The child becomes a top-level list item.
-
-- An unstarred indented code block loses its code indentation:
-
-  ```text
-  /*
-  Here is an example:
-
-      const value = computeSomethingVeryLong();
-  */
-  ```
-
-  The code line becomes normal paragraph text.
-
-- An unstarred emphasis line starting with `**Important:**` loses the first `*`, causing Prettier Markdown to escape and
-  reflow malformed Markdown.
-
-Suggested fix:
-
-- Detect whether a multiline block comment is actually using decorative star prefixes before removing leading `*`.
-- For unstarred comments, strip only a common indentation prefix rather than all indentation.
-- Preserve Markdown-significant indentation after dedenting.
-- Keep the existing behavior for standard star-prefixed block comments.
-
-Tests to add:
-
-- Fixture for unstarred multiline block comments with `*` unordered lists.
-- Fixture for unstarred nested Markdown lists.
-- Fixture for unstarred indented code blocks.
-- Unit tests for `normalizeBlockCommentBody`.
-- Regression coverage proving standard `*`-prefixed block comments still normalize correctly.
-
-### 2. Block-form `prettier-ignore` is not honored before closing-delimiter trailing comments
-
-Severity: Medium
-
-Affected code:
-
-- `src/comments/wrap.ts:464`
-- `src/comments/wrap.ts:490`
-- `src/comments/wrap.ts:494`
-
-The suite has fixtures for `// prettier-ignore` before closing-delimiter trailing comments, and those comments stay
-inline. Equivalent block-form markers are not handled by the special trailing-comment path.
-
-Repro:
-
-```text
-const config = {
-  value: 1,
-  /* prettier-ignore */
-};   // This comment describes the completed config object and should stay inline when block-form prettier-ignore is directly above the closing delimiter.
-```
-
-Actual output:
-
-```text
-const config = {
-  value: 1,
-  /* prettier-ignore */
-  // This comment describes the completed config object
-  // and should stay inline when block-form
-  // prettier-ignore is directly above the closing
-  // delimiter.
-};
-```
-
-The same behavior reproduces for `}` after a block body and `)` after a call expression.
-
-Decision needed:
-
-- If exact-body block-form `/* prettier-ignore */` should behave like `// prettier-ignore`, extend
-  `isPrettierIgnoredTrailingLineComment` to recognize standalone block comments too.
-- If this is intentionally line-only for closing delimiters, document that limitation in `README.md`.
-
-Tests to add if block-form support is desired:
-
-- Fixture for an object closing delimiter with block-form `prettier-ignore`.
-- Fixture for a block closing delimiter with block-form `prettier-ignore`.
-- Fixture for a call closing delimiter with block-form `prettier-ignore`.
+- Object closing delimiter with block-form `prettier-ignore`.
+- Block closing delimiter with block-form `prettier-ignore`.
+- Call closing delimiter with block-form `prettier-ignore`.
 
 ## Testing Gaps
-
-### Block-comment normalization
-
-Current fixtures cover star-prefixed Markdown lists, but not unstarred Markdown with meaningful leading syntax.
-
-Add coverage for:
-
-- Unstarred `*` list items.
-- Unstarred nested lists.
-- Unstarred indented code blocks.
-- Unstarred emphasis that starts at the first non-whitespace character.
-- Mixed star-prefixed and unstarred block-comment styles.
-- Blank lines at the beginning, middle, and end after dedenting.
 
 ### Prettier-ignore behavior
 
 Existing fixtures cover several important ignore cases, including ignored nodes, trailing line comments, closing
-delimiters with `// prettier-ignore`, and block-form ignores before ordinary code lines.
+delimiters with `// prettier-ignore`, and block-form ignores before ordinary code lines and closing delimiters.
 
 Missing cases:
 
-- Block-form ignores before closing delimiters.
 - `prettier-ignore` before decorated declarations, exported declarations, class fields, enum members, and object
   properties.
 - `prettier-ignore` around JSX and TSX trees with nested expression comments.
@@ -284,8 +150,5 @@ Options:
 
 ## Recommended Order
 
-1. Fix block-comment normalization first. It is a content-corruption bug.
-2. Decide and either fix or document block-form `prettier-ignore` before closing delimiters.
-3. Add focused regression fixtures for both confirmed bugs.
-4. Add direct unit tests for normalization and replacement helpers.
-5. Expand parser, JSX/TSX, end-of-line, and directive coverage after the confirmed defects are covered.
+1. Add direct unit tests for normalization and replacement helpers.
+2. Expand parser, JSX/TSX, end-of-line, and directive coverage after the confirmed defects are covered.
