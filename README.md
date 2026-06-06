@@ -122,6 +122,10 @@ the block comment is one the plugin would otherwise wrap, the following code sti
 comment is already skipped by the plugin, such as a JSDoc or directive block, Prettier keeps its normal ignore behavior
 for the following code.
 
+An exact `// prettier-ignore` marker can also apply to the following adjacent standalone `//` comment group. The plugin
+leaves that group unchanged and neutralizes the marker for Prettier, so code after the ignored comment group still
+formats normally.
+
 For trailing line comments, a standalone exact-body `prettier-ignore` marker, written as `// prettier-ignore` or
 `/* prettier-ignore */`, can apply to the code line and its inline comment. The plugin walks past adjacent standalone
 comments that it normally leaves alone, such as an `eslint-disable-next-line` directive, so an ignored code line's

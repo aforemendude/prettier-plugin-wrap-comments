@@ -2,6 +2,19 @@
 
 ---
 
+## v1.0.6 (June 6, 2026)
+
+### Added Features
+
+- Wrap leading inline comments
+
+### Bug Fixes
+
+- JSX/TSX expression closing braces
+- Prettier ignore handling
+
+---
+
 ## v1.0.5 (June 5, 2026)
 
 ### Bug Fixes
@@ -33,7 +46,7 @@
 
 ### Bug Fixes
 
-- Modular Directive Comment Detection
+- Directive comment detection
 - Text replacements safety
 
 ---
