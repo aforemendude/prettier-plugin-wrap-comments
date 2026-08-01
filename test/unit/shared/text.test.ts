@@ -18,6 +18,18 @@ describe('column measurement', () => {
     expect(getColumns('a\tb', 8)).toBe(9);
   });
 
+  it('uses Prettier display widths for Unicode text', () => {
+    expect(getColumns('\u6f22\u6f22\u6f22', 4)).toBe(6);
+    expect(getColumns('\u{1f600}', 4)).toBe(2);
+    expect(getColumns('e\u0301e\u0301e\u0301', 4)).toBe(3);
+  });
+
+  it('uses Unicode display widths when advancing to tab stops', () => {
+    expect(getColumns('\u6f22\u6f22\tb', 4)).toBe(9);
+    expect(getColumns('e\u0301e\u0301\tb', 4)).toBe(5);
+    expect(getColumns('a\t\u6f22\u6f22\tb', 4)).toBe(13);
+  });
+
   it('measures columns from the current line start', () => {
     const text = 'const value = 1;\n\t  // comment',
       commentStart = text.indexOf('//');

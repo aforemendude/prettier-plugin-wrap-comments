@@ -50,6 +50,33 @@ describe('wrapLineCommentGroup', () => {
 });
 
 describe('wrapTrailingLineComment', () => {
+  it('moves a trailing comment when wide characters make the line overflow', async () => {
+    const text = 'const x = "\u6f22\u6f22\u6f22"; // note',
+      commentStart = text.indexOf('//'),
+      comment = { end: text.length, kind: 'line' as const, start: commentStart };
+
+    await expect(wrapTrailingLineComment(text, comment, getWrapOptions({ printWidth: 25 }))).resolves.toEqual([
+      {
+        end: 0,
+        start: 0,
+        text: '// note\n',
+      },
+      {
+        end: text.length,
+        start: commentStart - 1,
+        text: '',
+      },
+    ]);
+  });
+
+  it('keeps a trailing comment when combining marks leave the line within the print width', async () => {
+    const text = 'const x = "e\u0301e\u0301e\u0301"; // note',
+      commentStart = text.indexOf('//'),
+      comment = { end: text.length, kind: 'line' as const, start: commentStart };
+
+    await expect(wrapTrailingLineComment(text, comment, getWrapOptions({ printWidth: 25 }))).resolves.toBeUndefined();
+  });
+
   it('uses configured newline sequences', async () => {
     const text = 'const value = compute(); // Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda.',
       commentStart = text.indexOf('//'),

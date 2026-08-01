@@ -1,3 +1,5 @@
+import { util } from 'prettier';
+
 import { getTabWidth } from './options.js';
 import type { Replacement, WrapOptions } from './types.js';
 
@@ -91,16 +93,17 @@ export function getColumnAt(text: string, index: number, tabWidth: number): numb
 
 export function getColumns(text: string, tabWidth: number): number {
   let column = 0;
+  let segmentStart = 0;
 
-  for (const character of text) {
-    if (character === '\t') {
+  for (let index = 0; index < text.length; index += 1) {
+    if (text[index] === '\t') {
+      column += util.getStringWidth(text.slice(segmentStart, index));
       column += tabWidth - (column % tabWidth);
-    } else {
-      column += 1;
+      segmentStart = index + 1;
     }
   }
 
-  return column;
+  return column + util.getStringWidth(text.slice(segmentStart));
 }
 
 export function isStandaloneBlockComment(text: string, comment: { end: number; start: number }): boolean {
