@@ -1,0 +1,108 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  areCommentsOnAdjacentLines,
+  isCommentAdjacentBeforeIndex,
+  isStandaloneBlockComment,
+  isStandaloneComment,
+  isStandaloneLineComment,
+} from '../../../src/comments/comment-location.js';
+import { createCommentRange } from '../support/comments.js';
+
+describe('standalone comment detection', () => {
+  it('classifies line comments by the text before their marker', () => {
+    const text = ['  \t// standalone', 'value(); // trailing'].join('\n');
+
+    expect(isStandaloneLineComment(text, createCommentRange(text, '// standalone'))).toBe(true);
+    expect(isStandaloneLineComment(text, createCommentRange(text, '// trailing'))).toBe(false);
+  });
+
+  it('requires block comments to be alone on their source line', () => {
+    const standaloneText = '  /* standalone */ \t';
+    const leadingCodeText = 'value(); /* comment */';
+    const trailingCodeText = '/* comment */ value();';
+
+    expect(isStandaloneBlockComment(standaloneText, createCommentRange(standaloneText, '/* standalone */'))).toBe(true);
+    expect(isStandaloneBlockComment(leadingCodeText, createCommentRange(leadingCodeText, '/* comment */'))).toBe(false);
+    expect(isStandaloneBlockComment(trailingCodeText, createCommentRange(trailingCodeText, '/* comment */'))).toBe(
+      false,
+    );
+  });
+
+  it('dispatches according to the comment kind', () => {
+    const text = ['  // line', '  /* block */'].join('\n');
+
+    expect(isStandaloneComment(text, createCommentRange(text, '// line'))).toBe(true);
+    expect(isStandaloneComment(text, createCommentRange(text, '/* block */'))).toBe(true);
+  });
+});
+
+describe('comment adjacency', () => {
+  it('accepts exactly one newline followed by indentation', () => {
+    const lfText = ['// first', '  // second'].join('\n');
+    const crlfText = ['// first', '\t// second'].join('\r\n');
+
+    expect(
+      areCommentsOnAdjacentLines(
+        lfText,
+        createCommentRange(lfText, '// first'),
+        createCommentRange(lfText, '// second'),
+      ),
+    ).toBe(true);
+    expect(
+      areCommentsOnAdjacentLines(
+        crlfText,
+        createCommentRange(crlfText, '// first'),
+        createCommentRange(crlfText, '// second'),
+      ),
+    ).toBe(true);
+  });
+
+  it('rejects same-line, blank-line, and intervening content', () => {
+    const sameLineText = '// first /* second */';
+    const blankLineText = ['// first', '', '// second'].join('\n');
+    const contentText = ['// first', 'value();', '// second'].join('\n');
+
+    expect(
+      areCommentsOnAdjacentLines(
+        sameLineText,
+        createCommentRange(sameLineText, '// first'),
+        createCommentRange(sameLineText, '/* second */'),
+      ),
+    ).toBe(false);
+    expect(
+      areCommentsOnAdjacentLines(
+        blankLineText,
+        createCommentRange(blankLineText, '// first'),
+        createCommentRange(blankLineText, '// second'),
+      ),
+    ).toBe(false);
+    expect(
+      areCommentsOnAdjacentLines(
+        contentText,
+        createCommentRange(contentText, '// first'),
+        createCommentRange(contentText, '// second'),
+      ),
+    ).toBe(false);
+  });
+
+  it('checks adjacency between a comment and a following source index', () => {
+    const adjacentText = ['// note', '  value();'].join('\n');
+    const separatedText = ['// note', '', 'value();'].join('\n');
+
+    expect(
+      isCommentAdjacentBeforeIndex(
+        adjacentText,
+        createCommentRange(adjacentText, '// note'),
+        adjacentText.indexOf('value'),
+      ),
+    ).toBe(true);
+    expect(
+      isCommentAdjacentBeforeIndex(
+        separatedText,
+        createCommentRange(separatedText, '// note'),
+        separatedText.indexOf('value'),
+      ),
+    ).toBe(false);
+  });
+});

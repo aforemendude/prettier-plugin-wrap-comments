@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { getPreferredNewline } from '../../../src/utils/source-lines.js';
+import {
+  getLineEnd,
+  getLinePrefix,
+  getLineStart,
+  getPreferredNewline,
+  isBlankLine,
+} from '../../../src/utils/source-lines.js';
 import { createWrapOptions } from '../support/wrap-options.js';
 
 describe('getPreferredNewline', () => {
@@ -15,5 +21,42 @@ describe('getPreferredNewline', () => {
     expect(getPreferredNewline(crlfThenLfText, createWrapOptions({ endOfLine: 'auto' }))).toBe('\r\n');
     expect(getPreferredNewline(crThenLfText, createWrapOptions({ endOfLine: 'auto' }))).toBe('\r');
     expect(getPreferredNewline('single line', createWrapOptions({ endOfLine: 'auto' }))).toBe('\n');
+  });
+});
+
+describe('line boundaries', () => {
+  it('locates prefixes and boundaries on LF-separated lines', () => {
+    const text = ['alpha', 'beta', 'gamma'].join('\n');
+    const betaStart = text.indexOf('beta');
+    const betaIndex = betaStart + 2;
+    const gammaStart = text.indexOf('gamma');
+
+    expect(getLineStart(text, 2)).toBe(0);
+    expect(getLineEnd(text, 2)).toBe('alpha'.length);
+    expect(getLineStart(text, betaIndex)).toBe(betaStart);
+    expect(getLinePrefix(text, betaIndex)).toBe('be');
+    expect(getLineEnd(text, betaIndex)).toBe(betaStart + 'beta'.length);
+    expect(getLineEnd(text, gammaStart)).toBe(text.length);
+  });
+
+  it('excludes the carriage return from CRLF line endings', () => {
+    const text = ['alpha', 'beta'].join('\r\n');
+    const betaStart = text.indexOf('beta');
+
+    expect(getLineEnd(text, 0)).toBe('alpha'.length);
+    expect(getLineStart(text, betaStart)).toBe(betaStart);
+    expect(getLinePrefix(text, betaStart)).toBe('');
+  });
+});
+
+describe('isBlankLine', () => {
+  it('accepts empty and whitespace-only lines', () => {
+    expect(isBlankLine('')).toBe(true);
+    expect(isBlankLine(' \t')).toBe(true);
+  });
+
+  it('rejects missing and nonblank lines', () => {
+    expect(isBlankLine(undefined)).toBe(false);
+    expect(isBlankLine(' value ')).toBe(false);
   });
 });

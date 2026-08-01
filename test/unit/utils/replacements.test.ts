@@ -3,6 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { applyReplacements } from '../../../src/utils/replacements.js';
 
 describe('applyReplacements', () => {
+  it('returns the original text when there are no replacements', () => {
+    expect(applyReplacements('abcdef', [])).toBe('abcdef');
+  });
+
   it('applies adjacent and out-of-order replacements', () => {
     expect(
       applyReplacements('abcdef', [
@@ -39,5 +43,10 @@ describe('applyReplacements', () => {
         { end: 1, start: 1, text: 'B' },
       ]),
     ).toBe('aBbc');
+  });
+
+  it('applies deletions and full-range replacements', () => {
+    expect(applyReplacements('abcdef', [{ end: 5, start: 1, text: '' }])).toBe('af');
+    expect(applyReplacements('abcdef', [{ end: 6, start: 0, text: 'value' }])).toBe('value');
   });
 });
