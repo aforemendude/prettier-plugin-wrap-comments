@@ -2,23 +2,6 @@
 
 ## Findings
 
-### 1. Source-rewriting preprocessing breaks cursor and range offsets
-
-- **Severity:** Medium
-- **Location:** `src/plugin/create-parsers.ts:35-52`
-- **Problem:** The parser `preprocess` hook rewrites comments with `wrapComments`, which can add or remove characters
-  before `cursorOffset`, `rangeStart`, or `rangeEnd`, but it returns only the rewritten string and does not remap those
-  offsets. Prettier continues using the offsets normalized from the original input against the rewritten source.
-- **Impact:** `prettier.formatWithCursor` can return a cursor position on the wrong token, and range formatting can
-  select and reformat nodes outside the requested original range. The preprocessing pass also rewrites eligible comments
-  outside a requested range. In a focused check with a long comment before two declarations, the plugin returned cursor
-  offset 155 while the intended position in the formatted output was 164; a range aimed at the second declaration also
-  formatted the preceding declaration and rewrote the earlier comment.
-- **Recommendation:** Preserve source length and offsets during parser preprocessing, or add an explicit offset-mapping
-  strategy for cursor and range operations. If Prettier's parser hook cannot express that mapping, detect non-default
-  cursor/range requests and avoid length-changing comment rewrites outside a safely mapped full-file operation; document
-  any unavoidable API limitation.
-
 ### 2. A valid zero tab width can crash comment formatting
 
 - **Severity:** Medium
