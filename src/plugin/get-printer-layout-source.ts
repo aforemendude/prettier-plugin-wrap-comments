@@ -18,8 +18,8 @@ export async function getPrinterLayoutSource<T>(
   };
 
   try {
-    // Preprocessing runs before the JavaScript printer chooses indentation and line breaks.
-    // Probe the native output so comment widths can be measured against those final positions.
+    // Preprocessing runs before the JavaScript printer chooses indentation and line breaks. Probe the native output so
+    // comment widths can be measured against those final positions.
     const formattedText = await format(text, {
       ...options,
       endOfLine: 'lf',
