@@ -1,10 +1,10 @@
 import type { Plugin } from 'prettier';
 
-import { buildParsers } from './plugin/parsers.js';
-import { buildPrinters } from './plugin/printers.js';
+import { createParsers } from './plugin/create-parsers.js';
+import { createPrinters } from './plugin/create-printers.js';
 
-const parsers = buildParsers();
-const printers = buildPrinters();
+const parsers = createParsers();
+const printers = createPrinters();
 const plugin: Plugin = {
   parsers,
   printers,

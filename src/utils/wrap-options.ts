@@ -1,4 +1,6 @@
-import type { WrapOptions } from './types.js';
+import type { ParserOptions } from 'prettier';
+
+export type WrapOptions = Pick<ParserOptions, 'endOfLine' | 'printWidth' | 'tabWidth' | 'useTabs'>;
 
 const DEFAULT_PRINT_WIDTH = 80;
 const DEFAULT_TAB_WIDTH = 2;

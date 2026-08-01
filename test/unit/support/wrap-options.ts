@@ -1,4 +1,4 @@
-import type { WrapOptions } from '../../../src/shared/types.js';
+import type { WrapOptions } from '../../../src/utils/wrap-options.js';
 
 const defaultOptions: WrapOptions = {
   endOfLine: 'lf',
@@ -7,6 +7,6 @@ const defaultOptions: WrapOptions = {
   useTabs: false,
 };
 
-export function getWrapOptions(overrides: Partial<WrapOptions>): WrapOptions {
+export function createWrapOptions(overrides: Partial<WrapOptions>): WrapOptions {
   return { ...defaultOptions, ...overrides };
 }

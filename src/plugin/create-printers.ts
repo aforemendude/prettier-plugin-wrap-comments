@@ -2,12 +2,14 @@ import type { AstPath, Doc, ParserOptions, Plugin, Printer } from 'prettier';
 import { doc } from 'prettier';
 import * as estreePlugin from 'prettier/plugins/estree';
 
+import { isRecord } from '../utils/type-guards.js';
+
 const { hardline, indent } = doc.builders;
 
 type AstNode = Record<string, unknown>;
 type PrintFunction = Parameters<Printer<AstNode>['print']>[2];
 
-export function buildPrinters(): Plugin['printers'] {
+export function createPrinters(): Plugin['printers'] {
   const estreePrinter = estreePlugin.printers.estree as Printer<AstNode>;
 
   return {
@@ -49,8 +51,4 @@ function isMultilineBlockComment(comment: unknown): boolean {
   const value = comment['value'];
 
   return typeof value === 'string' && value.includes('\n');
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
 }

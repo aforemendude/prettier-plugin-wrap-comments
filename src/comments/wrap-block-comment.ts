@@ -1,14 +1,13 @@
-import { hasPreserveCommentMarker, isDirectiveComment, normalizeBlockCommentBody } from './core.js';
-import { formatMarkdownLines } from '../shared/markdown.js';
-import { getAvailableContentWidth, getPrintWidth, getTabWidth } from '../shared/options.js';
-import {
-  getColumnAt,
-  getColumns,
-  getLinePrefix,
-  getPreferredNewline,
-  isStandaloneBlockComment,
-} from '../shared/text.js';
-import type { CommentRange, Replacement, WrapOptions } from '../shared/types.js';
+import { normalizeBlockCommentBody } from './comment-body.js';
+import { shouldSkipBlockComment } from './comment-eligibility.js';
+import { isStandaloneBlockComment } from './comment-location.js';
+import type { CommentRange } from './comment-ranges.js';
+import { getColumnAt, getColumns } from '../utils/display-width.js';
+import { formatMarkdownLines } from '../utils/format-markdown.js';
+import type { Replacement } from '../utils/replacements.js';
+import { getLinePrefix, getPreferredNewline } from '../utils/source-lines.js';
+import { getAvailableContentWidth, getPrintWidth, getTabWidth } from '../utils/wrap-options.js';
+import type { WrapOptions } from '../utils/wrap-options.js';
 
 export type BlockCommentLayout = {
   contentColumn?: number;
@@ -33,17 +32,12 @@ export async function wrapBlockComment(
   options: WrapOptions,
   layout: BlockCommentLayout = getDefaultBlockCommentLayout(text, comment),
 ): Promise<Replacement | Replacement[] | undefined> {
+  if (shouldSkipBlockComment(text, comment)) {
+    return undefined;
+  }
+
   const raw = text.slice(comment.start, comment.end);
-
-  if (raw.startsWith('/**') || hasPreserveCommentMarker(raw)) {
-    return undefined;
-  }
-
   const markdown = normalizeBlockCommentBody(raw);
-
-  if (markdown.trim() === '' || isDirectiveComment(markdown)) {
-    return undefined;
-  }
 
   const tabWidth = getTabWidth(options);
   const markerColumn = layout.markerColumn ?? getColumnAt(text, comment.start, tabWidth);

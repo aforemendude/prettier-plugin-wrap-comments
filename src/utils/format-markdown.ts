@@ -1,8 +1,8 @@
 import { format } from 'prettier';
 
-import { getTabWidth } from './options.js';
-import { trimBlankEdges } from './text.js';
-import type { WrapOptions } from './types.js';
+import { isBlankLine } from './source-lines.js';
+import { getTabWidth } from './wrap-options.js';
+import type { WrapOptions } from './wrap-options.js';
 
 export async function formatMarkdownLines(
   markdown: string,
@@ -25,4 +25,18 @@ export async function formatMarkdownLines(
   } catch {
     return normalized.split('\n');
   }
+}
+
+function trimBlankEdges(markdown: string): string {
+  const lines = markdown.split('\n');
+
+  while (isBlankLine(lines[0])) {
+    lines.shift();
+  }
+
+  while (isBlankLine(lines.at(-1))) {
+    lines.pop();
+  }
+
+  return lines.join('\n');
 }

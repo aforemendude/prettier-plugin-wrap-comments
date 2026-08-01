@@ -5,7 +5,7 @@ real column to calculate the available content width, so nested comments wrap mo
 
 ## Requirements
 
-- Node.js 18 or newer
+- Node.js 20 or newer
 - Prettier 3 or newer
 
 ## Install
@@ -150,6 +150,11 @@ The plugin leaves these comments unchanged:
 - `typescript`
 
 ## Development
+
+Source files are organized by responsibility. `src/plugin/` contains parser and printer integration,
+`src/comments/wrap-comments.ts` coordinates the rewriting pipeline, the other `src/comments/` modules isolate comment
+analysis and wrapping concerns, and `src/utils/` contains reusable utilities. Unit tests under `test/unit/` mirror those
+concerns and source file names wherever practical.
 
 ```sh
 npm install

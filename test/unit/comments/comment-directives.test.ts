@@ -1,13 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  hasPreserveCommentMarker,
-  isDirectiveComment,
-  normalizeBlockCommentBody,
-  toCommentRange,
-} from '../../../src/comments/core.js';
+import { isDirectiveComment } from '../../../src/comments/comment-directives.js';
 
-describe('comment classification', () => {
+describe('isDirectiveComment', () => {
   it('recognizes directive comment families', () => {
     const directiveBodies = [
       '@preserve license text',
@@ -61,39 +56,5 @@ describe('comment classification', () => {
     for (const body of nonDirectiveBodies) {
       expect(isDirectiveComment(body), body).toBe(false);
     }
-  });
-
-  it('recognizes preserved comment markers from raw syntax', () => {
-    expect(hasPreserveCommentMarker('/*! @license text */')).toBe(true);
-    expect(hasPreserveCommentMarker('//! @license text')).toBe(true);
-    expect(hasPreserveCommentMarker('/* ! @license text */')).toBe(false);
-    expect(hasPreserveCommentMarker('// ! @license text')).toBe(false);
-  });
-
-  it('does not coerce hashbang metadata into a line comment', () => {
-    const text = ['#!/usr/bin/env node', 'console.log(1);'].join('\n');
-    const hashbangEnd = text.indexOf('\n');
-
-    expect(toCommentRange({ end: hashbangEnd, start: 0, type: 'Line' }, text)).toBeUndefined();
-  });
-});
-
-describe('normalizeBlockCommentBody', () => {
-  it('normalizes multiline formatting markers', () => {
-    expect(normalizeBlockCommentBody(['/*', ' * First line', ' *   - nested item', ' */'].join('\n'))).toBe(
-      ['First line', '  - nested item'].join('\n'),
-    );
-  });
-
-  it('normalizes unstarred multiline indentation', () => {
-    expect(normalizeBlockCommentBody(['/*', '   First line', '     - nested item', '*/'].join('\n'))).toBe(
-      ['First line', '- nested item'].join('\n'),
-    );
-  });
-
-  it('normalizes carriage returns', () => {
-    expect(normalizeBlockCommentBody(['/*', ' * First line', ' * Second line', ' */'].join('\r\n'))).toBe(
-      ['First line', 'Second line'].join('\n'),
-    );
   });
 });

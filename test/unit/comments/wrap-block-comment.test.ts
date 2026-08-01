@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { wrapBlockComment } from '../../../src/comments/block.js';
-import { getWrapOptions } from '../support/options.js';
+import { wrapBlockComment } from '../../../src/comments/wrap-block-comment.js';
+import { createWrapOptions } from '../support/wrap-options.js';
 
 describe('wrapBlockComment', () => {
   it('preserves markdown list continuation indentation', async () => {
@@ -16,7 +16,7 @@ describe('wrapBlockComment', () => {
     ].join('\n');
     const comment = { end: text.length, kind: 'block' as const, start: 0 };
 
-    await expect(wrapBlockComment(text, comment, getWrapOptions({ printWidth: 44 }))).resolves.toEqual({
+    await expect(wrapBlockComment(text, comment, createWrapOptions({ printWidth: 44 }))).resolves.toEqual({
       end: text.length,
       start: 0,
       text: [
@@ -39,7 +39,7 @@ describe('wrapBlockComment', () => {
     const comment = { end: text.length, kind: 'block' as const, start: 0 };
 
     await expect(
-      wrapBlockComment(text, comment, getWrapOptions({ endOfLine: 'crlf', printWidth: 32 })),
+      wrapBlockComment(text, comment, createWrapOptions({ endOfLine: 'crlf', printWidth: 32 })),
     ).resolves.toEqual({
       end: text.length,
       start: 0,
@@ -54,7 +54,7 @@ describe('wrapBlockComment', () => {
     const comment = { end: text.length, kind: 'block' as const, start: 0 };
 
     await expect(
-      wrapBlockComment(text, comment, getWrapOptions({ endOfLine: 'auto', printWidth: 32 })),
+      wrapBlockComment(text, comment, createWrapOptions({ endOfLine: 'auto', printWidth: 32 })),
     ).resolves.toEqual({
       end: text.length,
       start: 0,

@@ -4,10 +4,13 @@ This is a Prettier plugin package named `@aforemendude/prettier-plugin-wrap-comm
 TypeScript comments as Markdown while leaving Prettier's built-in printers in charge of normal formatting.
 
 - The plugin entry point is `src/index.ts`.
-- Parser integration lives in `src/plugin/parsers.ts`. It wraps the `babel`, `babel-ts`, and `typescript` parsers and
-  runs comment rewriting during parser preprocessing.
-- Comment behavior lives in `src/comments/*`. Prefer changing this pipeline over touching printer behavior.
-- Shared helpers live in `src/shared/*`.
+- Parser integration starts in `src/plugin/create-parsers.ts`. Native-printer layout probing lives in
+  `src/plugin/get-printer-layout-source.ts`, and the JSX printer override lives in `src/plugin/create-printers.ts`.
+- Comment rewriting is coordinated by `src/comments/wrap-comments.ts`. Comment bodies, eligibility, ranges, locations,
+  grouping, JSX layout, printer layout, and `prettier-ignore` behavior each live in a correspondingly named module under
+  `src/comments/`.
+- Reusable AST, display-width, indentation, Markdown, replacement, source-line, type-guard, whitespace, and option
+  helpers live in correspondingly named modules under `src/utils/`.
 - `dist/` is generated output. Do not edit it by hand; run `npm run build`.
 
 ## Development Commands
@@ -33,7 +36,8 @@ TypeScript comments as Markdown while leaving Prettier's built-in printers in ch
 
 ## Tests And Fixtures
 
-- TypeScript unit tests live under `test/unit/` and import source modules directly.
+- TypeScript unit tests live under `test/unit/`, import source modules directly, and mirror the source concern and file
+  name wherever practical.
 - The Prettier integration harness is `test/integration/format.test.ts` and uses the fixtures under
   `test/integration/fixtures/`.
 - Each fixture directory must contain exactly three files:
