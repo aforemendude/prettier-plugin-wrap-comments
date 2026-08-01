@@ -1,17 +1,5 @@
 # Code Review: Comment Transformation Pipeline
 
-## Scope and review basis
-
-Reviewed `src/comments/core.ts`, `src/comments/line.ts`, `src/comments/block.ts`, `src/comments/wrap.ts`, and the
-directly related helpers `src/shared/markdown.ts`, `src/shared/text.ts`, and `src/shared/types.ts`. Call sites, options,
-package metadata, documentation, and focused runtime behavior were consulted only where needed to validate this segment.
-Generated `dist/`, third-party source, formatting, individual test cases and fixtures, test assertions, and coverage
-adequacy were out of scope.
-
-The review began from a clean worktree. Review basis includes static data-flow and boundary analysis of comment
-collection, classification, normalization, Markdown formatting, placement, and replacement application, plus focused
-read-only checks using the repository's existing dependencies.
-
 ## Findings
 
 ### Unicode JavaScript line separators can make wrapping delete later statements
@@ -68,38 +56,3 @@ read-only checks using the repository's existing dependencies.
   contains no Markdown constructs requiring parsing, and cache identical body/width/option combinations. For remaining
   comments, investigate safe batching or another way to amortize Markdown parser/printer setup, then benchmark
   comment-count scaling as part of the change.
-
-## Unresolved questions
-
-None.
-
-## Checks and areas not covered
-
-- `./node_modules/.bin/tsc -p tsconfig.json --outDir <temporary-directory>` completed with no diagnostics; output was
-  kept outside the repository so generated workspace artifacts were not changed.
-- A direct helper-pipeline check initially exposed incorrect CR-only line boundaries, but an end-to-end
-  `prettier.format` check with the compiled plugin confirmed that Prettier normalizes input before plugin preprocessing
-  and preserves all source. The helper-only behavior is therefore not reported as a package finding.
-- An end-to-end `prettier.format` check with the Babel parser verified that two wrapped block comments in a comment-only
-  JSX expression container are emitted in reverse order.
-- End-to-end Babel formatting at `printWidth: 25`, cross-checked with the installed `prettier.util.getStringWidth`,
-  verified both undercounting for CJK text and overcounting for combining sequences.
-- An end-to-end comparison with vanilla Prettier verified that a marker above a block comment sharing its line with code
-  is neutralized and the ignored declaration is reformatted.
-- End-to-end checks verified first-pass idempotence failures for both an ordinary standalone line comment in initially
-  unindented code and a comment-only JSX expression; a third JSX check verified unnecessary expansion in the opposite
-  source/output-column direction.
-- Public-path Babel checks with each of U+2028 and U+2029 verified deletion of the statement following an overlong
-  standalone line comment; the equivalent vanilla Prettier checks preserved it.
-- End-to-end Babel checks verified that moving trailing line comments outside JSX and template expression boundaries
-  reparses their text as rendered JSX content and raw template-string data, respectively.
-- A five-run warmed benchmark at 200 and 500 separated short comments measured public formatter totals and isolated
-  `formatMarkdownLines` loops, confirming linear per-comment Markdown-format cost. Timings are local and are included
-  only as magnitude evidence, not universal performance guarantees.
-- The repository's build-based test suite was not run because it regenerates `dist/`, while this review permitted no
-  workspace writes beyond this report. Focused public-path checks used source compiled into a temporary directory
-  instead.
-- Individual test cases, fixtures, assertions, and coverage adequacy were not reviewed by scope. Generated output and
-  third-party source were also not reviewed.
-- Runtime reproductions used the Babel parser. The shared transformation paths were reviewed statically for `babel-ts`
-  and `typescript`, but the reproductions were not repeated under those parsers.

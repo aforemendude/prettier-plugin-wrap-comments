@@ -1,19 +1,5 @@
 # Code Review: Package Infrastructure
 
-## Scope and review basis
-
-Reviewed the repository's package, build, configuration, documentation, and test-infrastructure segment:
-
-- `package.json` and `package-lock.json`
-- `tsconfig.json`, `.gitignore`, `.prettierrc.json`, and `.vscode/settings.json`
-- `README.md`, `CHANGELOG.md`, and `AGENTS.md`
-- Test runner and fixture-harness setup in `test/*.test.mjs`, plus fixture file shapes and `config.json` structure where
-  needed to assess the harness
-
-The review used the current clean worktree as its basis. Generated `dist/`, dependency source, individual test cases,
-fixture data, test logic and assertions, coverage adequacy, and formatting were excluded. Production source was
-consulted only to validate package and documentation contracts.
-
 ## Findings
 
 ### 1. Build and test scripts depend on POSIX shell behavior
@@ -103,20 +89,3 @@ consulted only to validate package and documentation contracts.
 - `package.json:35` declares the open-ended peer range `prettier >=3.0.0`, while the lockfile validates development only
   against Prettier 3.8.3. Confirm whether compatibility with every future Prettier major is an intentional contract;
   otherwise cap the range before the next breaking major and widen it only after compatibility validation.
-
-## Checks and areas not covered
-
-- Confirmed the worktree was clean before creating this report.
-- `./node_modules/.bin/tsc -p tsconfig.json --noEmit` completed successfully with the existing dependencies.
-- A read-only manifest comparison confirmed that the package name, version, license, engine, development dependencies,
-  and peer dependencies match the lockfile's root package metadata.
-- A read-only fixture-shape check found 44 fixture directories, exactly one supported `original` file per directory,
-  matching `expected` and `config.json` files, valid JSON object configs, and no shape mismatches.
-- The Node.js 18 command-line documentation was checked to confirm that `--test` was introduced in 18.1.0 and that
-  Node.js 18 accepts paths rather than internally expanding glob patterns.
-- On the available Node.js 24.18.0 runtime, a quoted `node --test 'test/*.test.mjs'` probe internally discovered all six
-  test modules but could not execute them because generated `dist/` was intentionally absent. This probe did not assess
-  test behavior.
-- Full build, test, format, install, and prepack commands were not run because the review skill permits report writes
-  only; the configured build removes and regenerates `dist`, and `verify` installs dependencies.
-- Individual test cases, fixture contents, assertions, and coverage adequacy were not reviewed.

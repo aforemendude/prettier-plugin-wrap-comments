@@ -1,28 +1,5 @@
 # Code Review: Plugin Integration
 
-## Scope and review basis
-
-Review status: complete.
-
-Reviewed scope:
-
-- `src/index.ts`
-- `src/plugin/parsers.ts`
-- `src/plugin/printers.ts`
-- `src/shared/options.ts`
-- directly related types, helpers, call sites, package metadata, configuration, and documentation needed to verify the
-  integration contracts
-
-Generated output, third-party source, individual test cases and fixtures, formatting, and coverage adequacy are out of
-scope. The review is based on the current clean worktree, the repository instructions, source code, package metadata,
-TypeScript configuration, installed Prettier API/type contracts, and focused read-only checks.
-
-The segment is divided into these milestones:
-
-1. Public exports and option contracts.
-2. Parser wrapping and preprocessing flow.
-3. Printer delegation and JSX comment handling.
-
 ## Findings
 
 ### 1. Source-rewriting preprocessing breaks cursor and range offsets
@@ -105,35 +82,3 @@ The segment is divided into these milestones:
   the preprocessed text contains neither `//` nor `/*`. For comment-bearing files, investigate an architecture that
   reuses parser work or transforms comment data after Prettier's required parse; benchmark the chosen approach on
   representative JavaScript and TypeScript inputs.
-
-## Unresolved questions
-
-None.
-
-## Checks and areas not covered
-
-- Confirmed the worktree was clean before creating this report with `git status --short`.
-- Compared `prettier.formatWithCursor` and range-formatting behavior with and without the plugin using an isolated
-  temporary TypeScript build against the installed Prettier 3.8.3 package. This verified finding 1 without generating
-  repository output.
-- Confirmed from Prettier's installed support metadata that `tabWidth` has a valid range beginning at zero, then
-  compared base and plugin behavior for `tabWidth: 0`/`useTabs: true` to verify finding 2.
-- Compared native and plugin JSX output for normal wrapped comments and pre-existing multiline JSDoc, bang-preserved,
-  and directive comments; repeated formatting was idempotent, but the first plugin pass verified the out-of-scope layout
-  changes in finding 3.
-- Emitted declarations to an isolated temporary directory and inspected the public entry-point types to verify finding
-  4; repository `dist/` was not created or changed.
-- Benchmarked eight warm base/plugin pairs on an in-memory, 5,000-line comment-free TypeScript source to verify the
-  repeated-parse impact in finding 5. Timing is environment-specific, but the two parse calls are directly established
-  by the source flow.
-- Ran `tsc -p tsconfig.json --noEmit` successfully and completed in-memory formatting smoke checks for the `babel`,
-  `babel-ts`, and `typescript` parser exports. The default export and named parser/printer exports referenced the same
-  runtime maps.
-- Runtime behavior was checked only with the installed Prettier 3.8.3 dependency. Compatibility with other versions
-  admitted by the `>=3.0.0` peer range and composition with unrelated third-party parser/printer plugins were not
-  exercised because the review did not install dependencies.
-- The repository test suite was not run because its configured command rebuilds `dist/`; generating repository output is
-  outside this report-only review. Individual test cases, fixtures, assertions, and coverage adequacy were intentionally
-  not reviewed.
-- Generated `dist/` output and third-party implementation source were not reviewed.
-- No dependencies were installed or updated.
