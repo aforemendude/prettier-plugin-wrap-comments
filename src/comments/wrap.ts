@@ -41,7 +41,17 @@ const AST_TRAVERSAL_SKIP_KEYS = new Set([
   'trailingComments',
 ]);
 
-export async function wrapComments<T>(text: string, ast: T, options: WrapOptions): Promise<string> {
+export type PrinterLayoutSource = {
+  ast: unknown;
+  text: string;
+};
+
+export async function wrapComments<T>(
+  text: string,
+  ast: T,
+  options: WrapOptions,
+  printerLayoutSource?: PrinterLayoutSource,
+): Promise<string> {
   const commentEntries = collectSortedCommentEntries(ast, text);
   const comments = commentEntries.map((entry) => entry.range);
   const jsxExpressionContainers = collectJsxExpressionContainerRanges(ast);
@@ -53,9 +63,11 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
 
   const replacements: Replacement[] = [];
   const tabWidth = getTabWidth(options);
+  const printerLayout = getPrinterLayout(text, commentEntries, jsxExpressionContainers, printerLayoutSource, tabWidth);
 
   for (let index = 0; index < comments.length; index += 1) {
     const comment = comments[index];
+    const outputCommentLayout = printerLayout.comments[index];
 
     if (comment === undefined) {
       continue;
@@ -76,13 +88,22 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
         comments[index - 1],
         jsxExpressionContainers,
         tabWidth,
+        outputCommentLayout,
+        printerLayout.jsxCommentMarkerColumns,
       );
 
       if (jsxLayout?.placement === 'inline') {
         continue;
       }
 
-      const replacement = await wrapBlockComment(text, comment, options, jsxLayout);
+      const outputLayout =
+        outputCommentLayout === undefined
+          ? undefined
+          : {
+              markerColumn: outputCommentLayout.markerColumn,
+              placement: isStandaloneBlockComment(text, comment) ? ('standalone' as const) : ('inline' as const),
+            };
+      const replacement = await wrapBlockComment(text, comment, options, jsxLayout ?? outputLayout);
 
       if (Array.isArray(replacement)) {
         replacements.push(...replacement);
@@ -107,7 +128,7 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
         continue;
       }
 
-      const replacement = await wrapTrailingLineComment(text, comment, options);
+      const replacement = await wrapTrailingLineComment(text, comment, options, outputCommentLayout);
 
       if (replacement !== undefined) {
         replacements.push(...replacement);
@@ -141,7 +162,7 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
       index += 1;
     }
 
-    const replacement = await wrapLineCommentGroup(text, group, options);
+    const replacement = await wrapLineCommentGroup(text, group, options, outputCommentLayout?.markerColumn);
 
     if (replacement !== undefined) {
       replacements.push(replacement);
@@ -184,6 +205,117 @@ type SourceRange = {
 type JsxExpressionContainerRange = SourceRange & {
   expression: SourceRange | undefined;
 };
+
+type PrinterCommentLayout = {
+  lineIndentColumn: number;
+  lineWidth: number;
+  markerColumn: number;
+  suffixWidth: number;
+};
+
+type PrinterLayout = {
+  comments: Array<PrinterCommentLayout | undefined>;
+  jsxCommentMarkerColumns: Array<number | undefined>;
+};
+
+function getPrinterLayout(
+  text: string,
+  commentEntries: CommentEntry[],
+  jsxExpressionContainers: JsxExpressionContainerRange[],
+  source: PrinterLayoutSource | undefined,
+  tabWidth: number,
+): PrinterLayout {
+  if (source === undefined) {
+    return {
+      comments: [],
+      jsxCommentMarkerColumns: [],
+    };
+  }
+
+  const outputCommentEntries = collectSortedCommentEntries(source.ast, source.text);
+  const alignedOutputComments = alignOutputComments(text, commentEntries, source.text, outputCommentEntries);
+  const outputJsxExpressionContainers = collectJsxExpressionContainerRanges(source.ast);
+  const jsxCommentMarkerColumns =
+    outputJsxExpressionContainers.length === jsxExpressionContainers.length
+      ? outputJsxExpressionContainers.map((container) =>
+          getJsxExpressionCommentMarkerColumn(source.text, container, tabWidth),
+        )
+      : [];
+
+  return {
+    comments: alignedOutputComments.map((comment) =>
+      comment === undefined ? undefined : getPrinterCommentLayout(source.text, comment.range, tabWidth),
+    ),
+    jsxCommentMarkerColumns,
+  };
+}
+
+function alignOutputComments(
+  text: string,
+  comments: CommentEntry[],
+  outputText: string,
+  outputComments: CommentEntry[],
+): Array<CommentEntry | undefined> {
+  if (
+    comments.length === outputComments.length &&
+    comments.every((comment, index) => comment.range.kind === outputComments[index]?.range.kind)
+  ) {
+    return outputComments;
+  }
+
+  const alignedComments: Array<CommentEntry | undefined> = [];
+  let outputIndex = 0;
+
+  for (const comment of comments) {
+    const raw = normalizeCommentForMatching(text.slice(comment.range.start, comment.range.end));
+    let matchingComment: CommentEntry | undefined;
+
+    while (outputIndex < outputComments.length) {
+      const candidate = outputComments[outputIndex];
+      outputIndex += 1;
+
+      if (
+        candidate !== undefined &&
+        candidate.range.kind === comment.range.kind &&
+        normalizeCommentForMatching(outputText.slice(candidate.range.start, candidate.range.end)) === raw
+      ) {
+        matchingComment = candidate;
+        break;
+      }
+    }
+
+    alignedComments.push(matchingComment);
+  }
+
+  return alignedComments;
+}
+
+function normalizeCommentForMatching(raw: string): string {
+  return raw.replace(/\r\n?/gu, '\n');
+}
+
+function getPrinterCommentLayout(text: string, comment: CommentRange, tabWidth: number): PrinterCommentLayout {
+  const lineStart = getLineStart(text, comment.start);
+  const lineEnd = getLineEnd(text, comment.end);
+  const linePrefix = text.slice(lineStart, comment.start);
+  const lineIndent = /^[ \t]*/u.exec(linePrefix)?.[0] ?? '';
+  const lineText = text.slice(lineStart, lineEnd).replace(/[ \t]+$/u, '');
+  const suffix = text.slice(comment.end, lineEnd).replace(/[ \t]+$/u, '');
+
+  return {
+    lineIndentColumn: getColumns(lineIndent, tabWidth),
+    lineWidth: getColumns(lineText, tabWidth),
+    markerColumn: getColumns(linePrefix, tabWidth),
+    suffixWidth: getColumns(suffix, tabWidth),
+  };
+}
+
+function getJsxExpressionCommentMarkerColumn(text: string, container: SourceRange, tabWidth: number): number {
+  const linePrefix = getLinePrefix(text, container.start);
+  const lineIndent = /^[ \t]*/u.exec(linePrefix)?.[0] ?? '';
+
+  return getColumns(lineIndent, tabWidth) + tabWidth;
+}
 
 function collectSortedCommentEntries<T>(ast: T, text: string): CommentEntry[] {
   return collectComments(ast)
@@ -389,6 +521,8 @@ function getJsxExpressionBlockCommentLayout(
   previousComment: CommentRange | undefined,
   jsxExpressionContainers: JsxExpressionContainerRange[],
   tabWidth: number,
+  outputCommentLayout: PrinterCommentLayout | undefined,
+  outputCommentMarkerColumns: Array<number | undefined>,
 ): BlockCommentLayout | undefined {
   const container = getSmallestContainingRange(comment, jsxExpressionContainers);
 
@@ -398,14 +532,20 @@ function getJsxExpressionBlockCommentLayout(
 
   const hasExpressionBeforeComment = container.expression !== undefined && container.expression.start < comment.start;
   const hasExpressionAfterComment = container.expression !== undefined && container.expression.end > comment.end;
-  const containerOutputColumn = getJsxExpressionContainerOutputColumn(text, container, tabWidth);
+  const containerIndex = jsxExpressionContainers.indexOf(container);
+  const multilineMarkerColumn =
+    outputCommentMarkerColumns[containerIndex] ??
+    getJsxExpressionContainerOutputColumn(text, container, tabWidth) + tabWidth;
+  const markerColumn = outputCommentLayout?.markerColumn ?? multilineMarkerColumn;
+  const contentColumn = multilineMarkerColumn + 3;
 
   if (!hasExpressionBeforeComment && !hasExpressionAfterComment) {
     return {
-      contentColumn: containerOutputColumn + tabWidth + 3,
+      contentColumn,
+      markerColumn,
       multilineIndent: '',
       placement: 'standalone',
-      singleLineSuffixWidth: 1,
+      singleLineSuffixWidth: outputCommentLayout?.suffixWidth ?? 1,
     };
   }
 
@@ -416,10 +556,11 @@ function getJsxExpressionBlockCommentLayout(
     // Moving separate trailing replacements to the same expression start would reverse their source order.
     if (hasEarlierCommentInContainer) {
       return {
-        contentColumn: containerOutputColumn + tabWidth + 3,
+        contentColumn,
+        markerColumn,
         multilineIndent: '',
         placement: 'standalone',
-        singleLineSuffixWidth: 1,
+        singleLineSuffixWidth: outputCommentLayout?.suffixWidth ?? 1,
       };
     }
 
@@ -428,10 +569,11 @@ function getJsxExpressionBlockCommentLayout(
     const removalEnd = Math.min(skipWhitespace(text, comment.end), container.end - 1);
 
     return {
-      contentColumn: containerOutputColumn + tabWidth + 3,
+      contentColumn,
+      markerColumn,
       multilineIndent: '',
       placement: 'trailing',
-      singleLineSuffixWidth: 1,
+      singleLineSuffixWidth: outputCommentLayout?.suffixWidth ?? 1,
       trailingMove: {
         insertAt: expressionStart,
         removeEnd: removalEnd,
@@ -448,14 +590,16 @@ function getJsxExpressionBlockCommentLayout(
     const expressionStart = skipWhitespace(text, comment.end);
 
     return {
-      contentColumn: containerOutputColumn + tabWidth + 3,
+      contentColumn,
       leadingMove: {
         removeEnd: expressionStart,
         removeStart: comment.end,
       },
+      markerColumn,
       multilineIndent: '',
       placement: 'standalone',
-      singleLineSuffixWidth: getColumns(text.slice(comment.end, container.end), tabWidth),
+      singleLineSuffixWidth:
+        outputCommentLayout?.suffixWidth ?? getColumns(text.slice(comment.end, container.end), tabWidth),
     };
   }
 

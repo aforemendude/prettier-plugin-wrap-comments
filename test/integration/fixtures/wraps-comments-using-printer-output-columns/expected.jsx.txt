@@ -1,0 +1,60 @@
+if (enabled) {
+  // This standalone comment barely
+  // fits.
+  run();
+}
+
+if (active) {
+  // trailing comment fits
+  const value = 1;
+}
+
+const count = 1; // fits now
+
+if (ready) {
+  /*
+   * This comment should fit at first.
+   */
+  run();
+}
+
+const nested = (
+  <span>
+    {
+      /*
+       * This comment should fit at
+       * first.
+       */
+    }
+  </span>
+);
+
+const compact = (
+  <span>
+    {/* This comment should fit. */}
+  </span>
+);
+
+const leading = (
+  <span>
+    {
+      /*
+       * This leading comment should
+       * wrap after indentation.
+       */
+      enabled
+    }
+  </span>
+);
+
+const trailing = (
+  <span>
+    {
+      /*
+       * This trailing comment should
+       * wrap after indentation.
+       */
+      enabled
+    }
+  </span>
+);

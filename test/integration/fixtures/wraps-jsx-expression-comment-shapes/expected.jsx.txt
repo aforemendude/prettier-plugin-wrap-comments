@@ -50,9 +50,9 @@ export const View = (
           <strong>
             {
               /*
-               * This nested JSX expression comment
-               * should wrap in the nested
-               * container.
+               * This nested JSX expression
+               * comment should wrap in the
+               * nested container.
                */
               item.label
             }

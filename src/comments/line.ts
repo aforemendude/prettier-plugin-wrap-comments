@@ -17,6 +17,7 @@ export async function wrapLineCommentGroup(
   text: string,
   comments: CommentRange[],
   options: WrapOptions,
+  outputMarkerColumn?: number,
 ): Promise<Replacement | undefined> {
   const firstComment = comments[0];
 
@@ -32,7 +33,7 @@ export async function wrapLineCommentGroup(
   }
 
   const tabWidth = getTabWidth(options);
-  const markerColumn = getColumnAt(text, firstComment.start, tabWidth);
+  const markerColumn = outputMarkerColumn ?? getColumnAt(text, firstComment.start, tabWidth);
   const availableWidth = getAvailableContentWidth(options, markerColumn + 3);
   const formattedLines = await formatMarkdownLines(bodyLines.join('\n'), availableWidth, options);
   const newline = getPreferredNewline(text, options);
@@ -62,8 +63,12 @@ export async function wrapTrailingLineComment(
   text: string,
   comment: CommentRange,
   options: WrapOptions,
+  outputLayout?: {
+    lineIndentColumn: number;
+    lineWidth: number;
+  },
 ): Promise<Replacement[] | undefined> {
-  if (isTrailingLineCommentWithinPrintWidth(text, comment, options)) {
+  if (isTrailingLineCommentWithinPrintWidth(text, comment, options, outputLayout?.lineWidth)) {
     return undefined;
   }
 
@@ -83,7 +88,7 @@ export async function wrapTrailingLineComment(
   }
 
   const tabWidth = getTabWidth(options);
-  const indent = getTrailingCommentIndent(codeText, linePrefix, options);
+  const indent = getTrailingCommentIndent(codeText, linePrefix, options, outputLayout?.lineIndentColumn);
   const availableWidth = getAvailableContentWidth(options, getColumns(indent, tabWidth) + 3);
   const formattedLines = await formatMarkdownLines(body, availableWidth, options);
   const newline = getPreferredNewline(text, options);
@@ -124,7 +129,16 @@ export function areAdjacentLineComments(text: string, previous: CommentRange, ne
   return /^(?:\r\n|\n|\r)[ \t]*$/u.test(text.slice(previous.end, next.start));
 }
 
-function isTrailingLineCommentWithinPrintWidth(text: string, comment: CommentRange, options: WrapOptions): boolean {
+function isTrailingLineCommentWithinPrintWidth(
+  text: string,
+  comment: CommentRange,
+  options: WrapOptions,
+  outputLineWidth?: number,
+): boolean {
+  if (outputLineWidth !== undefined) {
+    return outputLineWidth <= getPrintWidth(options);
+  }
+
   const tabWidth = getTabWidth(options);
   const lineStart = getLineStart(text, comment.start);
   const lineEnd = getLineEnd(text, comment.end);
@@ -137,16 +151,23 @@ function getLineIndent(linePrefix: string): string {
   return /^[ \t]*/u.exec(linePrefix)?.[0] ?? '';
 }
 
-function getTrailingCommentIndent(codeText: string, linePrefix: string, options: WrapOptions): string {
+function getTrailingCommentIndent(
+  codeText: string,
+  linePrefix: string,
+  options: WrapOptions,
+  outputLineIndentColumn?: number,
+): string {
   const indent = getLineIndent(linePrefix);
 
-  if (!isClosingDelimiterLine(codeText)) {
+  if (outputLineIndentColumn === undefined && !isClosingDelimiterLine(codeText)) {
     return indent;
   }
 
   const tabWidth = getTabWidth(options);
+  const indentColumn = outputLineIndentColumn ?? getColumns(indent, tabWidth);
+  const commentIndentColumn = isClosingDelimiterLine(codeText) ? indentColumn + tabWidth : indentColumn;
 
-  return makeIndent(getColumns(indent, tabWidth) + tabWidth, options);
+  return makeIndent(commentIndentColumn, options);
 }
 
 function isClosingDelimiterLine(codeText: string): boolean {

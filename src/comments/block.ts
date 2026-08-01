@@ -16,6 +16,7 @@ export type BlockCommentLayout = {
     removeEnd: number;
     removeStart: number;
   };
+  markerColumn?: number;
   multilineIndent?: string;
   placement: 'inline' | 'standalone' | 'trailing';
   singleLineSuffixWidth?: number;
@@ -45,7 +46,7 @@ export async function wrapBlockComment(
   }
 
   const tabWidth = getTabWidth(options);
-  const markerColumn = getColumnAt(text, comment.start, tabWidth);
+  const markerColumn = layout.markerColumn ?? getColumnAt(text, comment.start, tabWidth);
   const availableWidth = getAvailableContentWidth(options, layout.contentColumn ?? markerColumn + 3);
   const formattedLines = await formatMarkdownLines(markdown, availableWidth, options);
   const replacement = buildBlockReplacement(text, comment, formattedLines, options, layout);
@@ -77,7 +78,7 @@ function buildBlockReplacement(
   layout: BlockCommentLayout,
 ): Replacement[] | string | undefined {
   const tabWidth = getTabWidth(options);
-  const markerColumn = getColumnAt(text, comment.start, tabWidth);
+  const markerColumn = layout.markerColumn ?? getColumnAt(text, comment.start, tabWidth);
   const singleLine = `/* ${formattedLines.join(' ')} */`;
   const singleLineWidth = getColumns(singleLine, tabWidth);
   const singleLineSuffixWidth = layout.singleLineSuffixWidth ?? 0;
