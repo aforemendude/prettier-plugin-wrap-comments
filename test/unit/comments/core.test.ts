@@ -71,8 +71,8 @@ describe('comment classification', () => {
   });
 
   it('does not coerce hashbang metadata into a line comment', () => {
-    const text = '#!/usr/bin/env node\nconsole.log(1);',
-      hashbangEnd = text.indexOf('\n');
+    const text = ['#!/usr/bin/env node', 'console.log(1);'].join('\n');
+    const hashbangEnd = text.indexOf('\n');
 
     expect(toCommentRange({ end: hashbangEnd, start: 0, type: 'Line' }, text)).toBeUndefined();
   });
@@ -80,24 +80,20 @@ describe('comment classification', () => {
 
 describe('normalizeBlockCommentBody', () => {
   it('normalizes multiline formatting markers', () => {
-    expect(
-      normalizeBlockCommentBody(`/*
- * First line
- *   - nested item
- */`),
-    ).toBe('First line\n  - nested item');
+    expect(normalizeBlockCommentBody(['/*', ' * First line', ' *   - nested item', ' */'].join('\n'))).toBe(
+      ['First line', '  - nested item'].join('\n'),
+    );
   });
 
   it('normalizes unstarred multiline indentation', () => {
-    expect(
-      normalizeBlockCommentBody(`/*
-   First line
-     - nested item
-*/`),
-    ).toBe('First line\n- nested item');
+    expect(normalizeBlockCommentBody(['/*', '   First line', '     - nested item', '*/'].join('\n'))).toBe(
+      ['First line', '- nested item'].join('\n'),
+    );
   });
 
   it('normalizes carriage returns', () => {
-    expect(normalizeBlockCommentBody('/*\r\n * First line\r\n * Second line\r\n */')).toBe('First line\nSecond line');
+    expect(normalizeBlockCommentBody(['/*', ' * First line', ' * Second line', ' */'].join('\r\n'))).toBe(
+      ['First line', 'Second line'].join('\n'),
+    );
   });
 });

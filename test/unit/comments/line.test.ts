@@ -36,8 +36,8 @@ describe('wrapLineCommentGroup', () => {
     ['crlf', '\r\n'],
     ['cr', '\r'],
   ] as const)('uses the configured %s newline sequence', async (endOfLine, newline) => {
-    const text = '// Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda.',
-      comment = { end: text.length, kind: 'line' as const, start: 0 };
+    const text = '// Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda.';
+    const comment = { end: text.length, kind: 'line' as const, start: 0 };
 
     await expect(wrapLineCommentGroup(text, [comment], getWrapOptions({ endOfLine, printWidth: 32 }))).resolves.toEqual(
       {
@@ -51,15 +51,15 @@ describe('wrapLineCommentGroup', () => {
 
 describe('wrapTrailingLineComment', () => {
   it('moves a trailing comment when wide characters make the line overflow', async () => {
-    const text = 'const x = "\u6f22\u6f22\u6f22"; // note',
-      commentStart = text.indexOf('//'),
-      comment = { end: text.length, kind: 'line' as const, start: commentStart };
+    const text = 'const x = "\u6f22\u6f22\u6f22"; // note';
+    const commentStart = text.indexOf('//');
+    const comment = { end: text.length, kind: 'line' as const, start: commentStart };
 
     await expect(wrapTrailingLineComment(text, comment, getWrapOptions({ printWidth: 25 }))).resolves.toEqual([
       {
         end: 0,
         start: 0,
-        text: '// note\n',
+        text: ['// note', ''].join('\n'),
       },
       {
         end: text.length,
@@ -70,17 +70,17 @@ describe('wrapTrailingLineComment', () => {
   });
 
   it('keeps a trailing comment when combining marks leave the line within the print width', async () => {
-    const text = 'const x = "e\u0301e\u0301e\u0301"; // note',
-      commentStart = text.indexOf('//'),
-      comment = { end: text.length, kind: 'line' as const, start: commentStart };
+    const text = 'const x = "e\u0301e\u0301e\u0301"; // note';
+    const commentStart = text.indexOf('//');
+    const comment = { end: text.length, kind: 'line' as const, start: commentStart };
 
     await expect(wrapTrailingLineComment(text, comment, getWrapOptions({ printWidth: 25 }))).resolves.toBeUndefined();
   });
 
   it('uses configured newline sequences', async () => {
-    const text = 'const value = compute(); // Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda.',
-      commentStart = text.indexOf('//'),
-      comment = { end: text.length, kind: 'line' as const, start: commentStart };
+    const text = 'const value = compute(); // Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda.';
+    const commentStart = text.indexOf('//');
+    const comment = { end: text.length, kind: 'line' as const, start: commentStart };
 
     await expect(
       wrapTrailingLineComment(text, comment, getWrapOptions({ endOfLine: 'crlf', printWidth: 32 })),
@@ -88,7 +88,7 @@ describe('wrapTrailingLineComment', () => {
       {
         end: 0,
         start: 0,
-        text: '// Alpha beta gamma delta\r\n// epsilon zeta eta theta iota\r\n// kappa lambda.\r\n',
+        text: ['// Alpha beta gamma delta', '// epsilon zeta eta theta iota', '// kappa lambda.', ''].join('\r\n'),
       },
       {
         end: text.length,

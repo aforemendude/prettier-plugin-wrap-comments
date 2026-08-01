@@ -41,9 +41,9 @@ export async function wrapLineCommentGroup(
     .map((line, index) => {
       const commentText = line.length === 0 ? '//' : `// ${line}`;
 
-      return index === 0 ? commentText : `${newline}${continuationIndent}${commentText}`;
+      return `${index === 0 ? '' : continuationIndent}${commentText}`;
     })
-    .join('');
+    .join(newline);
   const start = firstComment.start;
   const end = lastComment.end;
 
@@ -96,7 +96,7 @@ export async function wrapTrailingLineComment(
     {
       end: lineStart,
       start: lineStart,
-      text: `${leadingCommentText}${newline}`,
+      text: [leadingCommentText, ''].join(newline),
     },
     {
       end: lineEnd,

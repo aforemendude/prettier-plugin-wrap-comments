@@ -26,6 +26,10 @@ TypeScript comments as Markdown while leaving Prettier's built-in printers in ch
 - This repo uses `module` and `moduleResolution` set to `nodenext`; internal TypeScript imports should use `.js`
   specifiers even when importing `.ts` source files.
 - Fix type errors with explicit guards or narrower types. Do not loosen compiler options to make a change pass.
+- Avoid comma-separated variable declarators; introduce each variable with its own `const` or `let` statement.
+  Destructuring declarations are allowed.
+- For multi-line strings, prefer an array of lines followed by `.join(newline)` instead of embedding line breaks or
+  newline escapes in a string or template literal.
 
 ## Tests And Fixtures
 

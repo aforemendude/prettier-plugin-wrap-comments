@@ -31,8 +31,8 @@ describe('column measurement', () => {
   });
 
   it('measures columns from the current line start', () => {
-    const text = 'const value = 1;\n\t  // comment',
-      commentStart = text.indexOf('//');
+    const text = ['const value = 1;', '\t  // comment'].join('\n');
+    const commentStart = text.indexOf('//');
 
     expect(getColumnAt(text, commentStart, 2)).toBe(4);
     expect(getColumnAt(text, commentStart, 4)).toBe(6);
@@ -89,11 +89,15 @@ describe('applyReplacements', () => {
 
 describe('getPreferredNewline', () => {
   it('selects the configured or detected newline sequence', () => {
-    expect(getPreferredNewline('a\r\nb\n', getWrapOptions({ endOfLine: 'lf' }))).toBe('\n');
-    expect(getPreferredNewline('a\nb\n', getWrapOptions({ endOfLine: 'crlf' }))).toBe('\r\n');
-    expect(getPreferredNewline('a\nb\n', getWrapOptions({ endOfLine: 'cr' }))).toBe('\r');
-    expect(getPreferredNewline('a\r\nb\n', getWrapOptions({ endOfLine: 'auto' }))).toBe('\r\n');
-    expect(getPreferredNewline('a\rb\n', getWrapOptions({ endOfLine: 'auto' }))).toBe('\r');
+    const crlfThenLfText = [['a', 'b'].join('\r\n'), ''].join('\n');
+    const lfText = ['a', 'b', ''].join('\n');
+    const crThenLfText = [['a', 'b'].join('\r'), ''].join('\n');
+
+    expect(getPreferredNewline(crlfThenLfText, getWrapOptions({ endOfLine: 'lf' }))).toBe('\n');
+    expect(getPreferredNewline(lfText, getWrapOptions({ endOfLine: 'crlf' }))).toBe('\r\n');
+    expect(getPreferredNewline(lfText, getWrapOptions({ endOfLine: 'cr' }))).toBe('\r');
+    expect(getPreferredNewline(crlfThenLfText, getWrapOptions({ endOfLine: 'auto' }))).toBe('\r\n');
+    expect(getPreferredNewline(crThenLfText, getWrapOptions({ endOfLine: 'auto' }))).toBe('\r');
     expect(getPreferredNewline('single line', getWrapOptions({ endOfLine: 'auto' }))).toBe('\n');
   });
 });

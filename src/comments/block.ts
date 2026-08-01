@@ -93,13 +93,14 @@ function buildBlockReplacement(
   const newline = getPreferredNewline(text, options);
   const indent = layout.multilineIndent ?? getLinePrefix(text, comment.start);
   const replacementText = buildMultilineBlockReplacement(formattedLines, newline, indent);
+  const replacementTextWithNewline = [replacementText, ''].join(newline);
 
   if (layout.trailingMove !== undefined) {
     return [
       {
         end: layout.trailingMove.insertAt,
         start: layout.trailingMove.insertAt,
-        text: `${replacementText}${newline}`,
+        text: replacementTextWithNewline,
       },
       {
         end: layout.trailingMove.removeEnd,
@@ -114,7 +115,7 @@ function buildBlockReplacement(
       {
         end: comment.end,
         start: comment.start,
-        text: `${replacementText}${newline}`,
+        text: replacementTextWithNewline,
       },
       {
         end: layout.leadingMove.removeEnd,
@@ -130,7 +131,7 @@ function buildBlockReplacement(
 function buildMultilineBlockReplacement(formattedLines: string[], newline: string, indent: string): string {
   const body = formattedLines.map((line) => `${indent} *${line.length === 0 ? '' : ` ${line}`}`).join(newline);
 
-  return `/*${newline}${body}${newline}${indent} */`;
+  return ['/*', body, `${indent} */`].join(newline);
 }
 
 function getDefaultBlockCommentLayout(text: string, comment: CommentRange): BlockCommentLayout {
