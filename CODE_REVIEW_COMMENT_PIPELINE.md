@@ -14,29 +14,6 @@ read-only checks using the repository's existing dependencies.
 
 ## Findings
 
-### Measuring pre-format source columns breaks formatter idempotence
-
-- **Severity:** Medium
-- **Location:** `src/comments/line.ts:34-45`, `src/comments/block.ts:47-50`, `src/comments/block.ts:79-86`, and
-  `src/comments/wrap.ts:384-404`
-- **Problem:** Wrapping decisions are made during preprocessing from comment columns in the unformatted source, before
-  Prettier's JavaScript printer corrects surrounding indentation and line layout. A comment that fits at its input
-  column can therefore exceed `printWidth` after the printer moves it, while a comment that appears too wide in the
-  input can be expanded even though its final position has room. JSX attempts to estimate an output `contentColumn`, but
-  `buildBlockReplacement` still tests the complete single-line block against the original source `markerColumn`,
-  creating the same inconsistency internally.
-- **Impact:** Output can change again on a second formatting pass, violating a central formatter invariant. At
-  `printWidth: 40`, an unindented standalone comment inside an unformatted `if` block was indented onto a 41-column line
-  on the first pass and wrapped only on the second. A JSX variant emitted a 42-column single-line comment on the first
-  pass and expanded it on the second. The opposite JSX layout expanded
-  `const x = <span>{/* This comment should fit. */}</span>;` even though its intact final line would occupy only 36
-  columns.
-- **Recommendation:** Make all width decisions against the comment's predicted printer-output column, not its raw input
-  column. That may require formatting or deriving the surrounding layout before comment reflow; for explicit JSX
-  layouts, carry one output marker/content column and use it consistently in both Markdown wrapping and complete-block
-  fit checks. Verify first-pass idempotence across ordinary indentation changes as well as leading, trailing, and
-  comment-only JSX layouts.
-
 ### Unicode JavaScript line separators can make wrapping delete later statements
 
 - **Severity:** Medium
