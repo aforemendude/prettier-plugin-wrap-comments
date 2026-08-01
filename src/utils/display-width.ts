@@ -13,7 +13,11 @@ export function getColumns(text: string, tabWidth: number): number {
   for (let index = 0; index < text.length; index += 1) {
     if (text[index] === '\t') {
       column += util.getStringWidth(text.slice(segmentStart, index));
-      column += tabWidth - (column % tabWidth);
+
+      if (tabWidth > 0) {
+        column += tabWidth - (column % tabWidth);
+      }
+
       segmentStart = index + 1;
     }
   }

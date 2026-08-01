@@ -24,7 +24,7 @@ export function getLeadingIndent(text: string): string {
 export function makeIndent(column: number, options: WrapOptions): string {
   const tabWidth = getTabWidth(options);
 
-  if (options.useTabs === true) {
+  if (options.useTabs === true && tabWidth > 0) {
     const tabs = Math.floor(column / tabWidth);
     const spaces = column % tabWidth;
 

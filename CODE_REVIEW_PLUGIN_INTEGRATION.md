@@ -2,21 +2,6 @@
 
 ## Findings
 
-### 2. A valid zero tab width can crash comment formatting
-
-- **Severity:** Medium
-- **Location:** `src/utils/wrap-options.ts:16-18`; `src/utils/display-width.ts:9-21`; `src/utils/indentation.ts:24-34`
-- **Problem:** `getTabWidth` accepts any numeric value, including Prettier's supported `tabWidth: 0`. Column measurement
-  then performs modulo by zero for source tabs, and `makeIndent` divides a positive column by zero before passing
-  `Infinity` to `String.prototype.repeat` when `useTabs` is enabled.
-- **Impact:** Valid Prettier configuration can make the plugin either calculate `NaN` widths and silently skip wrapping
-  or abort formatting. A focused closing-delimiter trailing-comment check succeeded with base Prettier using
-  `tabWidth: 0` and `useTabs: true`, but failed with the plugin with `RangeError: Invalid count value: Infinity`.
-- **Recommendation:** Define explicit zero-width behavior before doing tab arithmetic. For example, use a nonzero
-  effective width for the plugin's column and indentation calculations while preserving the original option passed to
-  Prettier, and guard all division/modulo operations against zero. Verify that tab-containing input and generated tab
-  indentation remain deterministic for this valid option value.
-
 ### 3. The JSX printer override changes comments that wrapping explicitly skips
 
 - **Severity:** Low

@@ -1,0 +1,6 @@
+function demo(enabled: boolean) {
+	if (enabled) {
+		// This tab-indented comment should wrap deterministically when the configured tab width is zero.
+		runTask();
+	} // This trailing comment should move before the closing delimiter without crashing.
+}

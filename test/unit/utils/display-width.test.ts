@@ -16,6 +16,11 @@ describe('display width', () => {
     expect(getColumns('a\tb', 8)).toBe(9);
   });
 
+  it('treats tabs as zero columns when the configured tab width is zero', () => {
+    expect(getColumns('\tword', 0)).toBe(4);
+    expect(getColumns('a\tb', 0)).toBe(2);
+  });
+
   it('uses Prettier display widths for Unicode text', () => {
     expect(getColumns('\u6f22\u6f22\u6f22', 4)).toBe(6);
     expect(getColumns('\u{1f600}', 4)).toBe(2);

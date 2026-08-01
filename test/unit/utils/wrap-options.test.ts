@@ -13,6 +13,7 @@ describe('getPrintWidth', () => {
 describe('getTabWidth', () => {
   it('returns the configured width or the default', () => {
     expect(getTabWidth(createWrapOptions({ tabWidth: 4 }))).toBe(4);
+    expect(getTabWidth(createWrapOptions({ tabWidth: 0 }))).toBe(0);
     expect(getTabWidth(createWrapOptions({ tabWidth: undefined }))).toBe(2);
   });
 });

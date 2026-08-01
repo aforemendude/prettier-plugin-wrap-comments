@@ -34,6 +34,7 @@ describe('makeIndent', () => {
     expect(makeIndent(6, createWrapOptions({ tabWidth: 4 }))).toBe('      ');
     expect(makeIndent(6, createWrapOptions({ tabWidth: 4, useTabs: true }))).toBe('\t  ');
     expect(makeIndent(6, createWrapOptions({ useTabs: true }))).toBe('\t\t\t');
+    expect(makeIndent(6, createWrapOptions({ tabWidth: 0, useTabs: true }))).toBe('      ');
     expect(makeIndent(10, createWrapOptions({ tabWidth: 8, useTabs: true }))).toBe('\t  ');
     expect(makeIndent(0, createWrapOptions({ useTabs: true }))).toBe('');
   });

@@ -115,4 +115,21 @@ describe('wrapTrailingLineComment', () => {
       { end: text.length, start: '  });'.length, text: '' },
     ]);
   });
+
+  it('uses spaces for positive-column indentation when tabs have zero width', async () => {
+    const text = '  }); // closing comment that overflows';
+    const commentStart = text.indexOf('//');
+    const comment = { end: text.length, kind: 'line' as const, start: commentStart };
+
+    await expect(
+      wrapTrailingLineComment(text, comment, createWrapOptions({ printWidth: 30, tabWidth: 0, useTabs: true })),
+    ).resolves.toEqual([
+      {
+        end: 0,
+        start: 0,
+        text: ['  // closing comment that', '  // overflows', ''].join('\n'),
+      },
+      { end: text.length, start: '  });'.length, text: '' },
+    ]);
+  });
 });

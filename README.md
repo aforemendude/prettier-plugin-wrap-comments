@@ -43,7 +43,9 @@ selected range; eligible comments inside that range can still be wrapped.
 
 Comment text is normalized and reflowed with Prettier's Markdown parser. The available content width is based on
 Prettier's `printWidth` minus the column where the comment text starts. `tabWidth`, `useTabs`, and `endOfLine` are used
-when measuring and rebuilding comments.
+when measuring and rebuilding comments. When `tabWidth` is `0`, tabs contribute zero columns during measurement, as they
+do in Prettier. If the plugin must synthesize indentation at a positive column, it uses spaces because zero-width tabs
+cannot advance to that column.
 
 Standalone `//` comments are wrapped in place. Adjacent standalone line comments are combined and reflowed as one
 Markdown block when they are directly next to each other and their `//` markers start in the same column.
