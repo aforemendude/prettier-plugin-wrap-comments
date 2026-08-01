@@ -14,23 +14,6 @@ read-only checks using the repository's existing dependencies.
 
 ## Findings
 
-### Unicode display widths are mismeasured when deciding whether comments fit
-
-- **Severity:** Medium
-- **Location:** `src/shared/text.ts:92-101`
-- **Problem:** `getColumns` assigns one column to every non-tab Unicode code point. Prettier's width model treats wide
-  characters such as CJK ideographs and many emoji as two columns and combining sequences as a single displayed column.
-  The helper feeds trailing-line fit checks, block-comment fit checks, marker columns, and JSX layout calculations, so
-  those decisions diverge systematically from the formatter's own `printWidth` model.
-- **Impact:** The plugin leaves lines over `printWidth` unchanged when code before a trailing comment contains wide
-  characters, and it moves comments unnecessarily when the prefix contains combining marks. At `printWidth: 25`, an
-  end-to-end check left `const x = "漢漢漢"; // note` on one 27-column output line, while it moved `// note` above
-  `const x = "ééé";` even though the original line occupies only 24 display columns according to the installed Prettier
-  width utility. This affects ordinary localized strings and identifiers, not only malformed Unicode.
-- **Recommendation:** Base non-tab segment measurement on Prettier's public string-width utility (or an equivalent
-  Unicode-width implementation) and preserve the current tab-stop calculation around those segments. Use the same width
-  primitive for every `printWidth` and column decision.
-
 ### `prettier-ignore` is neutralized for non-standalone block comments
 
 - **Severity:** Medium
