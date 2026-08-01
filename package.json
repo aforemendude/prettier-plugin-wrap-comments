@@ -5,16 +5,19 @@
   },
   "description": "A Prettier plugin that wraps non-JSDoc JavaScript and TypeScript comments as Markdown.",
   "devDependencies": {
+    "@types/node": "18.19.130",
     "prettier": "3.8.3",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vite": "6.4.3",
+    "vitest": "3.2.7"
   },
   "engines": {
     "node": ">=18"
   },
   "exports": {
     ".": {
-      "default": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   },
   "files": [
@@ -42,12 +45,16 @@
     "url": "git+https://github.com/aforemendude/prettier-plugin-wrap-comments.git"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.json",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "clean": "node scripts/clean.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepack": "npm run verify",
-    "test": "npm run build && node --test test/*.test.mjs",
-    "verify": "npm install && npm run format:check && npm run test"
+    "test": "vitest run",
+    "test:integration": "vitest run test/integration",
+    "test:unit": "vitest run test/unit",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "verify": "npm run format:check && npm run typecheck && npm run build && npm run test"
   },
   "type": "module",
   "types": "./dist/index.d.ts",

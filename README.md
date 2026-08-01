@@ -154,8 +154,11 @@ The plugin leaves these comments unchanged:
 ```sh
 npm install
 npm run format:check
+npm run typecheck
 npm run test
+npm run build
 ```
 
-`npm run test` builds `dist` before running the Node test suite. `npm run verify` runs `npm install`,
-`npm run format:check`, and `npm run test`.
+`npm run test` runs the TypeScript unit and fixture-based integration suites with Vitest. Use `npm run test:unit` or
+`npm run test:integration` to run one suite. `npm run build` removes and recreates `dist` using a cross-platform Node
+cleanup script, and `npm run verify` runs formatting, type checking, the build, and both test suites.
