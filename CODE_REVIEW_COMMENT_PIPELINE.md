@@ -14,23 +14,6 @@ read-only checks using the repository's existing dependencies.
 
 ## Findings
 
-### `prettier-ignore` is neutralized for non-standalone block comments
-
-- **Severity:** Medium
-- **Location:** `src/comments/wrap.ts:148-163` and `src/comments/wrap.ts:479-491`
-- **Problem:** `isPrettierIgnoredBlockComment` verifies that the marker is standalone and adjacent, but never verifies
-  that the following block comment is standalone. `neutralizePrettierIgnoreForIgnoredComments` then rewrites the marker
-  in the parsed AST whenever that block comment is otherwise eligible for wrapping. Consequently, a leading block
-  comment that shares its line with code is mistaken for the ignore target even though the documented special handling
-  applies only when the marker is directly above a standalone block comment.
-- **Impact:** The plugin defeats the user's explicit Prettier ignore request and reformats the following node. In an
-  end-to-end comparison, vanilla Prettier preserved `// prettier-ignore\n/* explanatory comment */ const x={a:1,b:2};`,
-  while the plugin expanded the object literal and normalized its spacing. The block comment itself remained unchanged,
-  making the lost ignore behavior non-obvious.
-- **Recommendation:** Require `isStandaloneBlockComment(text, comment)` before treating a block comment as the marker's
-  special target or neutralizing the marker. For a non-standalone leading block comment, retain normal Prettier ignore
-  semantics for the following AST node.
-
 ### Measuring pre-format source columns breaks formatter idempotence
 
 - **Severity:** Medium
