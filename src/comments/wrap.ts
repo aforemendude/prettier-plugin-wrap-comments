@@ -70,7 +70,13 @@ export async function wrapComments<T>(text: string, ast: T, options: WrapOptions
         continue;
       }
 
-      const jsxLayout = getJsxExpressionBlockCommentLayout(text, comment, jsxExpressionContainers, tabWidth);
+      const jsxLayout = getJsxExpressionBlockCommentLayout(
+        text,
+        comment,
+        comments[index - 1],
+        jsxExpressionContainers,
+        tabWidth,
+      );
 
       if (jsxLayout?.placement === 'inline') {
         continue;
@@ -175,6 +181,10 @@ type SourceRange = {
   start: number;
 };
 
+type JsxExpressionContainerRange = SourceRange & {
+  expression: SourceRange | undefined;
+};
+
 function collectSortedCommentEntries<T>(ast: T, text: string): CommentEntry[] {
   return collectComments(ast)
     .map((raw) => ({ range: toCommentRange(raw, text), raw }))
@@ -255,8 +265,8 @@ function collectAstNodeRanges(ast: unknown): SourceRange[] {
   }
 }
 
-function collectJsxExpressionContainerRanges(ast: unknown): SourceRange[] {
-  const ranges: SourceRange[] = [];
+function collectJsxExpressionContainerRanges(ast: unknown): JsxExpressionContainerRange[] {
+  const ranges: JsxExpressionContainerRange[] = [];
   const seen = new Set<object>();
 
   visit(ast);
@@ -274,7 +284,13 @@ function collectJsxExpressionContainerRanges(ast: unknown): SourceRange[] {
       const range = getAstNodeRange(value);
 
       if (range !== undefined) {
-        ranges.push(range);
+        const expressionNode = value['expression'];
+        const expression =
+          isRecord(expressionNode) && expressionNode['type'] !== 'JSXEmptyExpression'
+            ? getAstNodeRange(expressionNode)
+            : undefined;
+
+        ranges.push({ ...range, expression });
       }
     }
 
@@ -370,7 +386,8 @@ function isCommentInIgnoredLineRange(comment: CommentRange, ignoredLineRanges: S
 function getJsxExpressionBlockCommentLayout(
   text: string,
   comment: CommentRange,
-  jsxExpressionContainers: SourceRange[],
+  previousComment: CommentRange | undefined,
+  jsxExpressionContainers: JsxExpressionContainerRange[],
   tabWidth: number,
 ): BlockCommentLayout | undefined {
   const container = getSmallestContainingRange(comment, jsxExpressionContainers);
@@ -379,11 +396,11 @@ function getJsxExpressionBlockCommentLayout(
     return undefined;
   }
 
-  const expressionTextBeforeComment = text.slice(container.start + 1, comment.start).trim();
-  const expressionTextAfterComment = text.slice(comment.end, container.end - 1).trim();
+  const hasExpressionBeforeComment = container.expression !== undefined && container.expression.start < comment.start;
+  const hasExpressionAfterComment = container.expression !== undefined && container.expression.end > comment.end;
   const containerOutputColumn = getJsxExpressionContainerOutputColumn(text, container, tabWidth);
 
-  if (expressionTextBeforeComment === '' && expressionTextAfterComment === '') {
+  if (!hasExpressionBeforeComment && !hasExpressionAfterComment) {
     return {
       contentColumn: containerOutputColumn + tabWidth + 3,
       multilineIndent: '',
@@ -392,7 +409,20 @@ function getJsxExpressionBlockCommentLayout(
     };
   }
 
-  if (expressionTextBeforeComment !== '' && expressionTextAfterComment === '') {
+  if (hasExpressionBeforeComment && !hasExpressionAfterComment) {
+    const hasEarlierCommentInContainer =
+      previousComment !== undefined && previousComment.start > container.start && previousComment.end < container.end;
+
+    // Moving separate trailing replacements to the same expression start would reverse their source order.
+    if (hasEarlierCommentInContainer) {
+      return {
+        contentColumn: containerOutputColumn + tabWidth + 3,
+        multilineIndent: '',
+        placement: 'standalone',
+        singleLineSuffixWidth: 1,
+      };
+    }
+
     const expressionStart = skipWhitespace(text, container.start + 1);
     const expressionEnd = trimWhitespaceEnd(text, container.start + 1, comment.start);
     const removalEnd = Math.min(skipWhitespace(text, comment.end), container.end - 1);
@@ -410,7 +440,7 @@ function getJsxExpressionBlockCommentLayout(
     };
   }
 
-  if (expressionTextBeforeComment === '') {
+  if (!hasExpressionBeforeComment) {
     if (isStandaloneBlockComment(text, comment)) {
       return { placement: 'inline' };
     }
@@ -460,8 +490,11 @@ function trimWhitespaceEnd(text: string, start: number, end: number): number {
   return cursor;
 }
 
-function getSmallestContainingRange(comment: CommentRange, ranges: SourceRange[]): SourceRange | undefined {
-  let containingRange: SourceRange | undefined;
+function getSmallestContainingRange<Range extends SourceRange>(
+  comment: CommentRange,
+  ranges: Range[],
+): Range | undefined {
+  let containingRange: Range | undefined;
 
   for (const range of ranges) {
     if (comment.start <= range.start || comment.end >= range.end) {

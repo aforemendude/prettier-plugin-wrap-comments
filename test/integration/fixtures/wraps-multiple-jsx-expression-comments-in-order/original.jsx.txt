@@ -1,0 +1,6 @@
+export const View = ({ value }) => (
+  <>
+    <span>{/* First comment has enough words that it wraps across several lines. */ /* Second comment also has enough words that it wraps across several lines. */}</span>
+    <span>{value /* First trailing comment has enough words that it wraps across several lines. */ /* Second trailing comment also has enough words that it wraps across several lines. */}</span>
+  </>
+);
