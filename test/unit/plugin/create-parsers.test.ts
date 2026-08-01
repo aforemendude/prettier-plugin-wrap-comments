@@ -188,6 +188,27 @@ describe('createParsers', () => {
     expect(mocks.wrapComments).not.toHaveBeenCalled();
   });
 
+  it.each([
+    { name: 'cursor', options: { cursorOffset: 0, rangeEnd: 19, rangeStart: 0 } },
+    { name: 'range start', options: { cursorOffset: -1, rangeEnd: 19, rangeStart: 1 } },
+    { name: 'range end', options: { cursorOffset: -1, rangeEnd: 18, rangeStart: 0 } },
+  ])('skips plugin preprocessing for an active $name offset', async ({ options: optionOverrides }) => {
+    const source = 'const value = true;';
+    const preprocessedSource = 'const value = false;';
+    const options = { ...createParserOptions('babel'), ...optionOverrides };
+    const preprocess = vi.fn().mockResolvedValue(preprocessedSource);
+    mocks.babelParser.preprocess = preprocess;
+    const parser = getParser(createParsers(), 'babel');
+
+    await expect(callPreprocess(parser, source, options)).resolves.toBe(preprocessedSource);
+    expect(preprocess).toHaveBeenCalledTimes(1);
+    expect(preprocess).toHaveBeenCalledWith(source, options);
+    expect(mocks.babelParser.parse).not.toHaveBeenCalled();
+    expect(mocks.collectAstComments).not.toHaveBeenCalled();
+    expect(mocks.getPrinterLayoutSource).not.toHaveBeenCalled();
+    expect(mocks.wrapComments).not.toHaveBeenCalled();
+  });
+
   it('returns preprocessed source unchanged when parsing it fails', async () => {
     const source = 'original source';
     const preprocessedSource = 'invalid preprocessed source';

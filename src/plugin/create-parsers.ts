@@ -1,4 +1,4 @@
-import type { Parser, Plugin } from 'prettier';
+import type { Parser, ParserOptions, Plugin } from 'prettier';
 import * as babelPlugin from 'prettier/plugins/babel';
 import * as typescriptPlugin from 'prettier/plugins/typescript';
 
@@ -35,6 +35,12 @@ function createWrappedParser<T>(parserName: SupportedParserName, parser: Parser<
     async preprocess(text, options) {
       const preprocessed = parser.preprocess === undefined ? text : await parser.preprocess(text, options);
 
+      // Prettier calculates cursor nodes and initial range boundaries after preprocessing, but those offsets still
+      // refer to this input. A range-only request will safely re-enter this hook with the extracted source.
+      if (hasOffsetSensitiveFormatting(text, options)) {
+        return preprocessed;
+      }
+
       let ast: T;
 
       try {
@@ -52,4 +58,12 @@ function createWrappedParser<T>(parserName: SupportedParserName, parser: Parser<
       return wrapComments(preprocessed, ast, options, printerLayoutSource);
     },
   };
+}
+
+function hasOffsetSensitiveFormatting(text: string, options: ParserOptions): boolean {
+  const cursorOffset = options['cursorOffset'];
+  const hasCursor = typeof cursorOffset === 'number' && cursorOffset >= 0;
+  const hasPartialRange = options.rangeStart > 0 || options.rangeEnd < text.length;
+
+  return hasCursor || hasPartialRange;
 }

@@ -37,6 +37,10 @@ preprocessing: the underlying Prettier parser preprocesses and parses the source
 comments from that parsed comment list, and Prettier then formats the rewritten source with its built-in JavaScript and
 TypeScript printers. If the parser cannot parse the preprocessed source, the plugin leaves the source unchanged.
 
+Offset-sensitive formatting is conservative. Full-file `formatWithCursor` calls skip comment rewriting so Prettier can
+map the cursor from the original source. During range formatting, preprocessing does not rewrite text outside Prettier's
+selected range; eligible comments inside that range can still be wrapped.
+
 Comment text is normalized and reflowed with Prettier's Markdown parser. The available content width is based on
 Prettier's `printWidth` minus the column where the comment text starts. `tabWidth`, `useTabs`, and `endOfLine` are used
 when measuring and rebuilding comments.
