@@ -14,22 +14,6 @@ read-only checks using the repository's existing dependencies.
 
 ## Findings
 
-### Wrapping multiple JSX expression comments can reverse their order
-
-- **Severity:** Medium
-- **Location:** `src/comments/wrap.ts:382-410` and `src/comments/block.ts:97-109`
-- **Problem:** JSX layout classification treats any non-whitespace text before a comment as expression content,
-  including an earlier comment in the same expression container. In a comment-only container with multiple block
-  comments, the last comment is therefore classified as trailing and its multiline replacement is inserted at the start
-  of the container's “expression,” ahead of all earlier comments.
-- **Impact:** Formatting changes the order of comment content. For example, an end-to-end Babel/JSX check of
-  `{/* First ... */ /* Second ... */}` at a width that wraps both comments emitted the complete `Second` block before
-  the complete `First` block. This is a user-visible correctness regression for ordered explanations, annotations, or
-  examples even though the JavaScript runtime semantics are unchanged.
-- **Recommendation:** Classify JSX placement using non-comment expression tokens (or the expression node) rather than
-  raw trimmed container slices. When multiple comments occupy a container, build a coordinated replacement that keeps
-  their original relative order; at minimum, do not move a “trailing” comment ahead of a prefix made only of comments.
-
 ### Unicode display widths are mismeasured when deciding whether comments fit
 
 - **Severity:** Medium
