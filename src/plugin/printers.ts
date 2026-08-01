@@ -5,7 +5,7 @@ import * as estreePlugin from 'prettier/plugins/estree';
 const { hardline, indent } = doc.builders;
 
 type AstNode = Record<string, unknown>;
-type PrintFunction = (path: AstPath<unknown>) => Doc;
+type PrintFunction = Parameters<Printer<AstNode>['print']>[2];
 
 export function buildPrinters(): Plugin['printers'] {
   const estreePrinter = estreePlugin.printers.estree as Printer<AstNode>;
@@ -16,7 +16,7 @@ export function buildPrinters(): Plugin['printers'] {
       ...estreePrinter,
       print(path: AstPath<AstNode>, options: ParserOptions<AstNode>, print: PrintFunction, args?: unknown): Doc {
         if (isMultilineEmptyJsxExpressionBlockComment(path.node)) {
-          return ['{', indent([hardline, path.call(print, 'expression')]), hardline, '}'];
+          return ['{', indent([hardline, print('expression')]), hardline, '}'];
         }
 
         return estreePrinter.print(path, options, print, args);
