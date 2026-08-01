@@ -50,7 +50,7 @@
     "clean": "node scripts/clean.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepack": "npm run verify",
+    "prepack": "npm install && git diff --exit-code -- package-lock.json && npm run verify",
     "test": "vitest run",
     "test:integration": "vitest run test/integration",
     "test:unit": "vitest run test/unit",
