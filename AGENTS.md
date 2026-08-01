@@ -1,11 +1,5 @@
 # AGENTS.md
 
-## Scope
-
-These instructions apply to the whole repository.
-
-## Project Shape
-
 This is a Prettier plugin package named `@aforemendude/prettier-plugin-wrap-comments`. It wraps eligible JavaScript and
 TypeScript comments as Markdown while leaving Prettier's built-in printers in charge of normal formatting.
 
@@ -18,7 +12,7 @@ TypeScript comments as Markdown while leaving Prettier's built-in printers in ch
 
 ## Development Commands
 
-- Use Node.js 18 or newer.
+- Use Node.js 20 or newer.
 - Run `npm run format:check` for formatting validation.
 - Run `npm run typecheck` to type-check source, tests, and Vitest configuration.
 - Run `npm run test` for behavior changes. Use `npm run test:unit` or `npm run test:integration` for one suite.
@@ -46,6 +40,8 @@ TypeScript comments as Markdown while leaving Prettier's built-in printers in ch
   the exact file shape guard intact.
 - JavaScript and JSX fixtures use the `babel` parser; TypeScript and TSX fixtures use the `typescript` parser. A fixture
   can override the inferred parser in `config.json`, as the `babel-ts` fixtures do.
+- Keep integration fixtures ASCII-only. Cover non-ASCII cases in unit tests and write those characters with escapes
+  instead of literals.
 - Keep fixtures narrow and behavior-specific. If a fixture is meant to isolate comment wrapping, avoid unrelated long
   code lines that cause ordinary Prettier line breaking.
 
