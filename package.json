@@ -5,19 +5,19 @@
   },
   "description": "A Prettier plugin that wraps non-JSDoc JavaScript and TypeScript comments as Markdown.",
   "devDependencies": {
-    "@types/node": "18.19.130",
-    "prettier": "3.8.3",
-    "typescript": "6.0.3",
-    "vite": "6.4.3",
-    "vitest": "3.2.7"
+    "@types/node": "20.19.43",
+    "prettier": "3.9.6",
+    "typescript": "7.0.2",
+    "vite": "8.1.5",
+    "vitest": "4.1.10"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.0.0"
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     }
   },
   "files": [
