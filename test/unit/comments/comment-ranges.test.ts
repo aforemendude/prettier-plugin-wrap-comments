@@ -17,6 +17,8 @@ describe('collectAstComments', () => {
   it('returns an empty list when neither comment collection is an array', () => {
     expect(collectAstComments({ comments: null, program: { comments: 'invalid' } })).toEqual([]);
     expect(collectAstComments({})).toEqual([]);
+    expect(collectAstComments(null)).toEqual([]);
+    expect(collectAstComments(undefined)).toEqual([]);
   });
 });
 

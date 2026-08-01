@@ -23,19 +23,31 @@ export function getLinePrefix(text: string, index: number): string {
 }
 
 export function getLineStart(text: string, index: number): number {
-  const newlineIndex = text.lastIndexOf('\n', index - 1);
+  for (let cursor = Math.min(index, text.length) - 1; cursor >= 0; cursor -= 1) {
+    const character = text[cursor];
 
-  return newlineIndex === -1 ? 0 : newlineIndex + 1;
+    if (character === '\n') {
+      return cursor + 1;
+    }
+
+    if (character === '\r' && text[cursor + 1] !== '\n') {
+      return cursor + 1;
+    }
+  }
+
+  return 0;
 }
 
 export function getLineEnd(text: string, index: number): number {
-  const newlineIndex = text.indexOf('\n', index);
+  for (let cursor = Math.max(index, 0); cursor < text.length; cursor += 1) {
+    const character = text[cursor];
 
-  if (newlineIndex === -1) {
-    return text.length;
+    if (character === '\r' || character === '\n') {
+      return character === '\n' && text[cursor - 1] === '\r' ? cursor - 1 : cursor;
+    }
   }
 
-  return text[newlineIndex - 1] === '\r' ? newlineIndex - 1 : newlineIndex;
+  return text.length;
 }
 
 export function isBlankLine(line: string | undefined): boolean {

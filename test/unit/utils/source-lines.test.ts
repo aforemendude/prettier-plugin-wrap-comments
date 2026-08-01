@@ -47,6 +47,19 @@ describe('line boundaries', () => {
     expect(getLineStart(text, betaStart)).toBe(betaStart);
     expect(getLinePrefix(text, betaStart)).toBe('');
   });
+
+  it('locates prefixes and boundaries on CR-separated lines', () => {
+    const text = ['alpha', 'beta', 'gamma'].join('\r');
+    const betaStart = text.indexOf('beta');
+    const betaIndex = betaStart + 2;
+    const gammaStart = text.indexOf('gamma');
+
+    expect(getLineEnd(text, 2)).toBe('alpha'.length);
+    expect(getLineStart(text, betaIndex)).toBe(betaStart);
+    expect(getLinePrefix(text, betaIndex)).toBe('be');
+    expect(getLineEnd(text, betaIndex)).toBe(betaStart + 'beta'.length);
+    expect(getLineStart(text, gammaStart)).toBe(gammaStart);
+  });
 });
 
 describe('isBlankLine', () => {

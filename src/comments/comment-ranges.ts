@@ -32,6 +32,10 @@ export type CommentEntry = {
 };
 
 export function collectAstComments(ast: unknown): RawComment[] {
+  if (ast === null || ast === undefined) {
+    return [];
+  }
+
   const candidate = ast as AstWithComments;
 
   if (Array.isArray(candidate.comments)) {
