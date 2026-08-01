@@ -513,7 +513,12 @@ function isPrettierIgnoredBlockComment(text: string, comments: CommentEntry[], i
   const comment = comments[index]?.range;
   const previousComment = comments[index - 1]?.range;
 
-  if (comment === undefined || comment.kind !== 'block' || previousComment === undefined) {
+  if (
+    comment === undefined ||
+    comment.kind !== 'block' ||
+    !isStandaloneBlockComment(text, comment) ||
+    previousComment === undefined
+  ) {
     return false;
   }
 
