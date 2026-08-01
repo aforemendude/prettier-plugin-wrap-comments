@@ -5,7 +5,7 @@
 ### 1. Source-rewriting preprocessing breaks cursor and range offsets
 
 - **Severity:** Medium
-- **Location:** `src/plugin/parsers.ts:17-28`
+- **Location:** `src/plugin/create-parsers.ts:35-52`
 - **Problem:** The parser `preprocess` hook rewrites comments with `wrapComments`, which can add or remove characters
   before `cursorOffset`, `rangeStart`, or `rangeEnd`, but it returns only the rewritten string and does not remap those
   offsets. Prettier continues using the offsets normalized from the original input against the rewritten source.
@@ -22,7 +22,7 @@
 ### 2. A valid zero tab width can crash comment formatting
 
 - **Severity:** Medium
-- **Location:** `src/shared/options.ts:14-15`; `src/shared/text.ts:92-101`; `src/shared/text.ts:131-138`
+- **Location:** `src/utils/wrap-options.ts:16-18`; `src/utils/display-width.ts:9-21`; `src/utils/indentation.ts:24-34`
 - **Problem:** `getTabWidth` accepts any numeric value, including Prettier's supported `tabWidth: 0`. Column measurement
   then performs modulo by zero for source tabs, and `makeIndent` divides a positive column by zero before passing
   `Infinity` to `String.prototype.repeat` when `useTabs` is enabled.
@@ -37,7 +37,7 @@
 ### 3. The JSX printer override changes comments that wrapping explicitly skips
 
 - **Severity:** Low
-- **Location:** `src/plugin/printers.ts:18-22`; `src/plugin/printers.ts:28-51`; `README.md:136-144`
+- **Location:** `src/plugin/create-printers.ts:19-24`; `src/plugin/create-printers.ts:30-53`; `README.md:136-144`
 - **Problem:** `isMultilineEmptyJsxExpressionBlockComment` matches every multiline block comment in an empty JSX
   expression, without distinguishing comments expanded by this plugin from JSDoc, bang-preserved, directive, or other
   comments that the wrapping pipeline intentionally skips. The custom branch then bypasses the built-in estree printer
@@ -54,7 +54,7 @@
 ### 4. Named parser and printer exports are incorrectly typed as optional
 
 - **Severity:** Low
-- **Location:** `src/index.ts:6-13`; `src/plugin/parsers.ts:33`; `src/plugin/printers.ts:10`
+- **Location:** `src/index.ts:6-13`; `src/plugin/create-parsers.ts:12-24`; `src/plugin/create-printers.ts:12-28`
 - **Problem:** Both builders always return object literals, but their return annotations use the optional indexed types
   `Plugin['parsers']` and `Plugin['printers']`. That `undefined` union propagates to the explicitly exported `parsers`
   and `printers` declarations.
@@ -69,7 +69,7 @@
 ### 5. Every normally parsed nonempty file is parsed twice even when it has no comments
 
 - **Severity:** Medium
-- **Location:** `src/plugin/parsers.ts:12-28`
+- **Location:** `src/plugin/create-parsers.ts:27-52`
 - **Problem:** The wrapper performs a full underlying parse during `preprocess` to discover comments, then Prettier
   invokes the wrapper's `parse` method and parses the returned source a second time. There is no inexpensive early exit
   for nonempty text that cannot contain a JavaScript or TypeScript comment, so comment-free sources that reach

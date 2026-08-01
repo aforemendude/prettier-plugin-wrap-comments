@@ -5,7 +5,8 @@
 ### Unicode JavaScript line separators can make wrapping delete later statements
 
 - **Severity:** Medium
-- **Location:** `src/shared/text.ts:68-85` and `src/comments/line.ts:70-105`
+- **Location:** `src/utils/source-lines.ts:21-39`, `src/comments/comment-location.ts:8-32`,
+  `src/utils/display-width.ts:5-6`, and `src/comments/wrap-trailing-line-comment.ts:26-60`
 - **Problem:** The shared line-boundary helpers recognize only LF (with a CRLF adjustment), but JavaScript also treats
   U+2028 LINE SEPARATOR and U+2029 PARAGRAPH SEPARATOR as line terminators. Unlike CR and CRLF, Prettier does not
   normalize these characters before the plugin's preprocessing. A standalone line comment after either separator is
@@ -22,7 +23,7 @@
 ### Moving embedded trailing line comments can turn them into program data
 
 - **Severity:** Medium
-- **Location:** `src/comments/wrap.ts:99-108` and `src/comments/line.ts:61-106`
+- **Location:** `src/comments/wrap-comments.ts:96-105` and `src/comments/wrap-trailing-line-comment.ts:26-60`
 - **Problem:** Any non-standalone line comment is sent through the generic trailing-line mover, which inserts the
   wrapped comment at the physical source line start without considering lexical containers crossed by that move. Inside
   a `JSXExpressionContainer`, the insertion can land before the opening `{`; inside a template interpolation on a later
@@ -41,8 +42,9 @@
 ### Formatting every comment as a separate Markdown document scales poorly
 
 - **Severity:** Medium
-- **Location:** `src/comments/wrap.ts:57-143`, `src/comments/line.ts:34-37`, `src/comments/block.ts:47-50`, and
-  `src/shared/markdown.ts:14-24`
+- **Location:** `src/comments/wrap-comments.ts:42-118`, `src/comments/wrap-line-comment-group.ts:23-46`,
+  `src/comments/wrap-trailing-line-comment.ts:35-48`, `src/comments/wrap-block-comment.ts:39-56`, and
+  `src/utils/format-markdown.ts:7-27`
 - **Problem:** The main loop awaits a separate full `prettier.format(..., { parser: 'markdown' })` call for every
   eligible line-comment group and block comment, including short, already-normalized prose that produces no replacement.
   The work is strictly per group and serial, so formatter parsing/printing overhead grows linearly with comment count in
