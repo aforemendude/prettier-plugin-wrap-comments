@@ -46,7 +46,7 @@
     "url": "git+https://github.com/aforemendude/prettier-plugin-wrap-comments.git"
   },
   "scripts": {
-    "build": "npm run clean && tsc -p tsconfig.json",
+    "build": "npm run clean && tsc -p tsconfig.build.json",
     "clean": "node scripts/clean.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -54,7 +54,7 @@
     "test": "vitest run",
     "test:integration": "vitest run test/integration",
     "test:unit": "vitest run test/unit",
-    "typecheck": "tsc -p tsconfig.test.json",
+    "typecheck": "tsc -p tsconfig.json",
     "verify": "npm run format:check && npm run typecheck && npm run build && npm run test"
   },
   "type": "module",
