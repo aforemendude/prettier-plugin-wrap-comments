@@ -2,6 +2,23 @@
 
 ---
 
+## v1.1.0 (August 2, 2026)
+
+### Added Features
+
+- Printer-aware comment wrapping
+- Offset-sensitive formatting
+- Embedded expression trailing comments
+- Unicode display width and line separators
+
+### Bug Fixes
+
+- JSX comment layout and ordering
+- Prettier ignore handling
+- Zero tab width formatting
+
+---
+
 ## v1.0.6 (June 6, 2026)
 
 ### Added Features
