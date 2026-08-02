@@ -47,6 +47,71 @@ describe('wrapComments', () => {
     ).resolves.toBe(['// note', 'const x = "\u6f22\u6f22\u6f22";'].join('\n'));
   });
 
+  it('does not move trailing line comments out of embedded expressions', async () => {
+    const jsxComment = '// This trailing JSX comment is deliberately wider than the print width.';
+    const jsxText = [`<span>{value ${jsxComment}`, '}</span>'].join('\n');
+    const jsxEntries = createCommentEntries(jsxText, [jsxComment]);
+    const jsxContainerStart = jsxText.indexOf('{');
+    const jsxContainerEnd = jsxText.indexOf('}') + 1;
+    const templateComment = '// This trailing template comment is deliberately wider than the print width.';
+    const templateText = ['const text = `prefix', `\${value ${templateComment}`, '}`;'].join('\n');
+    const templateEntries = createCommentEntries(templateText, [templateComment]);
+    const firstQuasiStart = templateText.indexOf('`') + 1;
+    const interpolationStart = templateText.indexOf('${');
+    const interpolationEnd = templateText.indexOf('}') + 1;
+
+    await expect(
+      wrapComments(
+        jsxText,
+        {
+          body: [
+            {
+              end: jsxContainerEnd,
+              expression: {
+                end: jsxText.indexOf('value') + 'value'.length,
+                start: jsxText.indexOf('value'),
+                type: 'Identifier',
+              },
+              start: jsxContainerStart,
+              type: 'JSXExpressionContainer',
+            },
+          ],
+          comments: jsxEntries.map((entry) => entry.raw),
+          type: 'Program',
+        },
+        createWrapOptions({ printWidth: 20 }),
+      ),
+    ).resolves.toBe(jsxText);
+    await expect(
+      wrapComments(
+        templateText,
+        {
+          body: [
+            {
+              end: templateText.lastIndexOf('`') + 1,
+              expressions: [
+                {
+                  end: templateText.indexOf('value') + 'value'.length,
+                  start: templateText.indexOf('value'),
+                  type: 'Identifier',
+                },
+              ],
+              quasis: [
+                { end: interpolationStart, start: firstQuasiStart, type: 'TemplateElement' },
+                { end: interpolationEnd, start: interpolationEnd, type: 'TemplateElement' },
+              ],
+              start: firstQuasiStart - 1,
+              type: 'TemplateLiteral',
+            },
+          ],
+          comments: templateEntries.map((entry) => entry.raw),
+          type: 'Program',
+        },
+        createWrapOptions({ printWidth: 20 }),
+      ),
+    ).resolves.toBe(templateText);
+  });
+
   it('preserves statements around standalone comments separated by JavaScript Unicode line separators', async () => {
     const comment = '// Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda.';
 

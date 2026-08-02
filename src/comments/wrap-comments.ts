@@ -1,6 +1,7 @@
 import { shouldSkipLineComment } from './comment-eligibility.js';
 import { isStandaloneBlockComment, isStandaloneLineComment } from './comment-location.js';
 import { collectCommentEntries } from './comment-ranges.js';
+import { collectEmbeddedExpressionRanges, isCommentInEmbeddedExpression } from './embedded-expression-ranges.js';
 import { collectJsxExpressionContainerRanges, getJsxExpressionBlockCommentLayout } from './jsx-expression-layout.js';
 import { collectLineCommentGroup } from './line-comment-groups.js';
 import {
@@ -28,6 +29,7 @@ export async function wrapComments<T>(
 ): Promise<string> {
   const commentEntries = collectCommentEntries(ast, text);
   const comments = commentEntries.map((entry) => entry.range);
+  const embeddedExpressionRanges = collectEmbeddedExpressionRanges(ast);
   const jsxExpressionContainers = collectJsxExpressionContainerRanges(ast);
   const ignoredLineRanges = collectPrettierIgnoredLineRanges(text, ast, commentEntries);
 
@@ -95,6 +97,10 @@ export async function wrapComments<T>(
 
     if (!isStandaloneLineComment(text, comment)) {
       if (isPrettierIgnoredTrailingLineComment(text, commentEntries, index)) {
+        continue;
+      }
+
+      if (isCommentInEmbeddedExpression(comment, embeddedExpressionRanges)) {
         continue;
       }
 

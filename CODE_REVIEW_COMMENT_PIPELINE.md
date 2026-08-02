@@ -2,25 +2,6 @@
 
 ## Findings
 
-### Moving embedded trailing line comments can turn them into program data
-
-- **Severity:** Medium
-- **Location:** `src/comments/wrap-comments.ts:96-105` and `src/comments/wrap-trailing-line-comment.ts:26-60`
-- **Problem:** Any non-standalone line comment is sent through the generic trailing-line mover, which inserts the
-  wrapped comment at the physical source line start without considering lexical containers crossed by that move. Inside
-  a `JSXExpressionContainer`, the insertion can land before the opening `{`; inside a template interpolation on a later
-  template line, it can land in raw template text before `${`. The inserted `//` lines are no longer JavaScript comments
-  when the rewritten source is parsed.
-- **Impact:** Formatting changes runtime data. In a public Babel/JSX check of
-  `{value // this is a deliberately very long trailing comment inside a JSX expression\n}`, Babel reparsed the moved
-  lines as `JSXText`, and Prettier emitted visible child text containing the `//` markers and comment words. A
-  template-literal check similarly moved three `//` lines into the raw string before `${value}`, changing the resulting
-  string value. Vanilla Prettier kept both inputs' text as JavaScript comments inside their expression delimiters.
-- **Recommendation:** Determine whether the physical line prefix crosses a JSX-expression, template-interpolation, or
-  other lexical boundary before moving a trailing comment. Never insert outside the JavaScript expression that
-  originally owns the comment; either leave such comments trailing or relocate them to a safe position inside the
-  containing expression with a guaranteed line break before its value.
-
 ### Formatting every comment as a separate Markdown document scales poorly
 
 - **Severity:** Medium

@@ -59,7 +59,9 @@ function example() {
 ```
 
 Trailing `//` comments stay in place when the full source line fits within `printWidth`. If the source line is too long,
-the comment is moved above the code and wrapped using the code line's indentation.
+the comment is moved above the code and wrapped using the code line's indentation. Trailing line comments inside JSX
+expressions, JSX spreads, and template interpolations stay in place because moving them outside those lexical containers
+could change program data.
 
 ```ts
 function example() {

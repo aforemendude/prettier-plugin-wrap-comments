@@ -1,0 +1,14 @@
+const view = (
+  <section>
+    <span>
+      {
+        value // This trailing comment must stay inside its JSX expression even though it exceeds the print width.
+      }
+    </span>
+  </section>
+);
+
+const message = `prefix
+${
+  value // This trailing comment must stay inside its template interpolation even though it exceeds the print width.
+}`;
