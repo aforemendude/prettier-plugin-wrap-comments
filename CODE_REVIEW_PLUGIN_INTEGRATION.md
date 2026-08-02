@@ -2,23 +2,6 @@
 
 ## Findings
 
-### 3. The JSX printer override changes comments that wrapping explicitly skips
-
-- **Severity:** Low
-- **Location:** `src/plugin/create-printers.ts:19-24`; `src/plugin/create-printers.ts:30-53`; `README.md:136-144`
-- **Problem:** `isMultilineEmptyJsxExpressionBlockComment` matches every multiline block comment in an empty JSX
-  expression, without distinguishing comments expanded by this plugin from JSDoc, bang-preserved, directive, or other
-  comments that the wrapping pipeline intentionally skips. The custom branch then bypasses the built-in estree printer
-  and forces the surrounding braces onto separate lines.
-- **Impact:** Merely enabling the plugin changes normal Prettier layout for unsupported/preserved comment categories,
-  contrary to the README's statement that those comments are left unchanged. For example, installed Prettier prints an
-  existing multiline JSDoc expression with the opening brace and comment together, while the plugin puts `{`, the
-  untouched JSDoc, and `}` on separate lines. Multiline `/*! ... */` and directive blocks behave the same way, creating
-  unrelated diffs in code the plugin promises not to wrap.
-- **Recommendation:** Limit the custom JSX printer branch to comments actually expanded by the preprocessing pipeline,
-  such as by carrying explicit rewrite metadata through a supported mechanism or by using a predicate that uniquely
-  identifies the generated layout. Delegate skipped and pre-existing multiline comments to `estreePrinter.print`.
-
 ### 4. Named parser and printer exports are incorrectly typed as optional
 
 - **Severity:** Low
