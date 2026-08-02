@@ -1,4 +1,4 @@
-import type { Parser, ParserOptions, Plugin } from 'prettier';
+import type { Parser, ParserOptions } from 'prettier';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 type MockParser = Parser<unknown> & {
@@ -89,7 +89,7 @@ describe('createParsers', () => {
   it('wraps every available supported parser while preserving its metadata', () => {
     const parsers = createParsers();
 
-    expect(Object.keys(parsers ?? {})).toEqual(['babel', 'babel-ts', 'typescript']);
+    expect(Object.keys(parsers)).toEqual(['babel', 'babel-ts', 'typescript']);
 
     for (const { baseParser, parserName } of parserCases) {
       const parser = getParser(parsers, parserName);
@@ -105,7 +105,7 @@ describe('createParsers', () => {
   it('omits a supported parser that its source plugin does not provide', () => {
     delete mocks.babelParsers['babel-ts'];
 
-    expect(Object.keys(createParsers() ?? {})).toEqual(['babel', 'typescript']);
+    expect(Object.keys(createParsers())).toEqual(['babel', 'typescript']);
   });
 
   it.each(parserCases)(
@@ -288,8 +288,8 @@ function createParserOptions(parserName: string): ParserOptions {
   return { parser: parserName } as ParserOptions;
 }
 
-function getParser(parsers: Plugin['parsers'], parserName: string): Parser<unknown> {
-  const parser = parsers?.[parserName];
+function getParser(parsers: ReturnType<typeof createParsers>, parserName: string): Parser<unknown> {
+  const parser = parsers[parserName];
 
   if (parser === undefined) {
     throw new Error(`Expected ${parserName} parser`);

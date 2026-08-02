@@ -10,8 +10,8 @@ import { markRewrittenJsxBlockComments, setJsxBlockCommentRewrites } from './jsx
 import { SUPPORTED_PARSER_NAMES } from './parser-names.js';
 import type { SupportedParserName } from './parser-names.js';
 
-export function createParsers(): Plugin['parsers'] {
-  const parsers: Plugin['parsers'] = {};
+export function createParsers(): NonNullable<Plugin['parsers']> {
+  const parsers: NonNullable<Plugin['parsers']> = {};
 
   for (const parserName of SUPPORTED_PARSER_NAMES) {
     const sourceParsers = parserName === 'typescript' ? typescriptPlugin.parsers : babelPlugin.parsers;

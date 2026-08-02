@@ -107,7 +107,7 @@ describe('createPrinters', () => {
     const printers = createPrinters();
     const estreePrinter = getEstreePrinter(printers);
 
-    expect(printers?.['estree-json']).toBe(mocks.jsonPrinter);
+    expect(printers['estree-json']).toBe(mocks.jsonPrinter);
     expect(estreePrinter).not.toBe(mocks.estreePrinter);
     expect(estreePrinter.preprocess).toBe(mocks.estreePreprocess);
     expect(estreePrinter.print).not.toBe(mocks.nativePrint);
@@ -166,7 +166,7 @@ function createPath(node: unknown): AstPath<AstNode> {
 }
 
 function getEstreePrinter(printers: ReturnType<typeof createPrinters>): Printer<AstNode> {
-  const printer = printers?.['estree'];
+  const printer = printers['estree'];
 
   if (printer === undefined) {
     throw new Error('Expected an estree printer');

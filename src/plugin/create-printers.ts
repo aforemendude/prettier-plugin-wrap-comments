@@ -10,7 +10,7 @@ const { hardline, indent } = doc.builders;
 type AstNode = Record<string, unknown>;
 type PrintFunction = Parameters<Printer<AstNode>['print']>[2];
 
-export function createPrinters(): Plugin['printers'] {
+export function createPrinters(): NonNullable<Plugin['printers']> {
   const estreePrinter = estreePlugin.printers.estree as Printer<AstNode>;
 
   return {
