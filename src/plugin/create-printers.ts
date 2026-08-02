@@ -3,6 +3,7 @@ import { doc } from 'prettier';
 import * as estreePlugin from 'prettier/plugins/estree';
 
 import { isRecord } from '../utils/type-guards.js';
+import { isRewrittenJsxBlockComment } from './jsx-comment-rewrite-metadata.js';
 
 const { hardline, indent } = doc.builders;
 
@@ -17,7 +18,7 @@ export function createPrinters(): Plugin['printers'] {
     estree: {
       ...estreePrinter,
       print(path: AstPath<AstNode>, options: ParserOptions<AstNode>, print: PrintFunction, args?: unknown): Doc {
-        if (isMultilineEmptyJsxExpressionBlockComment(path.node)) {
+        if (isRewrittenMultilineEmptyJsxExpressionBlockComment(path.node)) {
           return ['{', indent([hardline, print('expression')]), hardline, '}'];
         }
 
@@ -27,7 +28,7 @@ export function createPrinters(): Plugin['printers'] {
   };
 }
 
-function isMultilineEmptyJsxExpressionBlockComment(node: unknown): boolean {
+function isRewrittenMultilineEmptyJsxExpressionBlockComment(node: unknown): boolean {
   if (!isRecord(node) || node['type'] !== 'JSXExpressionContainer') {
     return false;
   }
@@ -40,15 +41,15 @@ function isMultilineEmptyJsxExpressionBlockComment(node: unknown): boolean {
 
   const comments = expression['comments'];
 
-  return Array.isArray(comments) && comments.some(isMultilineBlockComment);
+  return Array.isArray(comments) && comments.some(isRewrittenMultilineBlockComment);
 }
 
-function isMultilineBlockComment(comment: unknown): boolean {
+function isRewrittenMultilineBlockComment(comment: unknown): boolean {
   if (!isRecord(comment) || (comment['type'] !== 'Block' && comment['type'] !== 'CommentBlock')) {
     return false;
   }
 
   const value = comment['value'];
 
-  return typeof value === 'string' && value.includes('\n');
+  return typeof value === 'string' && value.includes('\n') && isRewrittenJsxBlockComment(comment);
 }

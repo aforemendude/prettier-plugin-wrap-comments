@@ -23,8 +23,14 @@ import { wrapLineCommentGroup } from './wrap-line-comment-group.js';
 import { wrapTrailingLineComment } from './wrap-trailing-line-comment.js';
 import { applyReplacements } from '../utils/replacements.js';
 import type { Replacement } from '../utils/replacements.js';
+import type { JsxBlockCommentRewrite } from '../plugin/jsx-comment-rewrite-metadata.js';
 import { getTabWidth } from '../utils/wrap-options.js';
 import type { WrapOptions } from '../utils/wrap-options.js';
+
+export type WrapCommentsResult = {
+  jsxBlockCommentRewrites: JsxBlockCommentRewrite[];
+  text: string;
+};
 
 export async function wrapComments<T>(
   text: string,
@@ -32,6 +38,15 @@ export async function wrapComments<T>(
   options: WrapOptions,
   printerLayoutSource?: PrinterLayoutSource,
 ): Promise<string> {
+  return (await wrapCommentsWithMetadata(text, ast, options, printerLayoutSource)).text;
+}
+
+export async function wrapCommentsWithMetadata<T>(
+  text: string,
+  ast: T,
+  options: WrapOptions,
+  printerLayoutSource?: PrinterLayoutSource,
+): Promise<WrapCommentsResult> {
   const commentEntries = collectCommentEntries(ast, text);
   const comments = commentEntries.map((entry) => entry.range);
   const embeddedExpressionRanges = collectEmbeddedExpressionRanges(ast);
@@ -39,16 +54,22 @@ export async function wrapComments<T>(
   const ignoredLineRanges = collectPrettierIgnoredLineRanges(text, ast, commentEntries);
 
   if (comments.length === 0) {
-    return text;
+    return { jsxBlockCommentRewrites: [], text };
   }
 
   const replacements: Replacement[] = [];
+  const jsxBlockCommentRewrites: JsxBlockCommentRewrite[] = [];
   const tabWidth = getTabWidth(options);
   const printerLayout = getPrinterLayout(text, commentEntries, jsxExpressionContainers, printerLayoutSource, tabWidth);
+  let blockCommentIndex = -1;
 
   for (let index = 0; index < comments.length; index += 1) {
     const comment = comments[index];
     const outputCommentLayout = printerLayout.comments[index];
+
+    if (comment?.kind === 'block') {
+      blockCommentIndex += 1;
+    }
 
     if (comment === undefined || isCommentInIgnoredLineRange(comment, ignoredLineRanges)) {
       continue;
@@ -95,6 +116,10 @@ export async function wrapComments<T>(
         }
       } else if (replacement !== undefined) {
         replacements.push(replacement);
+
+        if (jsxLayout !== undefined) {
+          jsxBlockCommentRewrites.push({ blockCommentIndex, text: replacement.text });
+        }
       }
 
       continue;
@@ -139,5 +164,8 @@ export async function wrapComments<T>(
     }
   }
 
-  return applyReplacements(text, replacements);
+  return {
+    jsxBlockCommentRewrites,
+    text: applyReplacements(text, replacements),
+  };
 }

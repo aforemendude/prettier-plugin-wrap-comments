@@ -1,0 +1,19 @@
+export const View = () => (
+  <section>
+    <span>
+      {/**
+       * JSDoc stays in the native JSX layout.
+       */}
+    </span>
+    <span>
+      {/*!
+       * Bang-preserved text stays in the native JSX layout.
+       */}
+    </span>
+    <span>
+      {/*
+       * @license MIT
+       */}
+    </span>
+  </section>
+);

@@ -4,8 +4,9 @@ import * as typescriptPlugin from 'prettier/plugins/typescript';
 
 import { collectAstComments } from '../comments/comment-ranges.js';
 import { neutralizePrettierIgnoreForIgnoredComments } from '../comments/prettier-ignore.js';
-import { wrapComments } from '../comments/wrap-comments.js';
+import { wrapCommentsWithMetadata } from '../comments/wrap-comments.js';
 import { getPrinterLayoutSource } from './get-printer-layout-source.js';
+import { markRewrittenJsxBlockComments, setJsxBlockCommentRewrites } from './jsx-comment-rewrite-metadata.js';
 import { SUPPORTED_PARSER_NAMES } from './parser-names.js';
 import type { SupportedParserName } from './parser-names.js';
 
@@ -29,10 +30,15 @@ function createWrappedParser<T>(parserName: SupportedParserName, parser: Parser<
     ...parser,
     async parse(text, options) {
       const ast = await parser.parse(text, options);
+      const neutralizedAst = neutralizePrettierIgnoreForIgnoredComments(text, ast);
 
-      return neutralizePrettierIgnoreForIgnoredComments(text, ast);
+      markRewrittenJsxBlockComments(text, neutralizedAst, options);
+
+      return neutralizedAst;
     },
     async preprocess(text, options) {
+      setJsxBlockCommentRewrites(options, []);
+
       const preprocessed = parser.preprocess === undefined ? text : await parser.preprocess(text, options);
 
       // Prettier calculates cursor nodes and initial range boundaries after preprocessing, but those offsets still
@@ -54,8 +60,11 @@ function createWrappedParser<T>(parserName: SupportedParserName, parser: Parser<
       }
 
       const printerLayoutSource = await getPrinterLayoutSource(preprocessed, ast, parserName, parser, options);
+      const result = await wrapCommentsWithMetadata(preprocessed, ast, options, printerLayoutSource);
 
-      return wrapComments(preprocessed, ast, options, printerLayoutSource);
+      setJsxBlockCommentRewrites(options, result.jsxBlockCommentRewrites);
+
+      return result.text;
     },
   };
 }

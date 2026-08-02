@@ -30,6 +30,10 @@ vi.mock('prettier/plugins/estree', () => ({
 }));
 
 import { createPrinters } from '../../../src/plugin/create-printers.js';
+import {
+  markRewrittenJsxBlockComments,
+  setJsxBlockCommentRewrites,
+} from '../../../src/plugin/jsx-comment-rewrite-metadata.js';
 
 const { hardline, indent } = doc.builders;
 const fallbackCases = [
@@ -82,6 +86,16 @@ const fallbackCases = [
       type: 'JSXExpressionContainer',
     },
   },
+  {
+    name: 'an unmarked multiline block comment',
+    node: {
+      expression: {
+        comments: [{ type: 'Block', value: ['first line', 'second line'].join('\n') }],
+        type: 'JSXEmptyExpression',
+      },
+      type: 'JSXExpressionContainer',
+    },
+  },
 ] as const;
 
 describe('createPrinters', () => {
@@ -102,12 +116,12 @@ describe('createPrinters', () => {
   it.each(['Block', 'CommentBlock'] as const)('expands a multiline %s comment in an empty JSX expression', (type) => {
     const expressionDoc = ['printed expression'] satisfies Doc;
     const print = vi.fn(() => expressionDoc);
+    const value = ['first line', 'second line'].join('\n');
+    const raw = `/*${value}*/`;
+    const blockComment = { end: raw.length, start: 0, type, value };
     const node = {
       expression: {
-        comments: [
-          { type: 'Line', value: ['ignored', 'line'].join('\n') },
-          { type, value: ['first line', 'second line'].join('\n') },
-        ],
+        comments: [{ type: 'Line', value: ['ignored', 'line'].join('\n') }, blockComment],
         type: 'JSXEmptyExpression',
       },
       type: 'JSXExpressionContainer',
@@ -115,6 +129,10 @@ describe('createPrinters', () => {
     const path = createPath(node);
     const options = createParserOptions();
     const args = { marker: 'args' };
+
+    setJsxBlockCommentRewrites(options, [{ blockCommentIndex: 0, text: raw }]);
+    markRewrittenJsxBlockComments(raw, { comments: [blockComment] }, options);
+
     const printer = getEstreePrinter(createPrinters());
 
     expect(printer.print(path, options, print, args)).toEqual(['{', indent([hardline, expressionDoc]), hardline, '}']);

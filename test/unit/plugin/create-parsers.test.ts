@@ -32,7 +32,7 @@ const mocks = vi.hoisted(() => {
     typescriptParsers: {
       typescript: typescriptParser,
     } as Record<string, MockParser | undefined>,
-    wrapComments: vi.fn(),
+    wrapCommentsWithMetadata: vi.fn(),
   };
 });
 
@@ -53,7 +53,7 @@ vi.mock('../../../src/comments/prettier-ignore.js', () => ({
 }));
 
 vi.mock('../../../src/comments/wrap-comments.js', () => ({
-  wrapComments: mocks.wrapComments,
+  wrapCommentsWithMetadata: mocks.wrapCommentsWithMetadata,
 }));
 
 vi.mock('../../../src/plugin/get-printer-layout-source.js', () => ({
@@ -61,6 +61,7 @@ vi.mock('../../../src/plugin/get-printer-layout-source.js', () => ({
 }));
 
 import { createParsers } from '../../../src/plugin/create-parsers.js';
+import { isRewrittenJsxBlockComment } from '../../../src/plugin/jsx-comment-rewrite-metadata.js';
 
 const parserCases = [
   { baseParser: mocks.babelParser, parserName: 'babel' },
@@ -82,7 +83,7 @@ describe('createParsers', () => {
     mocks.collectAstComments.mockReset();
     mocks.getPrinterLayoutSource.mockReset();
     mocks.neutralizePrettierIgnoreForIgnoredComments.mockReset();
-    mocks.wrapComments.mockReset();
+    mocks.wrapCommentsWithMetadata.mockReset();
   });
 
   it('wraps every available supported parser while preserving its metadata', () => {
@@ -144,12 +145,13 @@ describe('createParsers', () => {
     const options = createParserOptions('babel');
     const ast = { comments: [{}] };
     const printerLayoutSource = { ast: { formatted: true }, text: 'formatted source' };
+    const jsxBlockCommentRewrites = [{ blockCommentIndex: 0, text: '/* wrapped */' }];
     const preprocess = vi.fn().mockResolvedValue(preprocessedSource);
     mocks.babelParser.preprocess = preprocess;
     mocks.babelParser.parse.mockResolvedValue(ast);
     mocks.collectAstComments.mockReturnValue(ast.comments);
     mocks.getPrinterLayoutSource.mockResolvedValue(printerLayoutSource);
-    mocks.wrapComments.mockResolvedValue(wrappedSource);
+    mocks.wrapCommentsWithMetadata.mockResolvedValue({ jsxBlockCommentRewrites, text: wrappedSource });
     const parser = getParser(createParsers(), 'babel');
 
     await expect(callPreprocess(parser, source, options)).resolves.toBe(wrappedSource);
@@ -167,8 +169,38 @@ describe('createParsers', () => {
       mocks.babelParser,
       options,
     );
-    expect(mocks.wrapComments).toHaveBeenCalledTimes(1);
-    expect(mocks.wrapComments).toHaveBeenCalledWith(preprocessedSource, ast, options, printerLayoutSource);
+    expect(mocks.wrapCommentsWithMetadata).toHaveBeenCalledTimes(1);
+    expect(mocks.wrapCommentsWithMetadata).toHaveBeenCalledWith(preprocessedSource, ast, options, printerLayoutSource);
+  });
+
+  it('marks rewritten JSX block comments on the final parsed AST', async () => {
+    const originalSource = '<span>{/* original */}</span>';
+    const rewrittenComment = ['/*', ' * rewritten', ' */'].join('\n');
+    const rewrittenSource = `<span>{${rewrittenComment}}</span>`;
+    const options = createParserOptions('babel');
+    const originalAst = { comments: [{}] };
+    const rewrittenCommentStart = rewrittenSource.indexOf('/*');
+    const finalComment = {
+      end: rewrittenCommentStart + rewrittenComment.length,
+      start: rewrittenCommentStart,
+      type: 'Block',
+      value: rewrittenComment.slice(2, -2),
+    };
+    const finalAst = { comments: [finalComment] };
+    mocks.babelParser.parse.mockResolvedValueOnce(originalAst).mockResolvedValueOnce(finalAst);
+    mocks.collectAstComments.mockReturnValueOnce(originalAst.comments).mockReturnValueOnce(finalAst.comments);
+    mocks.getPrinterLayoutSource.mockResolvedValue(undefined);
+    mocks.wrapCommentsWithMetadata.mockResolvedValue({
+      jsxBlockCommentRewrites: [{ blockCommentIndex: 0, text: rewrittenComment }],
+      text: rewrittenSource,
+    });
+    mocks.neutralizePrettierIgnoreForIgnoredComments.mockReturnValue(finalAst);
+    const parser = getParser(createParsers(), 'babel');
+
+    await expect(callPreprocess(parser, originalSource, options)).resolves.toBe(rewrittenSource);
+    await expect(parser.parse(rewrittenSource, options)).resolves.toBe(finalAst);
+
+    expect(isRewrittenJsxBlockComment(finalComment)).toBe(true);
   });
 
   it('uses the original source when the source parser has no preprocess hook', async () => {
@@ -185,7 +217,7 @@ describe('createParsers', () => {
     expect(mocks.collectAstComments).toHaveBeenCalledTimes(1);
     expect(mocks.collectAstComments).toHaveBeenCalledWith(ast);
     expect(mocks.getPrinterLayoutSource).not.toHaveBeenCalled();
-    expect(mocks.wrapComments).not.toHaveBeenCalled();
+    expect(mocks.wrapCommentsWithMetadata).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -206,7 +238,7 @@ describe('createParsers', () => {
     expect(mocks.babelParser.parse).not.toHaveBeenCalled();
     expect(mocks.collectAstComments).not.toHaveBeenCalled();
     expect(mocks.getPrinterLayoutSource).not.toHaveBeenCalled();
-    expect(mocks.wrapComments).not.toHaveBeenCalled();
+    expect(mocks.wrapCommentsWithMetadata).not.toHaveBeenCalled();
   });
 
   it('returns preprocessed source unchanged when parsing it fails', async () => {
@@ -225,7 +257,7 @@ describe('createParsers', () => {
     expect(mocks.babelTsParser.parse).toHaveBeenCalledWith(preprocessedSource, options);
     expect(mocks.collectAstComments).not.toHaveBeenCalled();
     expect(mocks.getPrinterLayoutSource).not.toHaveBeenCalled();
-    expect(mocks.wrapComments).not.toHaveBeenCalled();
+    expect(mocks.wrapCommentsWithMetadata).not.toHaveBeenCalled();
   });
 
   it('propagates source preprocessor failures without attempting to parse', async () => {
@@ -240,7 +272,7 @@ describe('createParsers', () => {
     expect(mocks.babelParser.parse).not.toHaveBeenCalled();
     expect(mocks.collectAstComments).not.toHaveBeenCalled();
     expect(mocks.getPrinterLayoutSource).not.toHaveBeenCalled();
-    expect(mocks.wrapComments).not.toHaveBeenCalled();
+    expect(mocks.wrapCommentsWithMetadata).not.toHaveBeenCalled();
   });
 });
 
