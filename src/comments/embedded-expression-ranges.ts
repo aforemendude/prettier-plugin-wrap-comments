@@ -1,6 +1,7 @@
 import type { CommentRange } from './comment-ranges.js';
 import { getAstNodeRange, visitAstNodes } from '../utils/ast.js';
 import type { SourceRange } from '../utils/ast.js';
+import { getLineEnd } from '../utils/source-lines.js';
 import { isRecord, numberOrUndefined } from '../utils/type-guards.js';
 
 const JSX_EMBEDDED_EXPRESSION_TYPES = new Set(['JSXExpressionContainer', 'JSXSpreadAttribute', 'JSXSpreadChild']);
@@ -68,6 +69,35 @@ export function getEmbeddedTrailingLineCommentMove(
   }
 
   return { insertAt: expression.start, removeStart: expression.end };
+}
+
+export function doesBlockCommentSeparateEmbeddedTrailingLineComment(
+  text: string,
+  blockComment: CommentRange,
+  nextComment: CommentRange | undefined,
+  ranges: EmbeddedExpressionRange[],
+): boolean {
+  if (
+    blockComment.kind !== 'block' ||
+    nextComment?.kind !== 'line' ||
+    blockComment.end >= nextComment.start ||
+    nextComment.end > getLineEnd(text, blockComment.start)
+  ) {
+    return false;
+  }
+
+  const range = getSmallestContainingRange(blockComment, ranges);
+  const nextRange = getSmallestContainingRange(nextComment, ranges);
+  const expression = range?.expression;
+
+  return (
+    range !== undefined &&
+    range === nextRange &&
+    expression !== undefined &&
+    expression.end <= blockComment.start &&
+    /^[\t ]*$/u.test(text.slice(expression.end, blockComment.start)) &&
+    /^[\t ]*$/u.test(text.slice(blockComment.end, nextComment.start))
+  );
 }
 
 function collectTemplateInterpolationRanges(

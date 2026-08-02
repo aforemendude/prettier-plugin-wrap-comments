@@ -3,6 +3,7 @@ import { isStandaloneBlockComment, isStandaloneLineComment } from './comment-loc
 import { collectCommentEntries } from './comment-ranges.js';
 import {
   collectEmbeddedExpressionRanges,
+  doesBlockCommentSeparateEmbeddedTrailingLineComment,
   getEmbeddedTrailingLineCommentMove,
   isCommentInEmbeddedExpression,
 } from './embedded-expression-ranges.js';
@@ -80,9 +81,18 @@ export async function wrapComments<T>(
               placement: isStandaloneBlockComment(text, comment) ? ('standalone' as const) : ('inline' as const),
             };
       const replacement = await wrapBlockComment(text, comment, options, jsxLayout ?? outputLayout);
+      const preservesEmbeddedCommentOrder = doesBlockCommentSeparateEmbeddedTrailingLineComment(
+        text,
+        comment,
+        comments[index + 1],
+        embeddedExpressionRanges,
+      );
 
       if (Array.isArray(replacement)) {
-        replacements.push(...replacement);
+        // Moving the block would make the line comment directly trail the expression on the next formatting pass.
+        if (!preservesEmbeddedCommentOrder) {
+          replacements.push(...replacement);
+        }
       } else if (replacement !== undefined) {
         replacements.push(replacement);
       }

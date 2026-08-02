@@ -6,7 +6,12 @@
     "hardline",
     "ignoreful",
     "nonblank",
+    "nonobject",
+    "nonwhitespace",
     "oxlint",
+    "quasis",
+    "reparses",
+    "reparsing",
     "runtimeful",
     "unstarred"
   ]

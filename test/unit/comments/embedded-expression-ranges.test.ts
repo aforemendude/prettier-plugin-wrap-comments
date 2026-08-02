@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   collectEmbeddedExpressionRanges,
+  doesBlockCommentSeparateEmbeddedTrailingLineComment,
   getEmbeddedTrailingLineCommentMove,
   isCommentInEmbeddedExpression,
 } from '../../../src/comments/embedded-expression-ranges.js';
@@ -49,6 +50,28 @@ describe('collectEmbeddedExpressionRanges', () => {
       { end: 129, expression: { end: 115, start: 110 }, start: 108 },
       { end: 159, expression: { end: 151, start: 143 }, start: 141 },
     ]);
+  });
+});
+
+describe('doesBlockCommentSeparateEmbeddedTrailingLineComment', () => {
+  it('detects adjacent block and line comments after the root expression', () => {
+    const text = ['<span>{value /* note */ // trailing comment', '}</span>'].join('\n');
+    const blockComment = createCommentRange(text, '/* note */');
+    const lineComment = createCommentRange(text, '// trailing comment');
+    const expression = { end: text.indexOf('value') + 'value'.length, start: text.indexOf('value') };
+    const range = { end: text.indexOf('}') + 1, expression, start: text.indexOf('{') };
+
+    expect(doesBlockCommentSeparateEmbeddedTrailingLineComment(text, blockComment, lineComment, [range])).toBe(true);
+  });
+
+  it('ignores comments that are not adjacent in the same embedded expression', () => {
+    const text = ['<span>{value /* note */ + other // trailing comment', '}</span>'].join('\n');
+    const blockComment = createCommentRange(text, '/* note */');
+    const lineComment = createCommentRange(text, '// trailing comment');
+    const expression = { end: text.indexOf('value') + 'value'.length, start: text.indexOf('value') };
+    const range = { end: text.indexOf('}') + 1, expression, start: text.indexOf('{') };
+
+    expect(doesBlockCommentSeparateEmbeddedTrailingLineComment(text, blockComment, lineComment, [range])).toBe(false);
   });
 });
 

@@ -1,0 +1,18 @@
+const jsxObject = (
+  <span>{{ value: item, // This nested JSX trailing comment must stay in place because it is inside the root object expression.
+  }}</span>
+);
+
+const spread = (
+  <Component {...props // This JSX spread trailing comment must stay in place because a spread has no safe expression insertion point.
+  } />
+);
+
+const separated = (
+  <span>{value /* preserve comment order */ // This separated trailing line comment must stay after the block comment instead of moving above the value.
+  }</span>
+);
+
+const message = `prefix
+${{ value: item, // This nested template trailing comment must stay in place because it is inside the root object expression.
+}}`;
