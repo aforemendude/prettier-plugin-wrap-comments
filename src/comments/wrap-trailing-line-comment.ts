@@ -1,6 +1,7 @@
 import { normalizeLineCommentBody } from './comment-body.js';
 import type { CommentRange } from './comment-ranges.js';
-import { getColumns } from '../utils/display-width.js';
+import type { EmbeddedTrailingLineCommentMove } from './embedded-expression-ranges.js';
+import { getColumnAt, getColumns } from '../utils/display-width.js';
 import { formatMarkdownLines } from '../utils/format-markdown.js';
 import { getLeadingIndent, makeIndent } from '../utils/indentation.js';
 import type { Replacement } from '../utils/replacements.js';
@@ -18,6 +19,7 @@ export async function wrapTrailingLineComment(
   comment: CommentRange,
   options: WrapOptions,
   outputLayout?: TrailingLineCommentLayout,
+  move?: EmbeddedTrailingLineCommentMove,
 ): Promise<Replacement[] | undefined> {
   const lineStart = getLineStart(text, comment.start);
   const lineEnd = getLineEnd(text, comment.start);
@@ -44,27 +46,47 @@ export async function wrapTrailingLineComment(
   }
 
   const tabWidth = getTabWidth(options);
-  const indent = getTrailingCommentIndent(codeText, linePrefix, options, outputLayout?.lineIndentColumn);
+  const markerColumn =
+    move === undefined ? undefined : (outputLayout?.lineIndentColumn ?? getColumnAt(text, move.insertAt, tabWidth));
+  const indent =
+    markerColumn === undefined
+      ? getTrailingCommentIndent(codeText, linePrefix, options, outputLayout?.lineIndentColumn)
+      : makeIndent(markerColumn, options);
   const availableWidth = getAvailableContentWidth(options, getColumns(indent, tabWidth) + 3);
   const formattedLines = await formatMarkdownLines(body, availableWidth, options);
   const newline = getPreferredNewline(text, options);
-  const leadingCommentText = formattedLines
-    .map((line) => `${indent}${line.length === 0 ? '//' : `// ${line}`}`)
-    .join(newline);
+  const leadingCommentText = buildLeadingCommentText(formattedLines, indent, newline, move !== undefined);
   const codeEnd = lineStart + codeText.length;
+  const insertAt = move?.insertAt ?? lineStart;
+  const insertionSuffix = move === undefined ? '' : indent;
 
   return [
     {
-      end: lineStart,
-      start: lineStart,
-      text: [leadingCommentText, ''].join(newline),
+      end: insertAt,
+      start: insertAt,
+      text: [leadingCommentText, insertionSuffix].join(newline),
     },
     {
       end: lineEnd,
-      start: codeEnd,
+      start: move?.removeStart ?? codeEnd,
       text: '',
     },
   ];
+}
+
+function buildLeadingCommentText(
+  formattedLines: string[],
+  indent: string,
+  newline: string,
+  startsAtExpression: boolean,
+): string {
+  return formattedLines
+    .map((line, index) => {
+      const lineIndent = startsAtExpression && index === 0 ? '' : indent;
+
+      return `${lineIndent}${line.length === 0 ? '//' : `// ${line}`}`;
+    })
+    .join(newline);
 }
 
 function isTrailingLineCommentWithinPrintWidth(

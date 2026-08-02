@@ -5,8 +5,17 @@ import { isRecord, numberOrUndefined } from '../utils/type-guards.js';
 
 const JSX_EMBEDDED_EXPRESSION_TYPES = new Set(['JSXExpressionContainer', 'JSXSpreadAttribute', 'JSXSpreadChild']);
 
-export function collectEmbeddedExpressionRanges(ast: unknown): SourceRange[] {
-  const ranges: SourceRange[] = [];
+export type EmbeddedExpressionRange = SourceRange & {
+  expression?: SourceRange;
+};
+
+export type EmbeddedTrailingLineCommentMove = {
+  insertAt: number;
+  removeStart: number;
+};
+
+export function collectEmbeddedExpressionRanges(ast: unknown): EmbeddedExpressionRange[] {
+  const ranges: EmbeddedExpressionRange[] = [];
 
   visitAstNodes(ast, (node) => {
     const type = node['type'];
@@ -19,7 +28,10 @@ export function collectEmbeddedExpressionRanges(ast: unknown): SourceRange[] {
       const range = getAstNodeRange(node);
 
       if (range !== undefined) {
-        ranges.push(range);
+        const expressionNode = type === 'JSXExpressionContainer' ? node['expression'] : undefined;
+        const expression = isRecord(expressionNode) ? getAstNodeRange(expressionNode) : undefined;
+
+        ranges.push(expression === undefined ? range : { ...range, expression });
       }
 
       return;
@@ -36,13 +48,32 @@ export function collectEmbeddedExpressionRanges(ast: unknown): SourceRange[] {
 }
 
 export function isCommentInEmbeddedExpression(comment: CommentRange, ranges: SourceRange[]): boolean {
-  return ranges.some((range) => range.start < comment.start && comment.end < range.end);
+  return getSmallestContainingRange(comment, ranges) !== undefined;
+}
+
+export function getEmbeddedTrailingLineCommentMove(
+  text: string,
+  comment: CommentRange,
+  ranges: EmbeddedExpressionRange[],
+): EmbeddedTrailingLineCommentMove | undefined {
+  const range = getSmallestContainingRange(comment, ranges);
+  const expression = range?.expression;
+
+  if (
+    expression === undefined ||
+    expression.end > comment.start ||
+    !/^[\t ]*$/u.test(text.slice(expression.end, comment.start))
+  ) {
+    return undefined;
+  }
+
+  return { insertAt: expression.start, removeStart: expression.end };
 }
 
 function collectTemplateInterpolationRanges(
   node: Record<string, unknown>,
   expressionsKey: 'expressions' | 'types',
-  ranges: SourceRange[],
+  ranges: EmbeddedExpressionRange[],
 ): void {
   const quasis = node['quasis'];
   const expressions = node[expressionsKey];
@@ -54,13 +85,23 @@ function collectTemplateInterpolationRanges(
   for (let index = 0; index < expressions.length; index += 1) {
     const precedingQuasi = getNodeBoundary(quasis[index]);
     const followingQuasi = getNodeBoundary(quasis[index + 1]);
+    const expression = getExpressionRange(expressions[index]);
 
-    if (precedingQuasi === undefined || followingQuasi === undefined || precedingQuasi.end >= followingQuasi.start) {
+    if (
+      precedingQuasi === undefined ||
+      followingQuasi === undefined ||
+      expression === undefined ||
+      precedingQuasi.end >= followingQuasi.start
+    ) {
       continue;
     }
 
-    ranges.push({ end: followingQuasi.start, start: precedingQuasi.end });
+    ranges.push({ end: followingQuasi.start, expression, start: precedingQuasi.end });
   }
+}
+
+function getExpressionRange(value: unknown): SourceRange | undefined {
+  return isRecord(value) ? getAstNodeRange(value) : undefined;
 }
 
 function getNodeBoundary(value: unknown): SourceRange | undefined {
@@ -77,4 +118,23 @@ function getNodeBoundary(value: unknown): SourceRange | undefined {
   }
 
   return { end, start };
+}
+
+function getSmallestContainingRange<Range extends SourceRange>(
+  comment: CommentRange,
+  ranges: Range[],
+): Range | undefined {
+  let containingRange: Range | undefined;
+
+  for (const range of ranges) {
+    if (comment.start <= range.start || comment.end >= range.end) {
+      continue;
+    }
+
+    if (containingRange === undefined || range.end - range.start < containingRange.end - containingRange.start) {
+      containingRange = range;
+    }
+  }
+
+  return containingRange;
 }

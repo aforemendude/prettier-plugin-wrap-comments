@@ -47,7 +47,7 @@ describe('wrapComments', () => {
     ).resolves.toBe(['// note', 'const x = "\u6f22\u6f22\u6f22";'].join('\n'));
   });
 
-  it('does not move trailing line comments out of embedded expressions', async () => {
+  it('moves direct trailing line comments before their embedded expression values', async () => {
     const jsxComment = '// This trailing JSX comment is deliberately wider than the print width.';
     const jsxText = [`<span>{value ${jsxComment}`, '}</span>'].join('\n');
     const jsxEntries = createCommentEntries(jsxText, [jsxComment]);
@@ -81,7 +81,20 @@ describe('wrapComments', () => {
         },
         createWrapOptions({ printWidth: 20 }),
       ),
-    ).resolves.toBe(jsxText);
+    ).resolves.toBe(
+      [
+        '<span>{// This',
+        '       // trailing',
+        '       // JSX',
+        '       // comment is',
+        '       // deliberately',
+        '       // wider than',
+        '       // the print',
+        '       // width.',
+        '       value',
+        '}</span>',
+      ].join('\n'),
+    );
     await expect(
       wrapComments(
         templateText,
@@ -109,7 +122,71 @@ describe('wrapComments', () => {
         },
         createWrapOptions({ printWidth: 20 }),
       ),
-    ).resolves.toBe(templateText);
+    ).resolves.toBe(
+      [
+        'const text = `prefix',
+        '${// This trailing',
+        '  // template',
+        '  // comment is',
+        '  // deliberately',
+        '  // wider than the',
+        '  // print width.',
+        '  value',
+        '}`;',
+      ].join('\n'),
+    );
+  });
+
+  it('leaves ambiguous embedded trailing line comments in place', async () => {
+    const nestedComment = '// This nested comment is deliberately wider than the print width.';
+    const nestedText = [`<span>{{ value: item, ${nestedComment}`, '}}</span>'].join('\n');
+    const nestedEntries = createCommentEntries(nestedText, [nestedComment]);
+    const containerStart = nestedText.indexOf('{');
+    const expressionStart = nestedText.indexOf('{', containerStart + 1);
+    const expressionEnd = nestedText.indexOf('}');
+    const spreadComment = '// This spread comment is deliberately wider than the print width.';
+    const spreadText = [`<Component {...props ${spreadComment}`, '} />'].join('\n');
+    const spreadEntries = createCommentEntries(spreadText, [spreadComment]);
+
+    await expect(
+      wrapComments(
+        nestedText,
+        {
+          body: [
+            {
+              end: nestedText.lastIndexOf('}') + 1,
+              expression: {
+                end: expressionEnd + 1,
+                start: expressionStart,
+                type: 'ObjectExpression',
+              },
+              start: containerStart,
+              type: 'JSXExpressionContainer',
+            },
+          ],
+          comments: nestedEntries.map((entry) => entry.raw),
+          type: 'Program',
+        },
+        createWrapOptions({ printWidth: 20 }),
+      ),
+    ).resolves.toBe(nestedText);
+    await expect(
+      wrapComments(
+        spreadText,
+        {
+          body: [
+            {
+              end: spreadText.indexOf('}') + 1,
+              start: spreadText.indexOf('{'),
+              type: 'JSXSpreadAttribute',
+            },
+          ],
+          comments: spreadEntries.map((entry) => entry.raw),
+          type: 'Program',
+        },
+        createWrapOptions({ printWidth: 20 }),
+      ),
+    ).resolves.toBe(spreadText);
   });
 
   it('preserves statements around standalone comments separated by JavaScript Unicode line separators', async () => {
