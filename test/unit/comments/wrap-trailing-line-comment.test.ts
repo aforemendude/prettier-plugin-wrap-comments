@@ -76,6 +76,38 @@ describe('wrapTrailingLineComment', () => {
     ]);
   });
 
+  it('limits trailing-comment removal to JavaScript Unicode line separators', async () => {
+    for (const separator of ['\u2028', '\u2029']) {
+      const commentText = '// Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda.';
+      const text = [`const value = compute(); ${commentText}`, 'const after = 2;'].join(separator);
+      const commentStart = text.indexOf('//');
+      const lineEnd = text.indexOf(separator);
+      const comment = { end: lineEnd, kind: 'line' as const, start: commentStart };
+
+      await expect(wrapTrailingLineComment(text, comment, createWrapOptions({ printWidth: 32 }))).resolves.toEqual([
+        {
+          end: 0,
+          start: 0,
+          text: ['// Alpha beta gamma delta', '// epsilon zeta eta theta iota', '// kappa lambda.', ''].join('\n'),
+        },
+        {
+          end: lineEnd,
+          start: 'const value = compute();'.length,
+          text: '',
+        },
+      ]);
+    }
+  });
+
+  it('does not move a line-comment range across its JavaScript line boundary', async () => {
+    const text = ['value(); // comment that overflows', 'const after = 2;'].join('\u2028');
+    const comment = { end: text.length, kind: 'line' as const, start: text.indexOf('//') };
+
+    await expect(
+      wrapTrailingLineComment(text, comment, createWrapOptions({ printWidth: 10 })),
+    ).resolves.toBeUndefined();
+  });
+
   it('uses printer line measurements instead of the source line width', async () => {
     const longText = 'const value = computeSomethingExpensive(); // note';
     const longCommentStart = longText.indexOf('//');

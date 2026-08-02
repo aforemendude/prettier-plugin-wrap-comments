@@ -60,6 +60,21 @@ describe('line boundaries', () => {
     expect(getLineEnd(text, betaIndex)).toBe(betaStart + 'beta'.length);
     expect(getLineStart(text, gammaStart)).toBe(gammaStart);
   });
+
+  it('locates prefixes and boundaries on JavaScript Unicode line separators', () => {
+    for (const separator of ['\u2028', '\u2029']) {
+      const text = ['alpha', 'beta', 'gamma'].join(separator);
+      const betaStart = text.indexOf('beta');
+      const betaIndex = betaStart + 2;
+      const gammaStart = text.indexOf('gamma');
+
+      expect(getLineEnd(text, 2)).toBe('alpha'.length);
+      expect(getLineStart(text, betaIndex)).toBe(betaStart);
+      expect(getLinePrefix(text, betaIndex)).toBe('be');
+      expect(getLineEnd(text, betaIndex)).toBe(betaStart + 'beta'.length);
+      expect(getLineStart(text, gammaStart)).toBe(gammaStart);
+    }
+  });
 });
 
 describe('isBlankLine', () => {

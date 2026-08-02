@@ -17,6 +17,14 @@ describe('standalone comment detection', () => {
     expect(isStandaloneLineComment(text, createCommentRange(text, '// trailing'))).toBe(false);
   });
 
+  it('recognizes standalone line comments after JavaScript Unicode line separators', () => {
+    for (const separator of ['\u2028', '\u2029']) {
+      const text = ['value();', '  // standalone'].join(separator);
+
+      expect(isStandaloneLineComment(text, createCommentRange(text, '// standalone'))).toBe(true);
+    }
+  });
+
   it('requires block comments to be alone on their source line', () => {
     const standaloneText = '  /* standalone */ \t';
     const leadingCodeText = 'value(); /* comment */';
@@ -56,6 +64,14 @@ describe('comment adjacency', () => {
         createCommentRange(crlfText, '// second'),
       ),
     ).toBe(true);
+
+    for (const separator of ['\u2028', '\u2029']) {
+      const text = ['// first', '  // second'].join(separator);
+
+      expect(
+        areCommentsOnAdjacentLines(text, createCommentRange(text, '// first'), createCommentRange(text, '// second')),
+      ).toBe(true);
+    }
   });
 
   it('rejects same-line, blank-line, and intervening content', () => {

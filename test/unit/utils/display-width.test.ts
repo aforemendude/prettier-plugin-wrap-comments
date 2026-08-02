@@ -48,4 +48,14 @@ describe('display width', () => {
     expect(getColumnAt(text, 0, 4)).toBe(0);
     expect(getColumnAt(text, text.indexOf('def'), 4)).toBe(2);
   });
+
+  it('measures columns after JavaScript Unicode line separators', () => {
+    for (const separator of ['\u2028', '\u2029']) {
+      const text = ['const value = 1;', '\t  // comment'].join(separator);
+      const commentStart = text.indexOf('//');
+
+      expect(getColumnAt(text, commentStart, 2)).toBe(4);
+      expect(getColumnAt(text, commentStart, 4)).toBe(6);
+    }
+  });
 });

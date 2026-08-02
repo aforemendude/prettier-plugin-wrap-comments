@@ -2,24 +2,6 @@
 
 ## Findings
 
-### Unicode JavaScript line separators can make wrapping delete later statements
-
-- **Severity:** Medium
-- **Location:** `src/utils/source-lines.ts:21-39`, `src/comments/comment-location.ts:8-32`,
-  `src/utils/display-width.ts:5-6`, and `src/comments/wrap-trailing-line-comment.ts:26-60`
-- **Problem:** The shared line-boundary helpers recognize only LF (with a CRLF adjustment), but JavaScript also treats
-  U+2028 LINE SEPARATOR and U+2029 PARAGRAPH SEPARATOR as line terminators. Unlike CR and CRLF, Prettier does not
-  normalize these characters before the plugin's preprocessing. A standalone line comment after either separator is
-  therefore seen as part of the preceding physical line, and `getLineEnd` can extend its trailing-comment removal range
-  to end of file.
-- **Impact:** Formatting can silently delete valid source while still returning parseable output. In public-path Babel
-  checks using both U+2028 and U+2029, an input containing `const before = 1;`, an overlong standalone comment, and
-  `const after = 2;` lost the entire `const after` statement; vanilla Prettier preserved all three lines and normalized
-  the separators to LF.
-- **Recommendation:** Implement JavaScript-aware line-start and line-end scanning that recognizes LF, CRLF, CR, U+2028,
-  and U+2029, and use it consistently in adjacency, standalone classification, width measurement, and replacement
-  construction. Add a guard ensuring a trailing-comment removal never extends past the comment's actual JavaScript line.
-
 ### Moving embedded trailing line comments can turn them into program data
 
 - **Severity:** Medium

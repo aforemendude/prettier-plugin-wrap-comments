@@ -29,5 +29,5 @@ export function isCommentAdjacentBeforeIndex(text: string, comment: CommentRange
 }
 
 function isOnlyNewlineAndIndent(text: string): boolean {
-  return /^(?:\r\n|\n|\r)[ \t]*$/u.test(text);
+  return /^(?:\r\n|[\n\r\u2028\u2029])[ \t]*$/u.test(text);
 }

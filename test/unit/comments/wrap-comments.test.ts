@@ -47,6 +47,25 @@ describe('wrapComments', () => {
     ).resolves.toBe(['// note', 'const x = "\u6f22\u6f22\u6f22";'].join('\n'));
   });
 
+  it('preserves statements around standalone comments separated by JavaScript Unicode line separators', async () => {
+    const comment = '// Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda.';
+
+    for (const separator of ['\u2028', '\u2029']) {
+      const text = ['const before = 1;', comment, 'const after = 2;'].join(separator);
+      const entries = createCommentEntries(text, [comment]);
+
+      await expect(
+        wrapComments(text, { comments: entries.map((entry) => entry.raw) }, createWrapOptions({ printWidth: 32 })),
+      ).resolves.toBe(
+        [
+          'const before = 1;',
+          ['// Alpha beta gamma delta', '// epsilon zeta eta theta iota', '// kappa lambda.'].join('\n'),
+          'const after = 2;',
+        ].join(separator),
+      );
+    }
+  });
+
   it('skips the entire ignored line-comment group and resumes after it', async () => {
     const ignoredFirst = '// This ignored first comment is deliberately much wider than the print width.';
     const ignoredSecond = '// This ignored second comment is also deliberately much wider than the print width.';

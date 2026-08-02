@@ -26,7 +26,7 @@ export function getLineStart(text: string, index: number): number {
   for (let cursor = Math.min(index, text.length) - 1; cursor >= 0; cursor -= 1) {
     const character = text[cursor];
 
-    if (character === '\n') {
+    if (character === '\n' || character === '\u2028' || character === '\u2029') {
       return cursor + 1;
     }
 
@@ -42,7 +42,7 @@ export function getLineEnd(text: string, index: number): number {
   for (let cursor = Math.max(index, 0); cursor < text.length; cursor += 1) {
     const character = text[cursor];
 
-    if (character === '\r' || character === '\n') {
+    if (character === '\r' || character === '\n' || character === '\u2028' || character === '\u2029') {
       return character === '\n' && text[cursor - 1] === '\r' ? cursor - 1 : cursor;
     }
   }

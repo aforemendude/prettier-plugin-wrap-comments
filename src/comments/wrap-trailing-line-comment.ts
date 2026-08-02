@@ -19,12 +19,17 @@ export async function wrapTrailingLineComment(
   options: WrapOptions,
   outputLayout?: TrailingLineCommentLayout,
 ): Promise<Replacement[] | undefined> {
-  if (isTrailingLineCommentWithinPrintWidth(text, comment, options, outputLayout?.lineWidth)) {
+  const lineStart = getLineStart(text, comment.start);
+  const lineEnd = getLineEnd(text, comment.start);
+
+  if (comment.end > lineEnd) {
     return undefined;
   }
 
-  const lineStart = getLineStart(text, comment.start);
-  const lineEnd = getLineEnd(text, comment.end);
+  if (isTrailingLineCommentWithinPrintWidth(text, lineStart, lineEnd, options, outputLayout?.lineWidth)) {
+    return undefined;
+  }
+
   const linePrefix = text.slice(lineStart, comment.start);
   const codeText = linePrefix.replace(/[ \t]+$/u, '');
 
@@ -64,7 +69,8 @@ export async function wrapTrailingLineComment(
 
 function isTrailingLineCommentWithinPrintWidth(
   text: string,
-  comment: CommentRange,
+  lineStart: number,
+  lineEnd: number,
   options: WrapOptions,
   outputLineWidth?: number,
 ): boolean {
@@ -73,8 +79,6 @@ function isTrailingLineCommentWithinPrintWidth(
   }
 
   const tabWidth = getTabWidth(options);
-  const lineStart = getLineStart(text, comment.start);
-  const lineEnd = getLineEnd(text, comment.end);
   const lineText = text.slice(lineStart, lineEnd).replace(/[ \t]+$/u, '');
 
   return getColumns(lineText, tabWidth) <= getPrintWidth(options);
