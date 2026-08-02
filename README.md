@@ -6,7 +6,7 @@ real column to calculate the available content width, so nested comments wrap mo
 ## Requirements
 
 - Node.js 20 or newer
-- Prettier 3 or newer
+- Prettier 3 (`>=3.0.0 <4.0.0`)
 
 ## Install
 
@@ -59,9 +59,11 @@ function example() {
 ```
 
 Trailing `//` comments stay in place when the full source line fits within `printWidth`. If the source line is too long,
-the comment is moved above the code and wrapped using the code line's indentation. When a comment directly trails the
-root value of a JSX expression or template interpolation, it can move above that value and wrap inside the expression
-delimiters. Nested or otherwise ambiguous expression comments and comments in JSX spreads stay in place.
+the comment is moved above the code and normally wrapped using the code line's indentation. On a line made up of closing
+delimiters such as `}`, `]`, or `)`, the moved comment is indented one additional level so it remains visually inside
+the construct being closed. When a comment directly trails the root value of a JSX expression or template interpolation,
+it can move above that value and wrap inside the expression delimiters. Nested or otherwise ambiguous expression
+comments and comments in JSX spreads stay in place.
 
 ```ts
 function example() {
