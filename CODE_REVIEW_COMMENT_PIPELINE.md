@@ -15,26 +15,6 @@
 
 ## Findings
 
-### 6. Flow suppression and lint directives can be merged behind prose and disabled
-
-- **Severity:** Medium
-- **References:** `src/comments/comment-directives.ts:15-34`, `src/comments/comment-directives.ts:40-50`,
-  `src/comments/line-comment-groups.ts:28-45`, `src/comments/wrap-line-comment-group.ts:23-33`
-- **Problem:** The tool-directive list does not recognize Flow's `$FlowFixMe[...]`, `$FlowExpectedError[...]`,
-  `flowlint`, `flowlint-line`, or `flowlint-next-line` comments. If an ordinary standalone comment immediately precedes
-  one, line-group collection combines both bodies and Markdown reflow places the directive after the prose in the same
-  comment. Current Flow suppression syntax expressly disallows text before the suppressor, and the lint forms are
-  executable per-file/line configuration rather than prose ([Flow error suppressions](https://flow.org/en/docs/errors/),
-  [Flowlint comments](https://flow.org/en/docs/linting/flowlint-comments/)).
-- **Impact:** Formatting can disable a type-error suppression or Flow lint configuration and make a previously clean
-  Flow check fail. Focused current-build probes rewrote `// explanation` followed by each of
-  `// $FlowFixMe[incompatible-type]`, `// $FlowExpectedError[incompatible-type]`, and
-  `// flowlint-next-line sketchy-null-bool:off` into a single `// explanation <directive>` line immediately before the
-  target code.
-- **Recommendation:** Add Flow suppressor and `flowlint(?:-line|-next-line)?` forms to directive classification so
-  grouping stops before them and their text/placement is preserved. Include Flow's `@flow`/`@noflow` file pragmas in the
-  same preservation policy even though fresh Babel parsing tolerates prose merged around those pragma tokens.
-
 ### 7. Unicode block-comment line separators are not normalized before Markdown parsing
 
 - **Severity:** Medium
