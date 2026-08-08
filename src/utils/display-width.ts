@@ -6,8 +6,8 @@ export function getColumnAt(text: string, index: number, tabWidth: number): numb
   return getColumns(text.slice(getLineStart(text, index), index), tabWidth);
 }
 
-export function getColumns(text: string, tabWidth: number): number {
-  let column = 0;
+export function getColumns(text: string, tabWidth: number, startColumn = 0): number {
+  let column = startColumn;
   let segmentStart = 0;
 
   for (let index = 0; index < text.length; index += 1) {
@@ -22,5 +22,5 @@ export function getColumns(text: string, tabWidth: number): number {
     }
   }
 
-  return column + util.getStringWidth(text.slice(segmentStart));
+  return column + util.getStringWidth(text.slice(segmentStart)) - startColumn;
 }

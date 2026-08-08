@@ -13,6 +13,7 @@ export type PrinterLayoutSource = {
 
 export type PrinterCommentLayout = {
   lineIndentColumn: number;
+  lineStart: number;
   lineWidth: number;
   markerColumn: number;
   suffixWidth: number;
@@ -109,6 +110,7 @@ function getPrinterCommentLayout(text: string, comment: CommentRange, tabWidth: 
 
   return {
     lineIndentColumn: getColumns(lineIndent, tabWidth),
+    lineStart,
     lineWidth: getColumns(lineText, tabWidth),
     markerColumn: getColumns(linePrefix, tabWidth),
     suffixWidth: getColumns(suffix, tabWidth),

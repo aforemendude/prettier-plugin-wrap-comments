@@ -10,7 +10,7 @@ import { getAvailableContentWidth, getPrintWidth, getTabWidth } from '../utils/w
 import type { WrapOptions } from '../utils/wrap-options.js';
 
 export type TrailingLineCommentLayout = {
-  lineIndentColumn: number;
+  lineIndentColumn?: number;
   lineWidth: number;
 };
 

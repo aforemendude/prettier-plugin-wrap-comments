@@ -16,13 +16,16 @@ import {
   isPrettierIgnoredTrailingLineComment,
 } from './prettier-ignore.js';
 import { getPrinterLayout } from './printer-layout.js';
-import type { PrinterLayoutSource } from './printer-layout.js';
+import type { PrinterCommentLayout, PrinterLayoutSource } from './printer-layout.js';
 import { wrapBlockComment } from './wrap-block-comment.js';
 import { wrapLineCommentGroup } from './wrap-line-comment-group.js';
 import { wrapTrailingLineComment } from './wrap-trailing-line-comment.js';
+import type { TrailingLineCommentLayout } from './wrap-trailing-line-comment.js';
 import { matchOrderedRangesToSmallestContainers } from '../utils/ast.js';
+import { getColumnAt, getColumns } from '../utils/display-width.js';
 import { applyReplacements } from '../utils/replacements.js';
 import type { Replacement } from '../utils/replacements.js';
+import { getLineEnd, getLineStart } from '../utils/source-lines.js';
 import type { JsxBlockCommentRewrite } from '../plugin/jsx-comment-rewrite-metadata.js';
 import { getTabWidth } from '../utils/wrap-options.js';
 import type { WrapOptions } from '../utils/wrap-options.js';
@@ -30,6 +33,11 @@ import type { WrapOptions } from '../utils/wrap-options.js';
 export type WrapCommentsResult = {
   jsxBlockCommentRewrites: JsxBlockCommentRewrite[];
   text: string;
+};
+
+type SameLineWidthDeltas = {
+  output: Map<number, number>;
+  source: Map<number, number>;
 };
 
 export async function wrapComments<T>(
@@ -63,6 +71,11 @@ export async function wrapCommentsWithMetadata<T>(
   const jsxBlockCommentRewrites: JsxBlockCommentRewrite[] = [];
   const tabWidth = getTabWidth(options);
   const printerLayout = getPrinterLayout(text, commentEntries, jsxExpressionContainers, printerLayoutSource, tabWidth);
+  // Replacements are applied after traversal, so retain pending width changes in both layout coordinate spaces.
+  const sameLineWidthDeltas: SameLineWidthDeltas = {
+    output: new Map(),
+    source: new Map(),
+  };
   let blockCommentIndex = -1;
   let ignoredLineRangeIndex = 0;
 
@@ -131,6 +144,14 @@ export async function wrapCommentsWithMetadata<T>(
         }
       } else if (replacement !== undefined) {
         replacements.push(replacement);
+        recordSameLineReplacementWidthDelta(
+          text,
+          comment,
+          replacement,
+          outputCommentLayout,
+          tabWidth,
+          sameLineWidthDeltas,
+        );
 
         if (jsxLayout !== undefined) {
           jsxBlockCommentRewrites.push({ blockCommentIndex, text: replacement.text });
@@ -161,7 +182,14 @@ export async function wrapCommentsWithMetadata<T>(
         continue;
       }
 
-      const replacement = await wrapTrailingLineComment(text, comment, options, outputCommentLayout, embeddedMove);
+      const trailingLayout = getTrailingLineCommentLayout(
+        text,
+        comment,
+        outputCommentLayout,
+        tabWidth,
+        sameLineWidthDeltas,
+      );
+      const replacement = await wrapTrailingLineComment(text, comment, options, trailingLayout, embeddedMove);
 
       if (replacement !== undefined) {
         replacements.push(...replacement);
@@ -184,4 +212,96 @@ export async function wrapCommentsWithMetadata<T>(
     jsxBlockCommentRewrites,
     text: applyReplacements(text, replacements),
   };
+}
+
+function recordSameLineReplacementWidthDelta(
+  text: string,
+  comment: { end: number; start: number },
+  replacement: Replacement,
+  outputLayout: PrinterCommentLayout | undefined,
+  tabWidth: number,
+  sameLineWidthDeltas: SameLineWidthDeltas,
+): void {
+  const original = text.slice(comment.start, comment.end);
+
+  if (containsLineTerminator(original) || containsLineTerminator(replacement.text)) {
+    return;
+  }
+
+  const sourceLineStart = getLineStart(text, comment.start);
+  const sourceWidthDelta = sameLineWidthDeltas.source.get(sourceLineStart) ?? 0;
+  const sourceMarkerColumn = getColumnAt(text, comment.start, tabWidth) + sourceWidthDelta;
+  const sourceReplacementWidthDelta = getReplacementWidthDelta(
+    original,
+    replacement.text,
+    sourceMarkerColumn,
+    tabWidth,
+  );
+
+  addLineWidthDelta(sameLineWidthDeltas.source, sourceLineStart, sourceReplacementWidthDelta);
+
+  if (outputLayout === undefined) {
+    return;
+  }
+
+  const outputWidthDelta = sameLineWidthDeltas.output.get(outputLayout.lineStart) ?? 0;
+  const outputMarkerColumn = outputLayout.markerColumn + outputWidthDelta;
+  const outputReplacementWidthDelta = getReplacementWidthDelta(
+    original,
+    replacement.text,
+    outputMarkerColumn,
+    tabWidth,
+  );
+
+  addLineWidthDelta(sameLineWidthDeltas.output, outputLayout.lineStart, outputReplacementWidthDelta);
+}
+
+function getTrailingLineCommentLayout(
+  text: string,
+  comment: { start: number },
+  outputLayout: PrinterCommentLayout | undefined,
+  tabWidth: number,
+  sameLineWidthDeltas: SameLineWidthDeltas,
+): TrailingLineCommentLayout | undefined {
+  if (outputLayout !== undefined) {
+    const lineWidthDelta = sameLineWidthDeltas.output.get(outputLayout.lineStart) ?? 0;
+
+    return lineWidthDelta === 0
+      ? outputLayout
+      : { ...outputLayout, lineWidth: outputLayout.lineWidth + lineWidthDelta };
+  }
+
+  const lineStart = getLineStart(text, comment.start);
+  const lineWidthDelta = sameLineWidthDeltas.source.get(lineStart) ?? 0;
+
+  if (lineWidthDelta === 0) {
+    return undefined;
+  }
+
+  const lineEnd = getLineEnd(text, comment.start);
+  const lineText = text.slice(lineStart, lineEnd).replace(/[ \t]+$/u, '');
+
+  return { lineWidth: getColumns(lineText, tabWidth) + lineWidthDelta };
+}
+
+function getReplacementWidthDelta(
+  original: string,
+  replacement: string,
+  markerColumn: number,
+  tabWidth: number,
+): number {
+  const originalWidth = getColumns(original, tabWidth, markerColumn);
+  const replacementWidth = getColumns(replacement, tabWidth, markerColumn);
+
+  return replacementWidth - originalWidth;
+}
+
+function addLineWidthDelta(lineWidthDeltas: Map<number, number>, lineStart: number, delta: number): void {
+  if (delta !== 0) {
+    lineWidthDeltas.set(lineStart, (lineWidthDeltas.get(lineStart) ?? 0) + delta);
+  }
+}
+
+function containsLineTerminator(text: string): boolean {
+  return /[\r\n\u2028\u2029]/u.test(text);
 }

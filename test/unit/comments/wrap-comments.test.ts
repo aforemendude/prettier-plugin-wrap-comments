@@ -47,6 +47,30 @@ describe('wrapComments', () => {
     ).resolves.toBe(['// note', 'const x = "\u6f22\u6f22\u6f22";'].join('\n'));
   });
 
+  it('accounts for preceding same-line block comment replacements in printer widths', async () => {
+    const growingBlock = '/*x*/';
+    const growingLineComment = '// word word';
+    const shrinkingBlock = '/*    x    */';
+    const shrinkingLineComment = '// word';
+    const text = [
+      `const grows = ${growingBlock} thing; ${growingLineComment}`,
+      `const shrnk = ${shrinkingBlock} thing; ${shrinkingLineComment}`,
+    ].join('\n');
+    const entries = createCommentEntries(text, [
+      growingBlock,
+      growingLineComment,
+      shrinkingBlock,
+      shrinkingLineComment,
+    ]);
+    const ast = { comments: entries.map((entry) => entry.raw) };
+    const expected = [growingLineComment, 'const grows = /* x */ thing;', 'const shrnk = /* x */ thing; // word'].join(
+      '\n',
+    );
+
+    await expect(wrapComments(text, ast, createWrapOptions({ printWidth: 40 }))).resolves.toBe(expected);
+    await expect(wrapComments(text, ast, createWrapOptions({ printWidth: 40 }), { ast, text })).resolves.toBe(expected);
+  });
+
   it('moves direct trailing line comments before their embedded expression values', async () => {
     const jsxComment = '// This trailing JSX comment is deliberately wider than the print width.';
     const jsxText = [`<span>{value ${jsxComment}`, '}</span>'].join('\n');

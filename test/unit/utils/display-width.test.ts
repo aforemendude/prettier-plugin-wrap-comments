@@ -33,6 +33,12 @@ describe('display width', () => {
     expect(getColumns('a\t\u6f22\u6f22\tb', 4)).toBe(13);
   });
 
+  it('measures text from an existing display column', () => {
+    expect(getColumns('\tword', 4, 0)).toBe(8);
+    expect(getColumns('\tword', 4, 1)).toBe(7);
+    expect(getColumns('\tword', 4, 3)).toBe(5);
+  });
+
   it('measures columns from the current line start', () => {
     const text = ['const value = 1;', '\t  // comment'].join('\n');
     const commentStart = text.indexOf('//');

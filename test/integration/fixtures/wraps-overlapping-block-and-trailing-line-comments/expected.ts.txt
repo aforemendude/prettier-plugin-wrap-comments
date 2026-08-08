@@ -4,3 +4,7 @@ function demo() {
   // stays on the same source line.
   const value = /* inline block comment */ 1;
 }
+
+// word word word word words
+const grows = /* x */ thing;
+const shrinks = /* x */ thing; // words fit

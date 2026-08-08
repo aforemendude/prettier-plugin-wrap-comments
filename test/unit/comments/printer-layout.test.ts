@@ -21,6 +21,7 @@ describe('getPrinterLayout', () => {
       comments: [
         {
           lineIndentColumn: 0,
+          lineStart: 0,
           lineWidth: 25,
           markerColumn: 10,
           suffixWidth: 5,
@@ -48,6 +49,7 @@ describe('getPrinterLayout', () => {
       comments: [
         {
           lineIndentColumn: 4,
+          lineStart: 0,
           lineWidth: 18,
           markerColumn: 4,
           suffixWidth: 0,
@@ -79,12 +81,14 @@ describe('getPrinterLayout', () => {
       comments: [
         {
           lineIndentColumn: 0,
+          lineStart: 12,
           lineWidth: 20,
           markerColumn: 0,
           suffixWidth: 0,
         },
         {
           lineIndentColumn: 0,
+          lineStart: 34,
           lineWidth: 7,
           markerColumn: 0,
           suffixWidth: 0,

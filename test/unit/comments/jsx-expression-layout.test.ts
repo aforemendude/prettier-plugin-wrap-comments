@@ -96,6 +96,7 @@ describe('getJsxExpressionBlockCommentLayout', () => {
     };
     const outputLayout: PrinterCommentLayout = {
       lineIndentColumn: 0,
+      lineStart: 0,
       lineWidth: 20,
       markerColumn: 10,
       suffixWidth: 3,

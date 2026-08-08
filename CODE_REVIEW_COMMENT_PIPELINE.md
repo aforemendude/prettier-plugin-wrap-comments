@@ -15,26 +15,6 @@
 
 ## Findings
 
-### 12. Same-line replacements make the precomputed trailing-comment layout stale
-
-- **Severity:** Medium
-- **References:** `src/comments/wrap-comments.ts:60-68`, `src/comments/wrap-comments.ts:104`,
-  `src/comments/wrap-comments.ts:148-152`, `src/comments/wrap-comments.ts:167-170`,
-  `src/comments/wrap-block-comment.ts:74-81`, `src/comments/wrap-trailing-line-comment.ts:31-33`,
-  `src/comments/wrap-trailing-line-comment.ts:92-106`
-- **Problem:** The pipeline probes one native-printer layout before scheduling any replacements, then independently
-  decides block and trailing-line rewrites against that snapshot and applies everything only at the end. Normalizing an
-  inline block on the same line can change its width, but `wrapTrailingLineComment` still trusts the original
-  `outputLayout.lineWidth`.
-- **Impact:** Width growth makes formatting non-idempotent: at `printWidth: 40`,
-  `const value = /*x*/ thing; // word word` probes as 39 columns, then block normalization produces a 41-column
-  first-pass line; only pass two moves the trailing comment. Width shrinkage makes the opposite decision permanently
-  over-eager: a space-padded inline block plus `// word` was probed over width, so the comment moved above even though
-  simultaneous block normalization made the combined line short enough to fit.
-- **Recommendation:** Use a two-phase rewrite/layout pass when accepted replacements can affect another comment's output
-  line, or adjust the probed line width by the exact deltas of accepted same-line replacements before making
-  trailing-comment decisions. Verify both growing and shrinking inline-block cases in a one-pass/idempotence check.
-
 ### 13. Node test coverage control comments are reformatted into an unrecognized shape
 
 - **Severity:** Medium

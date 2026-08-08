@@ -1,3 +1,6 @@
 function demo() {
   const value = /*inline block comment*/ 1; // This trailing line comment is long enough to move above the statement while an inline block comment stays on the same source line.
 }
+
+const grows = /*x*/ thing; // word word word word words
+const shrinks = /*        x        */ thing; // words fit
