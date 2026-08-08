@@ -15,7 +15,7 @@ TypeScript comments as Markdown while leaving Prettier's built-in printers in ch
 
 ## Development Commands
 
-- Use Node.js 20 or newer.
+- Use Node.js 22.12 or newer.
 - Run `npm run format:check` for formatting validation.
 - Run `npm run typecheck` to type-check source, tests, and Vitest configuration.
 - Run `npm run test` for behavior changes. Use `npm run test:unit` or `npm run test:integration` for one suite.

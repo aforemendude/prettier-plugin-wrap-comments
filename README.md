@@ -5,7 +5,8 @@ real column to calculate the available content width, so nested comments wrap mo
 
 ## Requirements
 
-- Node.js 20 or newer
+- Node.js 20 or newer to use the plugin
+- Node.js 22.12 or newer to develop the plugin
 - Prettier 3 (`>=3.0.0 <4.0.0`)
 
 ## Install
