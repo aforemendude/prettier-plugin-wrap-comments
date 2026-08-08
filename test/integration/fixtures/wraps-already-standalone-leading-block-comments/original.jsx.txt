@@ -1,0 +1,15 @@
+const value = true;
+
+const outside = (
+  /* This already-standalone leading block comment outside the JSX tree should wrap while remaining before the expression value. */
+  value
+);
+
+const inside = (
+  <span>
+    {
+      /* This already-standalone leading JSX expression comment should wrap while remaining before the expression value. */
+      value
+    }
+  </span>
+);

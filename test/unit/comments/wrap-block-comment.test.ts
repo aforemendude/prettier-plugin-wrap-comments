@@ -116,6 +116,21 @@ describe('wrapBlockComment', () => {
     });
   });
 
+  it('preserves an explicitly multiline layout when the normalized body fits on one line', async () => {
+    const text = ['/*', '*short', '*/'].join('\n');
+
+    await expect(
+      wrapBlockComment(text, createCommentRange(text, text), createWrapOptions({}), {
+        placement: 'standalone',
+        preserveMultiline: true,
+      }),
+    ).resolves.toEqual({
+      end: text.length,
+      start: 0,
+      text: ['/*', ' * short', ' */'].join('\n'),
+    });
+  });
+
   it('returns exact insertion and removal replacements for trailing and leading moves', async () => {
     const trailingText = 'value /* Alpha beta gamma delta epsilon */';
     const trailingComment = createCommentRange(trailingText, '/* Alpha beta gamma delta epsilon */');

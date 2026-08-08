@@ -169,7 +169,7 @@ describe('getJsxExpressionBlockCommentLayout', () => {
     });
   });
 
-  it('leaves standalone leading and expression-surrounded comments inline', () => {
+  it('lays out an already-standalone leading comment without moving it', () => {
     const leadingText = ['{', '  /* note */', '  value', '}'].join('\n');
     const leadingComment = createCommentRange(leadingText, '/* note */');
     const valueStart = leadingText.indexOf('value');
@@ -178,6 +178,20 @@ describe('getJsxExpressionBlockCommentLayout', () => {
       expression: { end: valueStart + 'value'.length, start: valueStart },
       start: 0,
     };
+
+    expect(
+      getJsxExpressionBlockCommentLayout(leadingText, leadingComment, undefined, [leadingContainer], 2, undefined, []),
+    ).toEqual({
+      contentColumn: 5,
+      markerColumn: 2,
+      multilineIndent: '',
+      placement: 'standalone',
+      preserveMultiline: false,
+      singleLineSuffixWidth: 0,
+    });
+  });
+
+  it('leaves expression-surrounded comments inline', () => {
     const surroundedText = '{left /* note */ right}';
     const surroundedComment = createCommentRange(surroundedText, '/* note */');
     const surroundedContainer = {
@@ -186,9 +200,6 @@ describe('getJsxExpressionBlockCommentLayout', () => {
       start: 0,
     };
 
-    expect(
-      getJsxExpressionBlockCommentLayout(leadingText, leadingComment, undefined, [leadingContainer], 2, undefined, []),
-    ).toEqual({ placement: 'inline' });
     expect(
       getJsxExpressionBlockCommentLayout(
         surroundedText,

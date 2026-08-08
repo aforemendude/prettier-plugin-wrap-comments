@@ -15,23 +15,6 @@
 
 ## Findings
 
-### 2. An already-standalone leading JSX expression comment is classified as inline and never wrapped
-
-- **Severity:** Medium
-- **References:** `src/comments/jsx-expression-layout.ts:117-120`, `src/comments/wrap-comments.ts:83-95`
-- **Problem:** For a JSX expression container whose expression follows a block comment,
-  `getJsxExpressionBlockCommentLayout` checks whether the block is already standalone in the input and returns
-  `{ placement: 'inline' }`. The coordinator treats that placement as an instruction to skip the comment completely.
-  Consequently, an otherwise eligible leading comment is handled when written inline as `{/* ... */ value}` but not when
-  the equivalent comment is already on its own line before `value`.
-- **Impact:** Overlong comments in a common, already-expanded JSX layout remain beyond `printWidth`, contrary to the
-  documented behavior that eligible non-JSDoc block comments expand and leading JSX expression comments can wrap. A
-  focused current-build probe at `printWidth: 50` left a 104-column standalone leading comment unchanged while
-  formatting the surrounding JSX normally.
-- **Recommendation:** Represent this branch as a standalone JSX layout that does not move the comment, with the
-  appropriate printer-derived marker/content columns and multiline indentation, rather than using the sentinel `inline`
-  placement. Continue reserving `inline` for comments genuinely embedded between expression tokens.
-
 ### 3. Repeated linear range lookups make JSX and ignore processing quadratic
 
 - **Severity:** Medium

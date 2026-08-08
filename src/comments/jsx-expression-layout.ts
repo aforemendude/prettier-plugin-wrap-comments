@@ -6,7 +6,7 @@ import { getAstNodeRange, visitAstNodes } from '../utils/ast.js';
 import type { SourceRange } from '../utils/ast.js';
 import { getColumns } from '../utils/display-width.js';
 import { getLeadingIndent } from '../utils/indentation.js';
-import { getLinePrefix } from '../utils/source-lines.js';
+import { getLinePrefix, getLineStart } from '../utils/source-lines.js';
 import { isRecord } from '../utils/type-guards.js';
 import { skipWhitespace, trimWhitespaceEnd } from '../utils/whitespace.js';
 
@@ -116,7 +116,15 @@ export function getJsxExpressionBlockCommentLayout(
 
   if (!hasExpressionBeforeComment) {
     if (isStandaloneBlockComment(text, comment)) {
-      return { placement: 'inline' };
+      // A comment moved here by an earlier pass must not collapse after its marker column changes.
+      return {
+        contentColumn,
+        markerColumn,
+        multilineIndent: '',
+        placement: 'standalone',
+        preserveMultiline: getLineStart(text, comment.start) !== getLineStart(text, comment.end),
+        singleLineSuffixWidth: outputCommentLayout?.suffixWidth ?? 0,
+      };
     }
 
     const expressionStart = skipWhitespace(text, comment.end);
