@@ -1,0 +1,7 @@
+/* prettier-ignore */
+/* This block-form marker target must remain on one deliberately overlong line after repeated formatting. */
+const       blockMarkerValue=1;
+
+// prettier-ignore
+/* This line-form marker target must remain on one deliberately overlong line after repeated formatting. */
+const       lineMarkerValue=2;

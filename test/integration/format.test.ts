@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import plugin from '../../src/index.js';
 
-const expectedFixtureCount = 55;
+const expectedFixtureCount = 56;
 const fixtureRoot = fileURLToPath(new URL('./fixtures', import.meta.url));
 const parserByExtension = {
   js: 'babel',

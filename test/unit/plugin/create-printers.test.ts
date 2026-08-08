@@ -8,9 +8,11 @@ type PrintFunction = Parameters<Printer<AstNode>['print']>[2];
 const mocks = vi.hoisted(() => {
   const estreePreprocess = vi.fn();
   const nativePrint = vi.fn();
+  const nativePrintComment = vi.fn();
   const estreePrinter = {
     preprocess: estreePreprocess,
     print: nativePrint,
+    printComment: nativePrintComment,
   };
   const jsonPrinter = { print: vi.fn() };
 
@@ -19,6 +21,7 @@ const mocks = vi.hoisted(() => {
     estreePrinter,
     jsonPrinter,
     nativePrint,
+    nativePrintComment,
   };
 });
 
@@ -30,10 +33,12 @@ vi.mock('prettier/plugins/estree', () => ({
 }));
 
 import { createPrinters } from '../../../src/plugin/create-printers.js';
+import { neutralizePrettierIgnoreForIgnoredComments } from '../../../src/comments/prettier-ignore.js';
 import {
   markRewrittenJsxBlockComments,
   setJsxBlockCommentRewrites,
 } from '../../../src/plugin/jsx-comment-rewrite-metadata.js';
+import { createCommentEntries } from '../support/comments.js';
 
 const { hardline, indent } = doc.builders;
 const fallbackCases = [
@@ -101,6 +106,7 @@ const fallbackCases = [
 describe('createPrinters', () => {
   beforeEach(() => {
     mocks.nativePrint.mockReset();
+    mocks.nativePrintComment.mockReset();
   });
 
   it('preserves the other native printers and estree hooks', () => {
@@ -111,6 +117,36 @@ describe('createPrinters', () => {
     expect(estreePrinter).not.toBe(mocks.estreePrinter);
     expect(estreePrinter.preprocess).toBe(mocks.estreePreprocess);
     expect(estreePrinter.print).not.toBe(mocks.nativePrint);
+    expect(estreePrinter.printComment).not.toBe(mocks.nativePrintComment);
+  });
+
+  it('prints a neutralized block-form ignore directive from its original text', () => {
+    const marker = '/* prettier-ignore */';
+    const target = '/* ordinary target */';
+    const text = [marker, target].join('\n');
+    const entries = createCommentEntries(text, [marker, target]);
+    const ast = { comments: entries.map((entry) => entry.raw) };
+    const path = createPath(entries[0]?.raw);
+    const options = createParserOptions();
+
+    neutralizePrettierIgnoreForIgnoredComments(text, ast);
+
+    const printer = getEstreePrinter(createPrinters());
+
+    expect(printer.printComment?.(path, options)).toBe(marker);
+    expect(mocks.nativePrintComment).not.toHaveBeenCalled();
+  });
+
+  it('delegates unmarked comments to the native estree comment printer', () => {
+    const nativeDoc = ['native comment'] satisfies Doc;
+    const path = createPath({ type: 'CommentBlock', value: 'ordinary' });
+    const options = createParserOptions();
+    mocks.nativePrintComment.mockReturnValue(nativeDoc);
+    const printer = getEstreePrinter(createPrinters());
+
+    expect(printer.printComment?.(path, options)).toBe(nativeDoc);
+    expect(mocks.nativePrintComment).toHaveBeenCalledTimes(1);
+    expect(mocks.nativePrintComment).toHaveBeenCalledWith(path, options);
   });
 
   it.each(['Block', 'CommentBlock'] as const)('expands a multiline %s comment in an empty JSX expression', (type) => {

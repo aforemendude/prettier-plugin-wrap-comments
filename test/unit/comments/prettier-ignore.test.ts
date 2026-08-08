@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   collectPrettierIgnoredLineRanges,
+  getNeutralizedPrettierIgnoreOriginalText,
   isCommentInIgnoredLineRange,
   isPrettierIgnoredBlockComment,
   isPrettierIgnoredStandaloneLineComment,
@@ -36,6 +37,21 @@ describe('neutralizePrettierIgnoreForIgnoredComments', () => {
       ' prettier-ignore',
       ' eslint-disable-next-line no-console',
     ]);
+  });
+
+  it('records the original text of a neutralized block-form ignore directive', () => {
+    const marker = '/* prettier-ignore */';
+    const target = '/* ordinary target */';
+    const text = [marker, target].join('\n');
+    const entries = createCommentEntries(text, [marker, target]);
+    const ast = { comments: entries.map((entry) => entry.raw) };
+
+    neutralizePrettierIgnoreForIgnoredComments(text, ast);
+
+    expect(entries[0]?.raw.value).toBe('prettier-ignore wrap-comments');
+    expect(getNeutralizedPrettierIgnoreOriginalText(entries[0]?.raw)).toBe(marker);
+    expect(getNeutralizedPrettierIgnoreOriginalText(entries[1]?.raw)).toBeUndefined();
+    expect(getNeutralizedPrettierIgnoreOriginalText(undefined)).toBeUndefined();
   });
 });
 

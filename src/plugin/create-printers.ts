@@ -2,16 +2,24 @@ import type { AstPath, Doc, ParserOptions, Plugin, Printer } from 'prettier';
 import { doc } from 'prettier';
 import * as estreePlugin from 'prettier/plugins/estree';
 
+import { getNeutralizedPrettierIgnoreOriginalText } from '../comments/prettier-ignore.js';
+import { normalizeLineTerminators } from '../utils/source-lines.js';
 import { isRecord } from '../utils/type-guards.js';
 import { isRewrittenJsxBlockComment } from './jsx-comment-rewrite-metadata.js';
 
 const { hardline, indent } = doc.builders;
+const { replaceEndOfLine } = doc.utils;
 
 type AstNode = Record<string, unknown>;
 type PrintFunction = Parameters<Printer<AstNode>['print']>[2];
 
 export function createPrinters(): NonNullable<Plugin['printers']> {
   const estreePrinter = estreePlugin.printers.estree as Printer<AstNode>;
+  const estreePrintComment = estreePrinter.printComment;
+
+  if (estreePrintComment === undefined) {
+    throw new Error('Expected the native estree printer to provide printComment');
+  }
 
   return {
     ...estreePlugin.printers,
@@ -23,6 +31,19 @@ export function createPrinters(): NonNullable<Plugin['printers']> {
         }
 
         return estreePrinter.print(path, options, print, args);
+      },
+      printComment(path: AstPath<AstNode>, options: ParserOptions<AstNode>): Doc {
+        const originalText = getNeutralizedPrettierIgnoreOriginalText(path.node);
+
+        if (originalText !== undefined) {
+          const normalizedOriginalText = normalizeLineTerminators(originalText);
+
+          return normalizedOriginalText.includes('\n')
+            ? replaceEndOfLine(normalizedOriginalText)
+            : normalizedOriginalText;
+        }
+
+        return estreePrintComment(path, options);
       },
     },
   };

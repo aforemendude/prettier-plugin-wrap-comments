@@ -17,6 +17,11 @@ import { isRecord } from '../utils/type-guards.js';
 import { skipWhitespace } from '../utils/whitespace.js';
 
 const NEUTRALIZED_PRETTIER_IGNORE_COMMENT = 'prettier-ignore wrap-comments';
+const neutralizedPrettierIgnoreOriginalTextKey = Symbol('neutralizedPrettierIgnoreOriginalText');
+
+type NeutralizedPrettierIgnoreComment = Record<string, unknown> & {
+  [neutralizedPrettierIgnoreOriginalTextKey]?: string;
+};
 
 export function neutralizePrettierIgnoreForIgnoredComments<T>(text: string, ast: T): T {
   const comments = collectCommentEntries(ast, text);
@@ -31,11 +36,28 @@ export function neutralizePrettierIgnoreForIgnoredComments<T>(text: string, ast:
         (isPrettierIgnoredStandaloneLineComment(text, comments, index) && !shouldSkipLineComment(text, entry.range)));
 
     if (shouldNeutralize) {
+      if (previousEntry.range.kind === 'block') {
+        const originalText = text.slice(previousEntry.range.start, previousEntry.range.end);
+
+        (previousEntry.raw as NeutralizedPrettierIgnoreComment)[neutralizedPrettierIgnoreOriginalTextKey] =
+          originalText;
+      }
+
       previousEntry.raw.value = NEUTRALIZED_PRETTIER_IGNORE_COMMENT;
     }
   }
 
   return ast;
+}
+
+export function getNeutralizedPrettierIgnoreOriginalText(comment: unknown): string | undefined {
+  if (!isRecord(comment)) {
+    return undefined;
+  }
+
+  const originalText = (comment as NeutralizedPrettierIgnoreComment)[neutralizedPrettierIgnoreOriginalTextKey];
+
+  return typeof originalText === 'string' ? originalText : undefined;
 }
 
 export function collectPrettierIgnoredLineRanges(text: string, ast: unknown, comments: CommentEntry[]): SourceRange[] {
