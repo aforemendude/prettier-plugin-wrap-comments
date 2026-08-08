@@ -14,36 +14,6 @@ current source and, where useful, focused execution against the current committe
 
 ## Findings
 
-### 3. The native-layout probe and final printer disagree after an ignore marker is neutralized
-
-- **Severity:** Medium
-- **Reference:** `src/plugin/get-printer-layout-source.ts:15-28`; `src/plugin/create-parsers.ts:33-35` and
-  `src/plugin/create-parsers.ts:62-63`
-- **Problem:** Layout probing formats with the unwrapped native parser, so an exact `prettier-ignore` marker above an
-  eligible standalone line-comment group retains Prettier's native ignore effect during the probe. The real parse later
-  calls `neutralizePrettierIgnoreForIgnoredComments`, intentionally removing that effect so the following code formats
-  normally. Trailing-comment movement nevertheless trusts the stale probed line width. At `printWidth: 50`, the current
-  build formats the following source to a 52-column final code line while leaving the trailing comment inline:
-
-  ```js
-  // prettier-ignore
-  // kept
-  const result={alpha:1,beta:2}; // w w w w w w
-  ```
-
-  The probe sees the preserved 45-column raw code line and classifies it as fitting; after neutralization, native
-  spacing expands the line to `const result = { alpha: 1, beta: 2 }; // w w w w w w`. The inverse is also reproducible:
-  excessive raw spacing makes the probe move a short trailing comment even though the neutralized final line would fit.
-
-- **Impact:** Output can exceed the configured `printWidth`, or a trailing comment can be moved unnecessarily,
-  specifically in a supported `prettier-ignore` workflow whose purpose is to preserve the ignored comment group while
-  allowing the subsequent code to format. This contradicts the plugin's final-layout-based trailing-comment behavior and
-  can produce avoidable source churn.
-- **Recommendation:** Make the parser used by the layout-only plugin apply the same ignore-neutralization step to its
-  freshly parsed AST before printing, without sharing or mutating the outer AST or metadata. Alternatively, invalidate
-  probed layouts for comments whose preceding control flow includes a marker that the final parse will neutralize, so
-  those comments use a conservative source-layout fallback rather than known-inconsistent measurements.
-
 ### 4. Speculative Babel parsing corrupts the real parser selection for Flow files
 
 - **Severity:** High

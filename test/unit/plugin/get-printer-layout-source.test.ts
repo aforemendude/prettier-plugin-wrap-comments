@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => {
   return {
     createPrinters: vi.fn(() => printers),
     format: vi.fn(),
+    neutralizePrettierIgnoreForIgnoredComments: vi.fn(),
     printers,
   };
 });
@@ -28,12 +29,17 @@ vi.mock('../../../src/plugin/create-printers.js', () => ({
   createPrinters: mocks.createPrinters,
 }));
 
+vi.mock('../../../src/comments/prettier-ignore.js', () => ({
+  neutralizePrettierIgnoreForIgnoredComments: mocks.neutralizePrettierIgnoreForIgnoredComments,
+}));
+
 import { getPrinterLayoutSource } from '../../../src/plugin/get-printer-layout-source.js';
 
 describe('getPrinterLayoutSource', () => {
   beforeEach(() => {
     mocks.createPrinters.mockClear();
     mocks.format.mockReset();
+    mocks.neutralizePrettierIgnoreForIgnoredComments.mockReset();
   });
 
   it('formats with an isolated native-layout plugin and reparses changed output', async () => {
@@ -64,13 +70,54 @@ describe('getPrinterLayoutSource', () => {
       parser: 'babel',
       plugins: [
         {
-          parsers: { babel: parser },
+          parsers: {
+            babel: {
+              ...parser,
+              parse: expect.any(Function),
+            },
+          },
           printers: mocks.printers,
         },
       ],
     });
     expect(parse).toHaveBeenCalledTimes(1);
     expect(parse).toHaveBeenCalledWith(formattedSource, options);
+  });
+
+  it('neutralizes a freshly parsed layout AST without mutating the outer AST', async () => {
+    const source = ['// prettier-ignore', '// kept', 'const value=1;'].join('\n');
+    const ast = { marker: 'outer' };
+    const printerLayoutAst = { marker: 'parsed for layout' };
+    const neutralizedAst = { marker: 'neutralized for layout' };
+    const { parse, parser } = createParser();
+    const options = createParserOptions('babel');
+    parse.mockResolvedValue(printerLayoutAst);
+    mocks.neutralizePrettierIgnoreForIgnoredComments.mockReturnValue(neutralizedAst);
+    mocks.format.mockImplementation(async (_source, formatOptions) => {
+      const layoutPlugin = formatOptions?.plugins?.[0];
+
+      if (layoutPlugin === undefined || typeof layoutPlugin === 'string') {
+        throw new Error('Expected the layout plugin');
+      }
+
+      const layoutParser = layoutPlugin.parsers?.['babel'];
+
+      if (layoutParser === undefined) {
+        throw new Error('Expected the layout parser');
+      }
+
+      expect(layoutParser).not.toBe(parser);
+      await expect(layoutParser.parse(source, options)).resolves.toBe(neutralizedAst);
+
+      return source;
+    });
+
+    await expect(getPrinterLayoutSource(source, ast, 'babel', parser, options)).resolves.toEqual({ ast, text: source });
+    expect(parse).toHaveBeenCalledTimes(1);
+    expect(parse).toHaveBeenCalledWith(source, options);
+    expect(mocks.neutralizePrettierIgnoreForIgnoredComments).toHaveBeenCalledTimes(1);
+    expect(mocks.neutralizePrettierIgnoreForIgnoredComments).toHaveBeenCalledWith(source, printerLayoutAst);
+    expect(ast).toEqual({ marker: 'outer' });
   });
 
   it('reuses the original AST when formatting does not change the source', async () => {

@@ -1,0 +1,8 @@
+// prettier-ignore
+// kept
+// w w w w w w
+const result = { alpha: 1, beta: 2 };
+
+// prettier-ignore
+// kept
+const value = 1; // note

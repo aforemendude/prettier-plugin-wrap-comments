@@ -1,6 +1,7 @@
 import { format } from 'prettier';
 import type { Parser, ParserOptions, Plugin } from 'prettier';
 
+import { neutralizePrettierIgnoreForIgnoredComments } from '../comments/prettier-ignore.js';
 import type { PrinterLayoutSource } from '../comments/printer-layout.js';
 import { createPrinters } from './create-printers.js';
 import type { SupportedParserName } from './parser-names.js';
@@ -12,8 +13,16 @@ export async function getPrinterLayoutSource<T>(
   parser: Parser<T>,
   options: ParserOptions,
 ): Promise<PrinterLayoutSource | undefined> {
+  const printerLayoutParser: Parser<T> = {
+    ...parser,
+    async parse(source, parserOptions) {
+      const printerLayoutAst = await parser.parse(source, parserOptions);
+
+      return neutralizePrettierIgnoreForIgnoredComments(source, printerLayoutAst);
+    },
+  };
   const printerLayoutPlugin: Plugin = {
-    parsers: { [parserName]: parser },
+    parsers: { [parserName]: printerLayoutParser },
     printers: createPrinters(),
   };
 
