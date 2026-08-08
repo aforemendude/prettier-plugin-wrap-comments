@@ -15,25 +15,6 @@
 
 ## Findings
 
-### 9. Neutralizing a block-form ignore marker permanently rewrites the marker and breaks the next pass
-
-- **Severity:** Medium
-- **References:** `src/comments/prettier-ignore.ts:18`, `src/comments/prettier-ignore.ts:20-34`,
-  `src/plugin/create-parsers.ts:31-37`
-- **Problem:** To let code after an ignored eligible block comment format normally,
-  `neutralizePrettierIgnoreForIgnoredComments` replaces the preceding ignore comment node's `value`. Prettier prints a
-  mutated block-comment value rather than recovering its original source spelling, so a standard `/* prettier-ignore */`
-  marker is emitted as `/*prettier-ignore wrap-comments*/`. (The equivalent line-form marker happens to print from
-  source unchanged.)
-- **Impact:** The first format pass visibly destroys a user directive that the documented behavior promises to preserve.
-  Because the emitted block is no longer an exact ignore marker, a second plugin pass wraps the target comment that the
-  first pass deliberately left alone. A focused Babel probe changed the marker on pass one and changed its overlong
-  target from one line to a multiline block on pass two.
-- **Recommendation:** Do not encode transient ignore state by replacing the printable comment value. Track it out of
-  band and either suppress Prettier's ignore association structurally or teach the printer to emit the exact original
-  marker text while using separate metadata for ignore decisions. Add two-pass checks for both line- and block-form
-  markers.
-
 ### 10. Trailing whitespace after a block ignore marker defeats adjacency detection
 
 - **Severity:** Low
