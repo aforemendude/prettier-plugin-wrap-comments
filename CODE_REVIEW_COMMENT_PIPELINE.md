@@ -15,26 +15,6 @@
 
 ## Findings
 
-### 13. Node test coverage control comments are reformatted into an unrecognized shape
-
-- **Severity:** Medium
-- **References:** `src/comments/comment-directives.ts:15-34`, `src/comments/comment-directives.ts:40-50`,
-  `src/comments/comment-eligibility.ts:15-24`, `src/comments/wrap-block-comment.ts:35-46`,
-  `src/comments/wrap-block-comment.ts:80-129`
-- **Problem:** Node's test runner defines executable block comments `/* node:coverage disable */`, `enable`, and
-  `ignore next [N]` to control coverage collection
-  ([Node test coverage documentation](https://nodejs.org/api/test.html#collecting-code-coverage)). The coverage-oriented
-  directive list includes several other tools but not `node:coverage`, so a directive that does not fit is expanded to a
-  star-prefixed block with `node:coverage` and its command on separate lines. Node no longer recognizes that shape.
-- **Impact:** Formatting changes which code is counted as uncovered and can break coverage thresholds. A focused Node 24
-  coverage run reported 100% for a module whose uncalled function was enclosed by canonical disable/enable comments; the
-  otherwise identical plugin-expanded directives produced 86.67% line and 50% function coverage with the function
-  reported uncovered. At `printWidth: 20`, all four documented forms were expanded; the disable/enable pair was
-  demonstrably no longer effective.
-- **Recommendation:** Classify the exact `node:coverage disable`, `enable`, and `ignore next` forms (including the
-  optional positive line count) as directives and preserve them verbatim. Treat coverage-control syntax as semantic
-  regardless of configured width or indentation.
-
 ### 14. One Markdown pass exposes an upstream thematic-rule fixed-point change
 
 - **Severity:** Low

@@ -1,0 +1,13 @@
+function sample() {
+  /* node:coverage disable */
+  miss();
+  /* node:coverage enable */
+}
+
+/* node:coverage ignore next */
+miss();
+
+/* node:coverage ignore next 3 */
+if (flag) {
+  miss();
+}

@@ -24,6 +24,7 @@ const TOOL_DIRECTIVE_COMMENT_PATTERNS: readonly RegExp[] = [
   /^globals?\b/u,
   /^istanbul\b/u,
   /^jshint\b/u,
+  /^node:coverage (?:disable|enable|ignore next(?: [1-9]\d*)?)$/u,
   /^nyc\b/u,
   /^oxlint\b/u,
   /^prettier-ignore\b/u,

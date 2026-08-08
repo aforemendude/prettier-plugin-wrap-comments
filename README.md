@@ -154,8 +154,8 @@ The plugin leaves these comments unchanged:
 - empty comment bodies
 - `prettier-ignore` markers themselves
 - other directive comments such as `@license`, `@preserve`, JSX, TypeScript, and Flow pragmas, Flow error suppressions,
-  `flowlint` comments, source map directives, `#__PURE__`, `@__PURE__`, other lint/coverage/formatter directives,
-  `vite-ignore`, and webpack magic comments
+  `flowlint` comments, source map directives, `#__PURE__`, `@__PURE__`, exact Node test coverage controls, other
+  lint/coverage/formatter directives, `vite-ignore`, and webpack magic comments
 
 ## Supported Parsers
 
