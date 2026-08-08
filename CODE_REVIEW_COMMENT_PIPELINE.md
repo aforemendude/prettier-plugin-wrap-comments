@@ -15,25 +15,6 @@
 
 ## Findings
 
-### 1. Every eligible comment starts and awaits a separate Markdown formatting operation
-
-- **Severity:** Medium
-- **References:** `src/comments/wrap-comments.ts:66`, `src/comments/wrap-comments.ts:104`,
-  `src/comments/wrap-comments.ts:148`, `src/comments/wrap-comments.ts:160`, `src/utils/format-markdown.ts:14-22`
-- **Problem:** The main loop formats eligible comments/groups one at a time, and each wrapper calls `prettier.format`
-  with the Markdown parser even when a short plain-prose comment is already normalized and cannot wrap. Because each
-  call is awaited before the loop advances, a file with many comments incurs one serial parser/formatter startup per
-  comment or line-comment group.
-- **Impact:** Formatting latency grows directly with the number of eligible comments rather than mainly with source
-  size. In a focused warm-process probe on this checkout, a generated Babel file containing 1,000 distinct short
-  standalone comments took about 535 ms through this plugin versus about 32 ms through native Prettier; 500 comments
-  took about 327 ms versus 27 ms. This is enough to make format-on-save noticeably laggy in heavily commented or
-  generated files even though none of the comments need wrapping.
-- **Recommendation:** Add a conservative no-format fast path for already-normalized plain prose that fits its available
-  width, and/or process necessary Markdown operations with deliberately bounded concurrency. Preserve the Markdown
-  formatter path for text whose syntax or width can change the result, and add a comment-count scaling benchmark to
-  prevent regressions.
-
 ### 2. An already-standalone leading JSX expression comment is classified as inline and never wrapped
 
 - **Severity:** Medium
