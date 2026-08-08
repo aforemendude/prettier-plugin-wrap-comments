@@ -14,23 +14,6 @@ current source and, where useful, focused execution against the current committe
 
 ## Findings
 
-### 5. CR-only multiline JSX comments bypass the printer override
-
-- **Severity:** Medium
-- **Reference:** `src/plugin/create-printers.ts:47-54`
-- **Problem:** The custom JSX container layout recognizes a rewritten block comment as multiline only when its AST value
-  contains `\n`. With `endOfLine: 'cr'`, the wrapper deliberately rebuilds comments with `\r` separators, Babel and
-  TypeScript preserve those separators in the comment value, and the rewrite metadata is present, but this predicate
-  returns false. The native empty-expression printer then handles a shape for which the custom override was introduced.
-- **Impact:** All three supported parsers produce collapsed, misindented JSX comment output for a supported Prettier
-  end-of-line setting. A focused current-build reproduction at `printWidth: 40` yields the equivalent of
-  `    {/*\r * ...\r */}`: the opening brace and comment delimiter share a line, body stars start at column 1, and the
-  closing delimiter and brace share a line. The same source with LF or CRLF receives the intended expanded and indented
-  brace/comment layout.
-- **Recommendation:** Treat `\r` as a line break as well as `\n` when identifying rewritten multiline comments. Prefer a
-  predicate covering all ECMAScript line terminators (`\r`, `\n`, U+2028, and U+2029) so printer selection matches the
-  source-line utilities' definition of a multiline value.
-
 ### 6. The plugin unnecessarily overrides unrelated `estree-json` printers
 
 - **Severity:** Low
