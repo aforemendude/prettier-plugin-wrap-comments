@@ -14,26 +14,6 @@ current source and, where useful, focused execution against the current committe
 
 ## Findings
 
-### 2. Files containing only deliberately skipped comments still trigger a full recursive formatting pass
-
-- **Severity:** Medium
-- **Reference:** `src/plugin/create-parsers.ts:58-63`; the later eligibility decisions are deferred to
-  `src/comments/wrap-comments.ts:74-80` and `src/comments/wrap-comments.ts:128-129`
-- **Problem:** The parser wrapper decides whether to run the native-layout probe solely from
-  `collectAstComments(ast).length`. Thus a file containing only JSDoc, bang-preserved, triple-slash, directive, or
-  otherwise ineligible comments still enters `getPrinterLayoutSource`, which recursively formats the entire file, and
-  only afterward reaches the eligibility checks that guarantee no rewrite. This work includes an additional parse/print
-  and, whenever native formatting changes the text, another explicit parse of the formatted result.
-- **Impact:** Common source dominated by JSDoc or directives incurs the pipeline's most expensive analysis despite
-  producing exactly the same plugin result. A focused local benchmark on a generated 3,000-declaration Babel file
-  containing only JSDoc measured median end-to-end formatting time of 1,672 ms with the plugin versus 463 ms without it
-  (six warmed samples each). Exact timing is environment-dependent, but the unnecessary recursive format follows
-  deterministically from the current control flow.
-- **Recommendation:** After the initial AST parse and before `getPrinterLayoutSource`, classify comment entries with the
-  existing block/line eligibility predicates and return `preprocessed` when every comment is categorically skipped. Keep
-  the complete wrapping pipeline for any potentially eligible comment so contextual decisions such as `prettier-ignore`,
-  placement, and movement retain their current behavior.
-
 ### 3. The native-layout probe and final printer disagree after an ignore marker is neutralized
 
 - **Severity:** Medium
