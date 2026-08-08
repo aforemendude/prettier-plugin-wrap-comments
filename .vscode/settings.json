@@ -5,6 +5,7 @@
     "esversion",
     "hardline",
     "ignoreful",
+    "nocache",
     "nonblank",
     "nonobject",
     "nonwhitespace",
