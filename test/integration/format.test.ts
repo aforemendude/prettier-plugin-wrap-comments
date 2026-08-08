@@ -55,6 +55,32 @@ describe('fixture formatting', () => {
   });
 });
 
+describe('ECMAScript horizontal comment indentation', () => {
+  it.each([
+    { indentation: '\u000b', name: 'vertical tab' },
+    { indentation: '\u000c', name: 'form feed' },
+    { indentation: '\u00a0', name: 'no-break space' },
+  ])('wraps after $name on the first pass and remains stable', async ({ indentation }) => {
+    const original = [
+      `${indentation}// This standalone comment contains enough words to wrap across several lines.`,
+      'const value=1;',
+      '',
+    ].join('\n');
+    const expected = [
+      '// This standalone comment',
+      '// contains enough words to',
+      '// wrap across several lines.',
+      'const value = 1;',
+      '',
+    ].join('\n');
+    const options: Options = { parser: 'babel', plugins: [plugin], printWidth: 30 };
+    const output = await format(original, options);
+
+    expect(output).toBe(expected);
+    await expect(format(output, options)).resolves.toBe(output);
+  });
+});
+
 function getFixtureExtension(fixtureFiles: string[]): FixtureExtension {
   const originalFixtureFiles = fixtureFiles.filter((file) => /^original\.(?:js|jsx|ts|tsx)\.txt$/u.test(file));
 

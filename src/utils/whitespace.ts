@@ -1,3 +1,10 @@
+const ECMASCRIPT_HORIZONTAL_WHITESPACE_PATTERN =
+  /^[\t\u000b\u000c \u00a0\u1680\u2000-\u200a\u202f\u205f\u3000\ufeff]$/u;
+
+export function isEcmaScriptHorizontalWhitespace(character: string): boolean {
+  return ECMASCRIPT_HORIZONTAL_WHITESPACE_PATTERN.test(character);
+}
+
 export function skipWhitespace(text: string, index: number): number {
   let cursor = index;
 

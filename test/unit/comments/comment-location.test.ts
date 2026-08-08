@@ -25,6 +25,16 @@ describe('standalone comment detection', () => {
     }
   });
 
+  it('accepts ECMAScript horizontal whitespace around standalone comments', () => {
+    for (const whitespace of ['\u000b', '\u000c', '\u00a0']) {
+      const lineText = `${whitespace}// standalone`;
+      const blockText = `${whitespace}/* standalone */${whitespace}`;
+
+      expect(isStandaloneLineComment(lineText, createCommentRange(lineText, '// standalone'))).toBe(true);
+      expect(isStandaloneBlockComment(blockText, createCommentRange(blockText, '/* standalone */'))).toBe(true);
+    }
+  });
+
   it('requires block comments to be alone on their source line', () => {
     const standaloneText = '  /* standalone */ \t';
     const leadingCodeText = 'value(); /* comment */';
@@ -67,6 +77,16 @@ describe('comment adjacency', () => {
 
     for (const separator of ['\u2028', '\u2029']) {
       const text = ['// first', '  // second'].join(separator);
+
+      expect(
+        areCommentsOnAdjacentLines(text, createCommentRange(text, '// first'), createCommentRange(text, '// second')),
+      ).toBe(true);
+    }
+  });
+
+  it('accepts ECMAScript horizontal whitespace as indentation after the newline', () => {
+    for (const whitespace of ['\u000b', '\u000c', '\u00a0']) {
+      const text = ['// first', `${whitespace}// second`].join('\n');
 
       expect(
         areCommentsOnAdjacentLines(text, createCommentRange(text, '// first'), createCommentRange(text, '// second')),

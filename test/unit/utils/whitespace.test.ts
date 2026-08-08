@@ -1,6 +1,44 @@
 import { describe, expect, it } from 'vitest';
 
-import { skipWhitespace, trimWhitespaceEnd } from '../../../src/utils/whitespace.js';
+import { isEcmaScriptHorizontalWhitespace, skipWhitespace, trimWhitespaceEnd } from '../../../src/utils/whitespace.js';
+
+describe('isEcmaScriptHorizontalWhitespace', () => {
+  it('accepts the ECMAScript whitespace characters that are not line terminators', () => {
+    const whitespace = [
+      '\t',
+      '\u000b',
+      '\u000c',
+      ' ',
+      '\u00a0',
+      '\u1680',
+      '\u2000',
+      '\u2001',
+      '\u2002',
+      '\u2003',
+      '\u2004',
+      '\u2005',
+      '\u2006',
+      '\u2007',
+      '\u2008',
+      '\u2009',
+      '\u200a',
+      '\u202f',
+      '\u205f',
+      '\u3000',
+      '\ufeff',
+    ];
+
+    for (const character of whitespace) {
+      expect(isEcmaScriptHorizontalWhitespace(character), `U+${character.codePointAt(0)?.toString(16)}`).toBe(true);
+    }
+  });
+
+  it('rejects line terminators and non-whitespace text', () => {
+    for (const character of ['\n', '\r', '\u2028', '\u2029', '\u0085', 'a', '', '  ']) {
+      expect(isEcmaScriptHorizontalWhitespace(character), JSON.stringify(character)).toBe(false);
+    }
+  });
+});
 
 describe('skipWhitespace', () => {
   it('advances across ASCII and Unicode whitespace', () => {

@@ -15,24 +15,6 @@
 
 ## Findings
 
-### 8. Valid non-space JavaScript indentation makes wrapping non-idempotent
-
-- **Severity:** Low
-- **References:** `src/comments/comment-location.ts:8-16`, `src/comments/comment-location.ts:19-32`,
-  `src/comments/wrap-comments.ts:137-148`, `src/comments/wrap-trailing-line-comment.ts:35-45`
-- **Problem:** Standalone and adjacent-comment detection accepts only ASCII space and tab as indentation. JavaScript
-  parsers also accept other non-line-breaking whitespace such as form feed, vertical tab, and no-break space. A comment
-  preceded only by one of those characters is misclassified as trailing; the trailing wrapper then sees that the prefix
-  trims to empty and skips it. Native Prettier removes the unusual whitespace, so the next plugin pass classifies the
-  same comment as standalone.
-- **Impact:** Formatting takes two passes to reach a stable result. Focused Babel probes with U+000B, U+000C, and U+00A0
-  before an overlong line comment at `printWidth: 30` all left the comment unwrapped on the first pass and wrapped it to
-  four lines on the second. This is a limited but reproducible editor/CI mismatch for valid source, including whitespace
-  that can enter through copy/paste.
-- **Recommendation:** Centralize an ECMAScript-horizontal-whitespace predicate and use it consistently for standalone
-  checks and the indentation tail after an adjacent line terminator. Keep actual line terminators excluded from the
-  indentation portion so blank lines do not become adjacent groups.
-
 ### 9. Neutralizing a block-form ignore marker permanently rewrites the marker and breaks the next pass
 
 - **Severity:** Medium
