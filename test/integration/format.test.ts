@@ -39,6 +39,9 @@ describe('fixture formatting', () => {
       readFile(path.join(fixtureDirectory, `expected.${extension}.txt`), 'utf8'),
     ]);
     const config = JSON.parse(configText) as Options;
+
+    expect(config).not.toHaveProperty('plugins');
+
     const options: Options = {
       parser: parserByExtension[extension],
       plugins: [plugin],
