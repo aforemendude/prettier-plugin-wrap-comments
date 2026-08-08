@@ -120,11 +120,11 @@ describe('createPrinters', () => {
     mocks.nativePrintComment.mockReset();
   });
 
-  it('preserves the other native printers and estree hooks', () => {
+  it('exports only the wrapped estree printer while preserving its native hooks', () => {
     const printers = createPrinters();
     const estreePrinter = getEstreePrinter(printers);
 
-    expect(printers['estree-json']).toBe(mocks.jsonPrinter);
+    expect(Object.keys(printers)).toEqual(['estree']);
     expect(estreePrinter).not.toBe(mocks.estreePrinter);
     expect(estreePrinter.preprocess).toBe(mocks.estreePreprocess);
     expect(estreePrinter.print).not.toBe(mocks.nativePrint);

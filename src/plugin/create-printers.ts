@@ -23,7 +23,6 @@ export function createPrinters(): NonNullable<Plugin['printers']> {
   }
 
   return {
-    ...estreePlugin.printers,
     estree: {
       ...estreePrinter,
       print(path: AstPath<AstNode>, options: ParserOptions<AstNode>, print: PrintFunction, args?: unknown): Doc {
