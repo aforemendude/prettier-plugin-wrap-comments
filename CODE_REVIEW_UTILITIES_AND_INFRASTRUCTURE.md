@@ -16,23 +16,6 @@ contracts, package-lock and installed-package metadata, and the focused checks l
 
 ## Findings
 
-### 1. Development Node requirement understates the pinned toolchain minimum
-
-- **Severity:** Low
-- **References:** `package.json:12`, `package.json:15-16`, `package-lock.json:1542-1559`, `README.md:6-9`,
-  `AGENTS.md:16-24`
-- **Problem:** The package engine and both setup documents permit every Node 20 release (`>=20.0.0` / “Node.js 20 or
-  newer”), but the directly pinned Vite 8.1.5 development dependency declares `^20.19.0 || >=22.12.0`. The installed
-  package metadata agrees with the lockfile.
-- **Impact:** A contributor using Node 20.0 through 20.18, Node 21, or Node 22.0 through 22.11 satisfies the
-  repository's stated requirement while running an unsupported test toolchain. An engine-strict install rejects that
-  dependency; a default npm install only warns and can defer the failure or incompatibility until development commands
-  run.
-- **Recommendation:** State and enforce Vite's actual development range (`^20.19.0 || >=22.12.0`), or choose a simpler
-  supported floor such as Node 22.12 and enforce it with a checked-in version-manager declaration; alternatively, pin a
-  Vite version that supports the advertised range. If consumers genuinely remain supported on Node 20.0, distinguish the
-  package runtime engine from the contributor/toolchain requirement instead of unnecessarily narrowing both.
-
 ### 2. Fixture configuration can replace the plugin under test
 
 - **Severity:** Low
