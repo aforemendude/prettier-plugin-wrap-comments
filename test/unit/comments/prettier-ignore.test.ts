@@ -65,6 +65,95 @@ describe('collectPrettierIgnoredLineRanges', () => {
     ]);
   });
 
+  it('collects the following JSX child for a JSX-form ignore marker', () => {
+    const text = [
+      'const view = (',
+      '  <section>',
+      '    {/* prettier-ignore */}',
+      '    <span  >{/* nested target */}</span>',
+      '  </section>',
+      ');',
+    ].join('\n');
+    const entries = createCommentEntries(text, ['/* prettier-ignore */', '/* nested target */']);
+    const ignoreContainerStart = text.indexOf('{/* prettier-ignore */}');
+    const ignoreContainerEnd = ignoreContainerStart + '{/* prettier-ignore */}'.length;
+    const targetStart = text.indexOf('<span');
+    const targetEnd = text.indexOf('</span>') + '</span>'.length;
+    const sectionStart = text.indexOf('<section>');
+    const sectionEnd = text.indexOf('</section>') + '</section>'.length;
+    const ast = {
+      body: [
+        {
+          children: [
+            {
+              expression: {
+                range: [ignoreContainerStart + 1, ignoreContainerEnd - 1],
+                type: 'JSXEmptyExpression',
+              },
+              range: [ignoreContainerStart, ignoreContainerEnd],
+              type: 'JSXExpressionContainer',
+            },
+            {
+              range: [ignoreContainerEnd, targetStart],
+              type: 'JSXText',
+            },
+            {
+              range: [targetStart, targetEnd],
+              type: 'JSXElement',
+            },
+          ],
+          range: [sectionStart, sectionEnd],
+          type: 'JSXElement',
+        },
+      ],
+      comments: entries.map((entry) => entry.raw),
+      type: 'Program',
+    };
+
+    expect(collectPrettierIgnoredLineRanges(text, ast, entries)).toEqual([
+      { end: targetEnd, start: text.lastIndexOf('\n', targetStart) + 1 },
+    ]);
+  });
+
+  it('does not treat same-line JSX space as transparent between an ignore marker and child', () => {
+    const text = '<section>{/* prettier-ignore */} <span>{/* target */}</span></section>';
+    const entries = createCommentEntries(text, ['/* prettier-ignore */', '/* target */']);
+    const ignoreContainerStart = text.indexOf('{/* prettier-ignore */}');
+    const ignoreContainerEnd = ignoreContainerStart + '{/* prettier-ignore */}'.length;
+    const targetStart = text.indexOf('<span>');
+    const targetEnd = text.indexOf('</span>') + '</span>'.length;
+    const ast = {
+      children: [
+        {
+          expression: {
+            end: ignoreContainerEnd - 1,
+            start: ignoreContainerStart + 1,
+            type: 'JSXEmptyExpression',
+          },
+          end: ignoreContainerEnd,
+          start: ignoreContainerStart,
+          type: 'JSXExpressionContainer',
+        },
+        {
+          end: targetStart,
+          start: ignoreContainerEnd,
+          type: 'JSXText',
+        },
+        {
+          end: targetEnd,
+          start: targetStart,
+          type: 'JSXElement',
+        },
+      ],
+      comments: entries.map((entry) => entry.raw),
+      end: text.length,
+      start: 0,
+      type: 'JSXElement',
+    };
+
+    expect(collectPrettierIgnoredLineRanges(text, ast, entries)).toEqual([]);
+  });
+
   it('rejects invalid ignore-to-target relationships', () => {
     const cases = [
       {

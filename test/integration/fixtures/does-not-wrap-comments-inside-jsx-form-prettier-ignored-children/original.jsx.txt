@@ -1,0 +1,8 @@
+export function View() {
+  return (
+    <section>
+      {/* prettier-ignore */}
+      <span  >{/* This comment-only expression should stay on one long line because JSX-form prettier-ignore protects this child. */}</span>
+    </section>
+  );
+}

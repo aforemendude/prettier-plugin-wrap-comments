@@ -15,22 +15,6 @@
 
 ## Findings
 
-### 5. JSX-form `prettier-ignore` markers do not protect comments inside the ignored child
-
-- **Severity:** Medium
-- **References:** `src/comments/prettier-ignore.ts:40-50`, `src/comments/prettier-ignore.ts:55-70`,
-  `src/comments/comment-location.ts:12-16`, `src/comments/wrap-comments.ts:54`, `src/comments/wrap-comments.ts:74`
-- **Problem:** Ignore-range discovery only accepts a marker that is textually standalone. The standard JSX form
-  `{/* prettier-ignore */}` necessarily has `{` and `}` on its line, so `isStandaloneBlockComment` rejects it and the
-  following JSX child is never added to `ignoredLineRanges`. Prettier still interprets the marker and preserves the
-  child, but preprocessing has already rewritten eligible comments inside that child.
-- **Impact:** Source explicitly covered by `prettier-ignore` is modified. In a focused Babel/JSX probe, native Prettier
-  preserved an intentionally irregular `<span>` child and its one-line inner block comment byte-for-byte, while this
-  plugin expanded the inner comment to a four-line star-prefixed block inside that otherwise preserved child.
-- **Recommendation:** Recognize an exact ignore block contained by a comment-only `JSXExpressionContainer` as the JSX
-  standalone marker form, resolve the following JSX child node, and add that child's full source/line range to the
-  ignored intervals before wrapping any descendant comments.
-
 ### 6. Flow suppression and lint directives can be merged behind prose and disabled
 
 - **Severity:** Medium
