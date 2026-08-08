@@ -15,23 +15,6 @@
 
 ## Findings
 
-### 10. Trailing whitespace after a block ignore marker defeats adjacency detection
-
-- **Severity:** Low
-- **References:** `src/comments/comment-location.ts:19-32`, `src/comments/prettier-ignore.ts:80-98`,
-  `src/comments/prettier-ignore.ts:20-34`
-- **Problem:** `areCommentsOnAdjacentLines` permits indentation after the single line terminator but no spaces or tabs
-  before it. Unlike line comments, a block comment's AST range ends at `*/`, so harmless trailing whitespace on a
-  `/* prettier-ignore */   ` line remains in the inter-comment slice and makes an immediately following block target
-  appear non-adjacent.
-- **Impact:** The plugin wraps the block comment that the marker was meant to protect and fails to neutralize the
-  marker, allowing native Prettier to ignore the following code as well. In a focused Babel probe, adding three trailing
-  spaces to an otherwise working block marker changed the result from an untouched target plus normally formatted code
-  to a rewritten target plus an irregular `const       x=1` line. Subsequent passes then behave differently after
-  Prettier removes the spaces.
-- **Recommendation:** Define adjacent comment lines as optional horizontal indentation, one supported line terminator,
-  then optional indentation (`indent + newline + indent`), while still rejecting more than one line terminator.
-
 ### 11. Multiline wrapping silently disables Flow type-include comments
 
 - **Severity:** Medium

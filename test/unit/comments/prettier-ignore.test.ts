@@ -269,6 +269,15 @@ describe('isPrettierIgnoredBlockComment', () => {
     expect(isPrettierIgnoredBlockComment(text, entries, 1)).toBe(true);
   });
 
+  it('recognizes a target after trailing whitespace on a block-form ignore marker', () => {
+    const marker = '/* prettier-ignore */';
+    const target = '/* target */';
+    const text = [`${marker} \t`, `  ${target}`].join('\n');
+    const entries = createCommentEntries(text, [marker, target]);
+
+    expect(isPrettierIgnoredBlockComment(text, entries, 1)).toBe(true);
+  });
+
   it('rejects missing, inline, separated, and non-ignore predecessors', () => {
     const cases = [
       createCase('/* target */', ['/* target */']),

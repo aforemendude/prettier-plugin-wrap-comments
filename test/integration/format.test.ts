@@ -81,6 +81,20 @@ describe('ECMAScript horizontal comment indentation', () => {
   });
 });
 
+describe('prettier-ignore comment targets', () => {
+  it('honors a block marker with trailing whitespace', async () => {
+    const marker = '/* prettier-ignore */';
+    const target = '/* This block comment should stay on one long line because the ignore marker applies to it. */';
+    const original = [`${marker}   `, target, 'const       x=1;', ''].join('\n');
+    const expected = [marker, target, 'const x = 1;', ''].join('\n');
+    const options: Options = { parser: 'babel', plugins: [plugin], printWidth: 48 };
+    const output = await format(original, options);
+
+    expect(output).toBe(expected);
+    await expect(format(output, options)).resolves.toBe(output);
+  });
+});
+
 function getFixtureExtension(fixtureFiles: string[]): FixtureExtension {
   const originalFixtureFiles = fixtureFiles.filter((file) => /^original\.(?:js|jsx|ts|tsx)\.txt$/u.test(file));
 

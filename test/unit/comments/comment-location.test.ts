@@ -56,9 +56,10 @@ describe('standalone comment detection', () => {
 });
 
 describe('comment adjacency', () => {
-  it('accepts exactly one newline followed by indentation', () => {
+  it('accepts horizontal whitespace around exactly one newline', () => {
     const lfText = ['// first', '  // second'].join('\n');
     const crlfText = ['// first', '\t// second'].join('\r\n');
+    const trailingWhitespaceText = '/* first */ \t\n  /* second */';
 
     expect(
       areCommentsOnAdjacentLines(
@@ -74,6 +75,13 @@ describe('comment adjacency', () => {
         createCommentRange(crlfText, '// second'),
       ),
     ).toBe(true);
+    expect(
+      areCommentsOnAdjacentLines(
+        trailingWhitespaceText,
+        createCommentRange(trailingWhitespaceText, '/* first */'),
+        createCommentRange(trailingWhitespaceText, '/* second */'),
+      ),
+    ).toBe(true);
 
     for (const separator of ['\u2028', '\u2029']) {
       const text = ['// first', '  // second'].join(separator);
@@ -86,10 +94,14 @@ describe('comment adjacency', () => {
 
   it('accepts ECMAScript horizontal whitespace as indentation after the newline', () => {
     for (const whitespace of ['\u000b', '\u000c', '\u00a0']) {
-      const text = ['// first', `${whitespace}// second`].join('\n');
+      const text = `/* first */${whitespace}\n${whitespace}/* second */`;
 
       expect(
-        areCommentsOnAdjacentLines(text, createCommentRange(text, '// first'), createCommentRange(text, '// second')),
+        areCommentsOnAdjacentLines(
+          text,
+          createCommentRange(text, '/* first */'),
+          createCommentRange(text, '/* second */'),
+        ),
       ).toBe(true);
     }
   });
@@ -124,6 +136,7 @@ describe('comment adjacency', () => {
 
   it('checks adjacency between a comment and a following source index', () => {
     const adjacentText = ['// note', '  value();'].join('\n');
+    const trailingWhitespaceText = ['/* note */   ', '  value();'].join('\n');
     const separatedText = ['// note', '', 'value();'].join('\n');
 
     expect(
@@ -131,6 +144,13 @@ describe('comment adjacency', () => {
         adjacentText,
         createCommentRange(adjacentText, '// note'),
         adjacentText.indexOf('value'),
+      ),
+    ).toBe(true);
+    expect(
+      isCommentAdjacentBeforeIndex(
+        trailingWhitespaceText,
+        createCommentRange(trailingWhitespaceText, '/* note */'),
+        trailingWhitespaceText.indexOf('value'),
       ),
     ).toBe(true);
     expect(

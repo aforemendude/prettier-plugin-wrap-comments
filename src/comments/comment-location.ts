@@ -22,17 +22,29 @@ export function areCommentsOnAdjacentLines(
   previousComment: CommentRange,
   comment: CommentRange,
 ): boolean {
-  return isOnlyNewlineAndIndent(text.slice(previousComment.end, comment.start));
+  return isOnlyHorizontalWhitespaceAroundNewline(text.slice(previousComment.end, comment.start));
 }
 
 export function isCommentAdjacentBeforeIndex(text: string, comment: CommentRange, index: number): boolean {
-  return isOnlyNewlineAndIndent(text.slice(comment.end, index));
+  return isOnlyHorizontalWhitespaceAroundNewline(text.slice(comment.end, index));
 }
 
-function isOnlyNewlineAndIndent(text: string): boolean {
-  const newline = /^(?:\r\n|[\n\r\u2028\u2029])/u.exec(text)?.[0];
+function isOnlyHorizontalWhitespaceAroundNewline(text: string): boolean {
+  let newlineStart = 0;
 
-  return newline !== undefined && isOnlyHorizontalWhitespace(text.slice(newline.length));
+  while (newlineStart < text.length) {
+    const character = text[newlineStart];
+
+    if (character === undefined || !isEcmaScriptHorizontalWhitespace(character)) {
+      break;
+    }
+
+    newlineStart += 1;
+  }
+
+  const newline = /^(?:\r\n|[\n\r\u2028\u2029])/u.exec(text.slice(newlineStart))?.[0];
+
+  return newline !== undefined && isOnlyHorizontalWhitespace(text.slice(newlineStart + newline.length));
 }
 
 function isOnlyHorizontalWhitespace(text: string): boolean {
