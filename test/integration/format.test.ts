@@ -107,6 +107,41 @@ describe('Babel Flow parser delegation', () => {
   });
 });
 
+describe('CR-only JSX expression comment output', () => {
+  it.each(['babel', 'babel-ts', 'typescript'] as const)(
+    'expands and indents wrapped comments with %s',
+    async (parser) => {
+      const original = [
+        'export const View = () => (',
+        '  <div>',
+        '    {/* This JSX expression comment contains enough words to wrap across several lines. */}',
+        '  </div>',
+        ');',
+        '',
+      ].join('\n');
+      const expected = [
+        'export const View = () => (',
+        '  <div>',
+        '    {',
+        '      /*',
+        '       * This JSX expression comment',
+        '       * contains enough words to wrap',
+        '       * across several lines.',
+        '       */',
+        '    }',
+        '  </div>',
+        ');',
+        '',
+      ].join('\r');
+      const options: Options = { endOfLine: 'cr', parser, plugins: [plugin], printWidth: 40 };
+      const output = await format(original, options);
+
+      expect(output).toBe(expected);
+      await expect(format(output, options)).resolves.toBe(output);
+    },
+  );
+});
+
 function getFixtureExtension(fixtureFiles: string[]): FixtureExtension {
   const originalFixtureFiles = fixtureFiles.filter((file) => /^original\.(?:js|jsx|ts|tsx)\.txt$/u.test(file));
 

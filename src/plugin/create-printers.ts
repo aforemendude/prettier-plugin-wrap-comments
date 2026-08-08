@@ -8,9 +8,10 @@ import { isRecord } from '../utils/type-guards.js';
 import { isRewrittenJsxBlockComment } from './jsx-comment-rewrite-metadata.js';
 
 const { hardline, indent } = doc.builders;
-const { replaceEndOfLine } = doc.utils;
+const { mapDoc, replaceEndOfLine } = doc.utils;
 
 type AstNode = Record<string, unknown>;
+type RewrittenMultilineBlockComment = AstNode & { value: string };
 type PrintFunction = Parameters<Printer<AstNode>['print']>[2];
 
 export function createPrinters(): NonNullable<Plugin['printers']> {
@@ -43,6 +44,15 @@ export function createPrinters(): NonNullable<Plugin['printers']> {
             : normalizedOriginalText;
         }
 
+        if (isRewrittenMultilineBlockComment(path.node)) {
+          const printedComment = estreePrintComment(path, options);
+          const normalizedComment = mapDoc(printedComment, (currentDoc) =>
+            typeof currentDoc === 'string' ? normalizeLineTerminators(currentDoc) : currentDoc,
+          );
+
+          return replaceEndOfLine(normalizedComment, hardline);
+        }
+
         return estreePrintComment(path, options);
       },
     },
@@ -65,12 +75,12 @@ function isRewrittenMultilineEmptyJsxExpressionBlockComment(node: unknown): bool
   return Array.isArray(comments) && comments.some(isRewrittenMultilineBlockComment);
 }
 
-function isRewrittenMultilineBlockComment(comment: unknown): boolean {
+function isRewrittenMultilineBlockComment(comment: unknown): comment is RewrittenMultilineBlockComment {
   if (!isRecord(comment) || (comment['type'] !== 'Block' && comment['type'] !== 'CommentBlock')) {
     return false;
   }
 
   const value = comment['value'];
 
-  return typeof value === 'string' && value.includes('\n') && isRewrittenJsxBlockComment(comment);
+  return typeof value === 'string' && /[\r\n\u2028\u2029]/u.test(value) && isRewrittenJsxBlockComment(comment);
 }

@@ -41,6 +41,17 @@ import {
 import { createCommentEntries } from '../support/comments.js';
 
 const { hardline, indent } = doc.builders;
+const { replaceEndOfLine } = doc.utils;
+const blockCommentTypes = ['Block', 'CommentBlock'] as const;
+const lineTerminatorCases = [
+  { name: 'LF', separator: '\n' },
+  { name: 'CR', separator: '\r' },
+  { name: 'line separator', separator: '\u2028' },
+  { name: 'paragraph separator', separator: '\u2029' },
+] as const;
+const multilineBlockCommentCases = blockCommentTypes.flatMap((type) =>
+  lineTerminatorCases.map(({ name, separator }) => ({ name, separator, type })),
+);
 const fallbackCases = [
   { name: 'a non-object node', node: undefined },
   { name: 'another AST node type', node: { type: 'Identifier' } },
@@ -149,33 +160,61 @@ describe('createPrinters', () => {
     expect(mocks.nativePrintComment).toHaveBeenCalledWith(path, options);
   });
 
-  it.each(['Block', 'CommentBlock'] as const)('expands a multiline %s comment in an empty JSX expression', (type) => {
-    const expressionDoc = ['printed expression'] satisfies Doc;
-    const print = vi.fn(() => expressionDoc);
-    const value = ['first line', 'second line'].join('\n');
+  it.each(lineTerminatorCases)('prints a rewritten block comment containing $name as line docs', ({ separator }) => {
+    const value = ['first line', 'second line'].join(separator);
+    const normalizedValue = ['first line', 'second line'].join('\n');
+    const nativeDoc = ['/*', value, '*/'] satisfies Doc;
     const raw = `/*${value}*/`;
-    const blockComment = { end: raw.length, start: 0, type, value };
-    const node = {
-      expression: {
-        comments: [{ type: 'Line', value: ['ignored', 'line'].join('\n') }, blockComment],
-        type: 'JSXEmptyExpression',
-      },
-      type: 'JSXExpressionContainer',
-    };
-    const path = createPath(node);
+    const blockComment = { end: raw.length, start: 0, type: 'Block', value };
+    const path = createPath(blockComment);
     const options = createParserOptions();
-    const args = { marker: 'args' };
+    mocks.nativePrintComment.mockReturnValue(nativeDoc);
 
     setJsxBlockCommentRewrites(options, [{ blockCommentIndex: 0, text: raw }]);
     markRewrittenJsxBlockComments(raw, { comments: [blockComment] }, options);
 
     const printer = getEstreePrinter(createPrinters());
 
-    expect(printer.print(path, options, print, args)).toEqual(['{', indent([hardline, expressionDoc]), hardline, '}']);
-    expect(print).toHaveBeenCalledTimes(1);
-    expect(print).toHaveBeenCalledWith('expression');
-    expect(mocks.nativePrint).not.toHaveBeenCalled();
+    expect(printer.printComment?.(path, options)).toEqual(replaceEndOfLine(['/*', normalizedValue, '*/'], hardline));
+    expect(mocks.nativePrintComment).toHaveBeenCalledTimes(1);
+    expect(mocks.nativePrintComment).toHaveBeenCalledWith(path, options);
   });
+
+  it.each(multilineBlockCommentCases)(
+    'expands a multiline $type comment containing $name in an empty JSX expression',
+    ({ separator, type }) => {
+      const expressionDoc = ['printed expression'] satisfies Doc;
+      const print = vi.fn(() => expressionDoc);
+      const value = ['first line', 'second line'].join(separator);
+      const raw = `/*${value}*/`;
+      const blockComment = { end: raw.length, start: 0, type, value };
+      const node = {
+        expression: {
+          comments: [{ type: 'Line', value: ['ignored', 'line'].join('\n') }, blockComment],
+          type: 'JSXEmptyExpression',
+        },
+        type: 'JSXExpressionContainer',
+      };
+      const path = createPath(node);
+      const options = createParserOptions();
+      const args = { marker: 'args' };
+
+      setJsxBlockCommentRewrites(options, [{ blockCommentIndex: 0, text: raw }]);
+      markRewrittenJsxBlockComments(raw, { comments: [blockComment] }, options);
+
+      const printer = getEstreePrinter(createPrinters());
+
+      expect(printer.print(path, options, print, args)).toEqual([
+        '{',
+        indent([hardline, expressionDoc]),
+        hardline,
+        '}',
+      ]);
+      expect(print).toHaveBeenCalledTimes(1);
+      expect(print).toHaveBeenCalledWith('expression');
+      expect(mocks.nativePrint).not.toHaveBeenCalled();
+    },
+  );
 
   it.each(fallbackCases)('delegates $name to the native estree printer', ({ node }) => {
     const nativeDoc = ['native output'] satisfies Doc;
