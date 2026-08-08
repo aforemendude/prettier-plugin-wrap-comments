@@ -1,4 +1,5 @@
 const PRAGMA_DIRECTIVE_COMMENT_PATTERNS: readonly RegExp[] = [
+  /^@(?:flow|noflow)\b/u,
   /^@(?:license|preserve)\b/u,
   /^@(?:jsxFrag|jsxImportSource|jsxRuntime|jsx)\b/u,
   /^@(?:ts-check|ts-expect-error|ts-ignore|ts-nocheck)\b/u,
@@ -19,6 +20,7 @@ const TOOL_DIRECTIVE_COMMENT_PATTERNS: readonly RegExp[] = [
   /^eslint\b/u,
   /^eslint-/u,
   /^exported\b/u,
+  /^flowlint(?:-next-line|-line)?\b/u,
   /^globals?\b/u,
   /^istanbul\b/u,
   /^jshint\b/u,
@@ -31,6 +33,7 @@ const TOOL_DIRECTIVE_COMMENT_PATTERNS: readonly RegExp[] = [
   /^tslint\b/u,
   /^v8\b/u,
   /^vite-ignore\b/u,
+  /^\$(?:FlowExpectedError|FlowFixMe)\b/u,
 ];
 
 const BUNDLER_DIRECTIVE_COMMENT_PATTERNS: readonly RegExp[] = [

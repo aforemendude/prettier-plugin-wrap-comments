@@ -151,8 +151,9 @@ The plugin leaves these comments unchanged:
 - TypeScript-style triple-slash line comments that start with `///`
 - empty comment bodies
 - `prettier-ignore` markers themselves
-- other directive comments such as `@license`, `@preserve`, JSX and TypeScript pragmas, source map directives,
-  `#__PURE__`, `@__PURE__`, lint/coverage/formatter directives, `vite-ignore`, and webpack magic comments
+- other directive comments such as `@license`, `@preserve`, JSX, TypeScript, and Flow pragmas, Flow error suppressions,
+  `flowlint` comments, source map directives, `#__PURE__`, `@__PURE__`, other lint/coverage/formatter directives,
+  `vite-ignore`, and webpack magic comments
 
 ## Supported Parsers
 

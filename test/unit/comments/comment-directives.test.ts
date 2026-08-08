@@ -5,6 +5,8 @@ import { isDirectiveComment, isPrettierIgnoreComment } from '../../../src/commen
 describe('isDirectiveComment', () => {
   it('recognizes directive comment families', () => {
     const directiveBodies = [
+      '  @flow strict',
+      '@noflow',
       '  @license package license',
       '@preserve license text',
       '@jsx createElement',
@@ -31,6 +33,9 @@ describe('isDirectiveComment', () => {
       'eslint no-console',
       'eslint-disable-next-line no-console',
       'exported globalName',
+      'flowlint sketchy-null-bool:off',
+      'flowlint-line sketchy-null-bool:off',
+      'flowlint-next-line sketchy-null-bool:off',
       'global globalName',
       'globals globalName',
       'istanbul ignore next',
@@ -45,6 +50,8 @@ describe('isDirectiveComment', () => {
       'v8 ignore next',
       'vite-ignore',
       'webpackChunkName: "admin"',
+      '$FlowFixMe[incompatible-type]',
+      '$FlowExpectedError[incompatible-type]',
     ];
 
     for (const body of directiveBodies) {
@@ -54,8 +61,11 @@ describe('isDirectiveComment', () => {
 
   it('rejects non-directive comments', () => {
     const nonDirectiveBodies = [
+      '@flowing prose',
       '@jsxRuntimeful automatic',
       '@ts-expect-errorful sentence',
+      '$FlowFixMeLater[incompatible-type]',
+      'flowlinting sketchy-null-bool:off',
       'not a directive eslint-disable-next-line',
       'prettier-ignoreful',
       'webpackMagic: true',

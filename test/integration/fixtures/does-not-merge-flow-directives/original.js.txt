@@ -1,0 +1,19 @@
+// @flow
+
+// explanation
+// $FlowFixMe[incompatible-type]
+const fixMe = 1;
+
+// explanation
+// $FlowExpectedError[incompatible-type]
+const expectedError = 1;
+
+// explanation
+// flowlint sketchy-null-bool:off
+const fileLint = true;
+
+// explanation
+// flowlint-next-line sketchy-null-bool:off
+const nextLineLint = true;
+
+const sameLineLint = true; // flowlint-line sketchy-null-bool:off

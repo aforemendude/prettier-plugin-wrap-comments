@@ -37,6 +37,16 @@ describe('collectLineCommentGroup', () => {
         text: ['// first', '// eslint-disable-next-line'].join('\n'),
       },
       {
+        comments: ['// first', '// $FlowFixMe[incompatible-type]'],
+        name: 'Flow suppression comment',
+        text: ['// first', '// $FlowFixMe[incompatible-type]'].join('\n'),
+      },
+      {
+        comments: ['// first', '// flowlint-next-line sketchy-null-bool:off'],
+        name: 'Flow lint comment',
+        text: ['// first', '// flowlint-next-line sketchy-null-bool:off'].join('\n'),
+      },
+      {
         comments: ['// first', '/// <reference path="types.d.ts" />'],
         name: 'triple-slash comment',
         text: ['// first', '/// <reference path="types.d.ts" />'].join('\n'),
