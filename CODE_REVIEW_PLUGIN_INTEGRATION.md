@@ -14,26 +14,6 @@ current source and, where useful, focused execution against the current committe
 
 ## Findings
 
-### 1. Comment-free files pay for an avoidable second full parse
-
-- **Severity:** Medium
-- **Reference:** `src/plugin/create-parsers.ts:50-60` (the relevant eligible-comment syntax is confirmed by
-  `src/comments/comment-ranges.ts:68-75`)
-- **Problem:** After the underlying parser's preprocessing finishes, the wrapper always builds a complete AST at line 53
-  and only then discovers that the AST has no comments at line 58. Prettier subsequently parses the returned
-  preprocessed text again for its real formatting pass. Consequently, every normally formatted comment-free file handled
-  by `babel`, `babel-ts`, or `typescript` incurs an extra full parse even though this plugin has nothing to do.
-- **Impact:** The plugin imposes CPU and allocation overhead across comment-free source files, which can be substantial
-  in large files and repository-wide formatting runs. A focused local benchmark on a generated 10,000-statement
-  comment-free Babel file measured median end-to-end formatting time of 689 ms with the plugin versus 589 ms without it
-  (eight warmed samples each); the exact ratio is environment-dependent, but the redundant parse is deterministic from
-  the call flow.
-- **Recommendation:** Before `parser.parse`, return `preprocessed` when it contains neither `//` nor `/*`. This is a
-  safe cheap fast path for the plugin's current behavior: every comment it can classify and rewrite must begin with one
-  of those exact delimiters. Delimiters inside strings or regular expressions merely cause a conservative false positive
-  and retain the current parse path; the check cannot skip an eligible comment. Keep the AST-based check for texts that
-  contain either delimiter.
-
 ### 2. Files containing only deliberately skipped comments still trigger a full recursive formatting pass
 
 - **Severity:** Medium

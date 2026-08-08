@@ -139,8 +139,8 @@ describe('createParsers', () => {
   });
 
   it('preprocesses, probes, and wraps source that has AST comments', async () => {
-    const source = 'const value = true;';
-    const preprocessedSource = 'const value = false;';
+    const source = ['// original comment', 'const value = true;'].join('\n');
+    const preprocessedSource = ['// preprocessed comment', 'const value = false;'].join('\n');
     const wrappedSource = '// wrapped';
     const options = createParserOptions('babel');
     const ast = { comments: [{}] };
@@ -203,18 +203,32 @@ describe('createParsers', () => {
     expect(isRewrittenJsxBlockComment(finalComment)).toBe(true);
   });
 
-  it('uses the original source when the source parser has no preprocess hook', async () => {
+  it.each(parserCases)('skips analysis for comment-free $parserName source', async ({ baseParser, parserName }) => {
+    const source = `const ${parserName.replace('-', '')} = true;`;
+    const options = createParserOptions(parserName);
+    const parser = getParser(createParsers(), parserName);
+
+    await expect(callPreprocess(parser, source, options)).resolves.toBe(source);
+    expect(baseParser.parse).not.toHaveBeenCalled();
+    expect(mocks.collectAstComments).not.toHaveBeenCalled();
+    expect(mocks.getPrinterLayoutSource).not.toHaveBeenCalled();
+    expect(mocks.wrapCommentsWithMetadata).not.toHaveBeenCalled();
+  });
+
+  it.each(['//', '/*'])('retains AST analysis when preprocessed source contains %s', async (delimiter) => {
     const source = 'const value = true;';
+    const preprocessedSource = `const delimiter = '${delimiter}';`;
     const options = createParserOptions('typescript');
     const ast = { comments: [] };
+    const preprocess = vi.fn().mockResolvedValue(preprocessedSource);
+    mocks.typescriptParser.preprocess = preprocess;
     mocks.typescriptParser.parse.mockResolvedValue(ast);
     mocks.collectAstComments.mockReturnValue([]);
     const parser = getParser(createParsers(), 'typescript');
 
-    await expect(callPreprocess(parser, source, options)).resolves.toBe(source);
-    expect(mocks.typescriptParser.parse).toHaveBeenCalledTimes(1);
-    expect(mocks.typescriptParser.parse).toHaveBeenCalledWith(source, options);
-    expect(mocks.collectAstComments).toHaveBeenCalledTimes(1);
+    await expect(callPreprocess(parser, source, options)).resolves.toBe(preprocessedSource);
+    expect(preprocess).toHaveBeenCalledWith(source, options);
+    expect(mocks.typescriptParser.parse).toHaveBeenCalledWith(preprocessedSource, options);
     expect(mocks.collectAstComments).toHaveBeenCalledWith(ast);
     expect(mocks.getPrinterLayoutSource).not.toHaveBeenCalled();
     expect(mocks.wrapCommentsWithMetadata).not.toHaveBeenCalled();
@@ -243,7 +257,7 @@ describe('createParsers', () => {
 
   it('returns preprocessed source unchanged when parsing it fails', async () => {
     const source = 'original source';
-    const preprocessedSource = 'invalid preprocessed source';
+    const preprocessedSource = 'invalid /* preprocessed source';
     const options = createParserOptions('babel-ts');
     const preprocess = vi.fn().mockResolvedValue(preprocessedSource);
     mocks.babelTsParser.preprocess = preprocess;

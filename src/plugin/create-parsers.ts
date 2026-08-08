@@ -47,6 +47,10 @@ function createWrappedParser<T>(parserName: SupportedParserName, parser: Parser<
         return preprocessed;
       }
 
+      if (!preprocessed.includes('//') && !preprocessed.includes('/*')) {
+        return preprocessed;
+      }
+
       let ast: T;
 
       try {
