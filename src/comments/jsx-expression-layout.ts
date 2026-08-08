@@ -3,7 +3,7 @@ import { isStandaloneBlockComment } from './comment-location.js';
 import type { PrinterCommentLayout } from './printer-layout.js';
 import type { BlockCommentLayout } from './wrap-block-comment.js';
 import { getAstNodeRange, visitAstNodes } from '../utils/ast.js';
-import type { SourceRange } from '../utils/ast.js';
+import type { ContainingRangeMatch, SourceRange } from '../utils/ast.js';
 import { getColumns } from '../utils/display-width.js';
 import { getLeadingIndent } from '../utils/indentation.js';
 import { getLinePrefix, getLineStart } from '../utils/source-lines.js';
@@ -51,22 +51,25 @@ export function getJsxExpressionBlockCommentLayout(
   text: string,
   comment: CommentRange,
   previousComment: CommentRange | undefined,
-  containers: JsxExpressionContainerRange[],
+  containerMatch: ContainingRangeMatch<JsxExpressionContainerRange> | undefined,
   tabWidth: number,
   outputCommentLayout: PrinterCommentLayout | undefined,
   outputCommentMarkerColumns: Array<number | undefined>,
 ): BlockCommentLayout | undefined {
-  const container = getSmallestContainingRange(comment, containers);
+  if (containerMatch === undefined) {
+    return undefined;
+  }
 
-  if (container === undefined || text[container.start] !== '{' || text[container.end - 1] !== '}') {
+  const container = containerMatch.range;
+
+  if (text[container.start] !== '{' || text[container.end - 1] !== '}') {
     return undefined;
   }
 
   const hasExpressionBeforeComment = container.expression !== undefined && container.expression.start < comment.start;
   const hasExpressionAfterComment = container.expression !== undefined && container.expression.end > comment.end;
-  const containerIndex = containers.indexOf(container);
   const multilineMarkerColumn =
-    outputCommentMarkerColumns[containerIndex] ??
+    outputCommentMarkerColumns[containerMatch.index] ??
     getJsxExpressionContainerOutputColumn(text, container, tabWidth) + tabWidth;
   const markerColumn = outputCommentLayout?.markerColumn ?? multilineMarkerColumn;
   const contentColumn = multilineMarkerColumn + 3;
@@ -156,23 +159,4 @@ function getJsxExpressionContainerOutputColumn(text: string, container: SourceRa
   const lineIndent = getLeadingIndent(linePrefix);
 
   return getColumns(lineIndent, tabWidth) + tabWidth;
-}
-
-function getSmallestContainingRange<Range extends SourceRange>(
-  comment: CommentRange,
-  ranges: Range[],
-): Range | undefined {
-  let containingRange: Range | undefined;
-
-  for (const range of ranges) {
-    if (comment.start <= range.start || comment.end >= range.end) {
-      continue;
-    }
-
-    if (containingRange === undefined || range.end - range.start < containingRange.end - containingRange.start) {
-      containingRange = range;
-    }
-  }
-
-  return containingRange;
 }

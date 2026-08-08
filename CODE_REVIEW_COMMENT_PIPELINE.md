@@ -15,27 +15,6 @@
 
 ## Findings
 
-### 3. Repeated linear range lookups make JSX and ignore processing quadratic
-
-- **Severity:** Medium
-- **References:** `src/comments/jsx-expression-layout.ts:59-70`, `src/comments/jsx-expression-layout.ts:153-167`,
-  `src/comments/embedded-expression-ranges.ts:60-61`, `src/comments/embedded-expression-ranges.ts:89-90`,
-  `src/comments/embedded-expression-ranges.ts:153-169`, `src/comments/prettier-ignore.ts:61`,
-  `src/comments/prettier-ignore.ts:76-78`
-- **Problem:** Sorted range collections are rescanned from the beginning for each comment. JSX block classification
-  performs a full containing-container scan and then an `indexOf` scan; embedded-comment checks likewise rescan every
-  embedded range; each `prettier-ignore` target uses `nodeRanges.find`; and every comment linearly scans all accumulated
-  ignored ranges. These operations compose to quadratic work as comments/containers/ignore markers grow.
-- **Impact:** Large generated sources can spend seconds only locating already-collected ranges, before Markdown
-  formatting. In focused current-build probes, classifying 5,000 skipped block comments across 5,000 JSX containers took
-  about 1.2 seconds and 10,000 took about 3.5 seconds. Collecting ignored ranges for 20,000 ignored declarations took
-  about 1.17 seconds. The growth was superlinear and applies even when the comments themselves are skipped and require
-  no Markdown work.
-- **Recommendation:** Exploit the existing source ordering: advance range cursors alongside the sorted comment loop or
-  use binary searches/interval indexes for containing ranges, retain container indexes while collecting them instead of
-  calling `indexOf`, map AST node starts to the preferred range, and merge/sweep ignored intervals once rather than
-  calling `some` for every comment.
-
 ### 4. Trailing comments after removable root parentheses require two formatting passes
 
 - **Severity:** Medium

@@ -48,16 +48,11 @@ export function collectEmbeddedExpressionRanges(ast: unknown): EmbeddedExpressio
   return ranges.sort((left, right) => left.start - right.start || right.end - left.end);
 }
 
-export function isCommentInEmbeddedExpression(comment: CommentRange, ranges: SourceRange[]): boolean {
-  return getSmallestContainingRange(comment, ranges) !== undefined;
-}
-
 export function getEmbeddedTrailingLineCommentMove(
   text: string,
   comment: CommentRange,
-  ranges: EmbeddedExpressionRange[],
+  range: EmbeddedExpressionRange | undefined,
 ): EmbeddedTrailingLineCommentMove | undefined {
-  const range = getSmallestContainingRange(comment, ranges);
   const expression = range?.expression;
 
   if (
@@ -75,7 +70,8 @@ export function doesBlockCommentSeparateEmbeddedTrailingLineComment(
   text: string,
   blockComment: CommentRange,
   nextComment: CommentRange | undefined,
-  ranges: EmbeddedExpressionRange[],
+  range: EmbeddedExpressionRange | undefined,
+  nextRange: EmbeddedExpressionRange | undefined,
 ): boolean {
   if (
     blockComment.kind !== 'block' ||
@@ -86,8 +82,6 @@ export function doesBlockCommentSeparateEmbeddedTrailingLineComment(
     return false;
   }
 
-  const range = getSmallestContainingRange(blockComment, ranges);
-  const nextRange = getSmallestContainingRange(nextComment, ranges);
   const expression = range?.expression;
 
   return (
@@ -148,23 +142,4 @@ function getNodeBoundary(value: unknown): SourceRange | undefined {
   }
 
   return { end, start };
-}
-
-function getSmallestContainingRange<Range extends SourceRange>(
-  comment: CommentRange,
-  ranges: Range[],
-): Range | undefined {
-  let containingRange: Range | undefined;
-
-  for (const range of ranges) {
-    if (comment.start <= range.start || comment.end >= range.end) {
-      continue;
-    }
-
-    if (containingRange === undefined || range.end - range.start < containingRange.end - containingRange.start) {
-      containingRange = range;
-    }
-  }
-
-  return containingRange;
 }

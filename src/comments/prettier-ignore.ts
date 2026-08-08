@@ -10,7 +10,7 @@ import {
 } from './comment-location.js';
 import { collectCommentEntries } from './comment-ranges.js';
 import type { CommentEntry, CommentRange } from './comment-ranges.js';
-import { getAstNodeRange, visitAstNodes } from '../utils/ast.js';
+import { collectAstNodeRangesByStart } from '../utils/ast.js';
 import type { SourceRange } from '../utils/ast.js';
 import { getLineEnd, getLineStart } from '../utils/source-lines.js';
 import { skipWhitespace } from '../utils/whitespace.js';
@@ -38,7 +38,7 @@ export function neutralizePrettierIgnoreForIgnoredComments<T>(text: string, ast:
 }
 
 export function collectPrettierIgnoredLineRanges(text: string, ast: unknown, comments: CommentEntry[]): SourceRange[] {
-  const nodeRanges = collectAstNodeRanges(ast);
+  const nodeRangesByStart = collectAstNodeRangesByStart(ast);
   const ignoredLineRanges: SourceRange[] = [];
 
   for (let index = 0; index < comments.length; index += 1) {
@@ -58,13 +58,13 @@ export function collectPrettierIgnoredLineRanges(text: string, ast: unknown, com
       continue;
     }
 
-    const targetRange = nodeRanges.find((range) => range.start === targetStart);
+    const targetRange = nodeRangesByStart.get(targetStart);
 
     if (targetRange === undefined) {
       continue;
     }
 
-    ignoredLineRanges.push({
+    appendMergedRange(ignoredLineRanges, {
       end: getLineEnd(text, targetRange.end),
       start: getLineStart(text, targetRange.start),
     });
@@ -73,8 +73,10 @@ export function collectPrettierIgnoredLineRanges(text: string, ast: unknown, com
   return ignoredLineRanges;
 }
 
-export function isCommentInIgnoredLineRange(comment: CommentRange, ignoredLineRanges: SourceRange[]): boolean {
-  return ignoredLineRanges.some((range) => comment.start >= range.start && comment.start < range.end);
+export function isCommentInIgnoredLineRange(comment: CommentRange, ignoredLineRange: SourceRange | undefined): boolean {
+  return (
+    ignoredLineRange !== undefined && comment.start >= ignoredLineRange.start && comment.start < ignoredLineRange.end
+  );
 }
 
 export function isPrettierIgnoredBlockComment(text: string, comments: CommentEntry[], index: number): boolean {
@@ -158,20 +160,6 @@ export function isPrettierIgnoredTrailingLineComment(text: string, comments: Com
   return false;
 }
 
-function collectAstNodeRanges(ast: unknown): SourceRange[] {
-  const ranges: SourceRange[] = [];
-
-  visitAstNodes(ast, (node) => {
-    const range = getAstNodeRange(node);
-
-    if (range !== undefined) {
-      ranges.push(range);
-    }
-  });
-
-  return ranges.sort((left, right) => left.start - right.start || right.end - left.end);
-}
-
 function getPrettierIgnoreTargetStart(
   text: string,
   comments: CommentEntry[],
@@ -212,4 +200,15 @@ function isSkippableCommentBetweenIgnoreAndTarget(text: string, comment: Comment
   }
 
   return shouldSkipLineComment(text, comment) && !isPrettierIgnoreComment(getCommentBody(text, comment));
+}
+
+function appendMergedRange(ranges: SourceRange[], range: SourceRange): void {
+  const previousRange = ranges[ranges.length - 1];
+
+  if (previousRange === undefined || range.start > previousRange.end) {
+    ranges.push(range);
+    return;
+  }
+
+  previousRange.end = Math.max(previousRange.end, range.end);
 }

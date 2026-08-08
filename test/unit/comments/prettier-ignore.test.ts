@@ -105,15 +105,54 @@ describe('collectPrettierIgnoredLineRanges', () => {
       expect(collectPrettierIgnoredLineRanges(testCase.text, ast, entries), testCase.name).toEqual([]);
     }
   });
+
+  it('merges ignored line ranges when an ignored target contains another ignored target', () => {
+    const text = [
+      '// prettier-ignore',
+      'if (condition) {',
+      '  // prettier-ignore',
+      '  const value = compute();',
+      '}',
+    ].join('\n');
+    const entries = createCommentEntries(text, ['// prettier-ignore', '// prettier-ignore']);
+    const ifStart = text.indexOf('if (condition)');
+    const declarationStart = text.indexOf('const value');
+    const ast = {
+      body: [
+        {
+          body: {
+            body: [
+              {
+                end: text.indexOf(';', declarationStart) + 1,
+                start: declarationStart,
+                type: 'VariableDeclaration',
+              },
+            ],
+            end: text.length,
+            start: text.indexOf('{', ifStart),
+            type: 'BlockStatement',
+          },
+          end: text.length,
+          start: ifStart,
+          type: 'IfStatement',
+        },
+      ],
+      comments: entries.map((entry) => entry.raw),
+      type: 'Program',
+    };
+
+    expect(collectPrettierIgnoredLineRanges(text, ast, entries)).toEqual([{ end: text.length, start: ifStart }]);
+  });
 });
 
 describe('isCommentInIgnoredLineRange', () => {
   it('uses an inclusive start and exclusive end boundary', () => {
-    const ignoredLineRanges = [{ end: 20, start: 10 }];
+    const ignoredLineRange = { end: 20, start: 10 };
 
-    expect(isCommentInIgnoredLineRange({ end: 12, kind: 'line', start: 10 }, ignoredLineRanges)).toBe(true);
-    expect(isCommentInIgnoredLineRange({ end: 21, kind: 'line', start: 19 }, ignoredLineRanges)).toBe(true);
-    expect(isCommentInIgnoredLineRange({ end: 22, kind: 'line', start: 20 }, ignoredLineRanges)).toBe(false);
+    expect(isCommentInIgnoredLineRange({ end: 12, kind: 'line', start: 10 }, ignoredLineRange)).toBe(true);
+    expect(isCommentInIgnoredLineRange({ end: 21, kind: 'line', start: 19 }, ignoredLineRange)).toBe(true);
+    expect(isCommentInIgnoredLineRange({ end: 22, kind: 'line', start: 20 }, ignoredLineRange)).toBe(false);
+    expect(isCommentInIgnoredLineRange({ end: 12, kind: 'line', start: 10 }, undefined)).toBe(false);
   });
 });
 

@@ -4,7 +4,6 @@ import {
   collectEmbeddedExpressionRanges,
   doesBlockCommentSeparateEmbeddedTrailingLineComment,
   getEmbeddedTrailingLineCommentMove,
-  isCommentInEmbeddedExpression,
 } from '../../../src/comments/embedded-expression-ranges.js';
 import { createCommentRange } from '../support/comments.js';
 
@@ -61,7 +60,9 @@ describe('doesBlockCommentSeparateEmbeddedTrailingLineComment', () => {
     const expression = { end: text.indexOf('value') + 'value'.length, start: text.indexOf('value') };
     const range = { end: text.indexOf('}') + 1, expression, start: text.indexOf('{') };
 
-    expect(doesBlockCommentSeparateEmbeddedTrailingLineComment(text, blockComment, lineComment, [range])).toBe(true);
+    expect(doesBlockCommentSeparateEmbeddedTrailingLineComment(text, blockComment, lineComment, range, range)).toBe(
+      true,
+    );
   });
 
   it('ignores comments that are not adjacent in the same embedded expression', () => {
@@ -71,7 +72,9 @@ describe('doesBlockCommentSeparateEmbeddedTrailingLineComment', () => {
     const expression = { end: text.indexOf('value') + 'value'.length, start: text.indexOf('value') };
     const range = { end: text.indexOf('}') + 1, expression, start: text.indexOf('{') };
 
-    expect(doesBlockCommentSeparateEmbeddedTrailingLineComment(text, blockComment, lineComment, [range])).toBe(false);
+    expect(doesBlockCommentSeparateEmbeddedTrailingLineComment(text, blockComment, lineComment, range, range)).toBe(
+      false,
+    );
   });
 });
 
@@ -82,7 +85,7 @@ describe('getEmbeddedTrailingLineCommentMove', () => {
     const expression = { end: text.indexOf('value') + 'value'.length, start: text.indexOf('value') };
     const range = { end: text.indexOf('}') + 1, expression, start: text.indexOf('{') };
 
-    expect(getEmbeddedTrailingLineCommentMove(text, comment, [range])).toEqual({
+    expect(getEmbeddedTrailingLineCommentMove(text, comment, range)).toEqual({
       insertAt: expression.start,
       removeStart: expression.end,
     });
@@ -113,34 +116,8 @@ describe('getEmbeddedTrailingLineCommentMove', () => {
     const spreadComment = createCommentRange(spreadText, '// spread comment');
     const spreadRange = { end: spreadText.indexOf('}') + 1, start: spreadText.indexOf('{') };
 
-    expect(getEmbeddedTrailingLineCommentMove(nestedText, nestedComment, [nestedRange])).toBeUndefined();
-    expect(getEmbeddedTrailingLineCommentMove(separatedText, separatedComment, [separatedRange])).toBeUndefined();
-    expect(getEmbeddedTrailingLineCommentMove(spreadText, spreadComment, [spreadRange])).toBeUndefined();
-  });
-});
-
-describe('isCommentInEmbeddedExpression', () => {
-  it('detects a comment after a boundary on the same line', () => {
-    const text = ['  <span>{value // long comment', '  }</span>'].join('\n');
-    const comment = createCommentRange(text, '// long comment');
-    const range = { end: text.indexOf('}') + 1, start: text.indexOf('{') };
-
-    expect(isCommentInEmbeddedExpression(comment, [range])).toBe(true);
-  });
-
-  it('detects a comment when its line starts inside the embedded expression', () => {
-    const text = ['  <span>{', '    value // long comment', '  }</span>'].join('\n');
-    const comment = createCommentRange(text, '// long comment');
-    const range = { end: text.indexOf('}') + 1, start: text.indexOf('{') };
-
-    expect(isCommentInEmbeddedExpression(comment, [range])).toBe(true);
-  });
-
-  it('ignores comments outside embedded expressions', () => {
-    const text = ['// outside', '<span>{value}</span>'].join('\n');
-    const comment = createCommentRange(text, '// outside');
-    const range = { end: text.indexOf('}') + 1, start: text.indexOf('{') };
-
-    expect(isCommentInEmbeddedExpression(comment, [range])).toBe(false);
+    expect(getEmbeddedTrailingLineCommentMove(nestedText, nestedComment, nestedRange)).toBeUndefined();
+    expect(getEmbeddedTrailingLineCommentMove(separatedText, separatedComment, separatedRange)).toBeUndefined();
+    expect(getEmbeddedTrailingLineCommentMove(spreadText, spreadComment, spreadRange)).toBeUndefined();
   });
 });

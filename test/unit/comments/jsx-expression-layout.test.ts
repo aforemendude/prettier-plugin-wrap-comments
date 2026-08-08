@@ -65,7 +65,9 @@ describe('getJsxExpressionBlockCommentLayout', () => {
     const comment = createCommentRange(text, '/* note */');
     const container = { end: text.length, expression: undefined, start: 0 };
 
-    expect(getJsxExpressionBlockCommentLayout(text, comment, undefined, [container], 2, undefined, [])).toBeUndefined();
+    expect(
+      getJsxExpressionBlockCommentLayout(text, comment, undefined, createContainerMatch(container), 2, undefined, []),
+    ).toBeUndefined();
   });
 
   it('lays out a comment-only expression container as standalone', () => {
@@ -73,7 +75,9 @@ describe('getJsxExpressionBlockCommentLayout', () => {
     const comment = createCommentRange(text, '/* note */');
     const container = { end: text.length, expression: undefined, start: 0 };
 
-    expect(getJsxExpressionBlockCommentLayout(text, comment, undefined, [container], 2, undefined, [])).toEqual({
+    expect(
+      getJsxExpressionBlockCommentLayout(text, comment, undefined, createContainerMatch(container), 2, undefined, []),
+    ).toEqual({
       contentColumn: 5,
       markerColumn: 2,
       multilineIndent: '',
@@ -82,13 +86,14 @@ describe('getJsxExpressionBlockCommentLayout', () => {
     });
   });
 
-  it('uses the smallest container and printer-provided marker measurements', () => {
+  it('uses the matched container index and printer-provided marker measurements', () => {
     const text = '{{/* note */}}';
     const comment = createCommentRange(text, '/* note */');
-    const containers: JsxExpressionContainerRange[] = [
-      { end: text.length, expression: undefined, start: 0 },
-      { end: text.length - 1, expression: undefined, start: 1 },
-    ];
+    const innerContainer: JsxExpressionContainerRange = {
+      end: text.length - 1,
+      expression: undefined,
+      start: 1,
+    };
     const outputLayout: PrinterCommentLayout = {
       lineIndentColumn: 0,
       lineWidth: 20,
@@ -96,7 +101,17 @@ describe('getJsxExpressionBlockCommentLayout', () => {
       suffixWidth: 3,
     };
 
-    expect(getJsxExpressionBlockCommentLayout(text, comment, undefined, containers, 2, outputLayout, [8, 4])).toEqual({
+    expect(
+      getJsxExpressionBlockCommentLayout(
+        text,
+        comment,
+        undefined,
+        createContainerMatch(innerContainer, 1),
+        2,
+        outputLayout,
+        [8, 4],
+      ),
+    ).toEqual({
       contentColumn: 7,
       markerColumn: 10,
       multilineIndent: '',
@@ -115,7 +130,9 @@ describe('getJsxExpressionBlockCommentLayout', () => {
       start: 0,
     };
 
-    expect(getJsxExpressionBlockCommentLayout(text, comment, undefined, [container], 2, undefined, [])).toEqual({
+    expect(
+      getJsxExpressionBlockCommentLayout(text, comment, undefined, createContainerMatch(container), 2, undefined, []),
+    ).toEqual({
       contentColumn: 5,
       markerColumn: 2,
       multilineIndent: '',
@@ -140,7 +157,17 @@ describe('getJsxExpressionBlockCommentLayout', () => {
       start: 0,
     };
 
-    expect(getJsxExpressionBlockCommentLayout(text, comment, previousComment, [container], 2, undefined, [])).toEqual({
+    expect(
+      getJsxExpressionBlockCommentLayout(
+        text,
+        comment,
+        previousComment,
+        createContainerMatch(container),
+        2,
+        undefined,
+        [],
+      ),
+    ).toEqual({
       contentColumn: 5,
       markerColumn: 2,
       multilineIndent: '',
@@ -159,7 +186,9 @@ describe('getJsxExpressionBlockCommentLayout', () => {
       start: 0,
     };
 
-    expect(getJsxExpressionBlockCommentLayout(text, comment, undefined, [container], 2, undefined, [])).toEqual({
+    expect(
+      getJsxExpressionBlockCommentLayout(text, comment, undefined, createContainerMatch(container), 2, undefined, []),
+    ).toEqual({
       contentColumn: 5,
       leadingMove: { removeEnd: expressionStart, removeStart: comment.end },
       markerColumn: 2,
@@ -180,7 +209,15 @@ describe('getJsxExpressionBlockCommentLayout', () => {
     };
 
     expect(
-      getJsxExpressionBlockCommentLayout(leadingText, leadingComment, undefined, [leadingContainer], 2, undefined, []),
+      getJsxExpressionBlockCommentLayout(
+        leadingText,
+        leadingComment,
+        undefined,
+        createContainerMatch(leadingContainer),
+        2,
+        undefined,
+        [],
+      ),
     ).toEqual({
       contentColumn: 5,
       markerColumn: 2,
@@ -205,7 +242,7 @@ describe('getJsxExpressionBlockCommentLayout', () => {
         surroundedText,
         surroundedComment,
         undefined,
-        [surroundedContainer],
+        createContainerMatch(surroundedContainer),
         2,
         undefined,
         [],
@@ -213,3 +250,10 @@ describe('getJsxExpressionBlockCommentLayout', () => {
     ).toEqual({ placement: 'inline' });
   });
 });
+
+function createContainerMatch(
+  range: JsxExpressionContainerRange,
+  index = 0,
+): { index: number; range: JsxExpressionContainerRange } {
+  return { index, range };
+}

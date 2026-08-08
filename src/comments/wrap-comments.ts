@@ -5,7 +5,6 @@ import {
   collectEmbeddedExpressionRanges,
   doesBlockCommentSeparateEmbeddedTrailingLineComment,
   getEmbeddedTrailingLineCommentMove,
-  isCommentInEmbeddedExpression,
 } from './embedded-expression-ranges.js';
 import { collectJsxExpressionContainerRanges, getJsxExpressionBlockCommentLayout } from './jsx-expression-layout.js';
 import { collectLineCommentGroup } from './line-comment-groups.js';
@@ -21,6 +20,7 @@ import type { PrinterLayoutSource } from './printer-layout.js';
 import { wrapBlockComment } from './wrap-block-comment.js';
 import { wrapLineCommentGroup } from './wrap-line-comment-group.js';
 import { wrapTrailingLineComment } from './wrap-trailing-line-comment.js';
+import { matchOrderedRangesToSmallestContainers } from '../utils/ast.js';
 import { applyReplacements } from '../utils/replacements.js';
 import type { Replacement } from '../utils/replacements.js';
 import type { JsxBlockCommentRewrite } from '../plugin/jsx-comment-rewrite-metadata.js';
@@ -52,6 +52,8 @@ export async function wrapCommentsWithMetadata<T>(
   const embeddedExpressionRanges = collectEmbeddedExpressionRanges(ast);
   const jsxExpressionContainers = collectJsxExpressionContainerRanges(ast);
   const ignoredLineRanges = collectPrettierIgnoredLineRanges(text, ast, commentEntries);
+  const embeddedExpressionRangeMatches = matchOrderedRangesToSmallestContainers(comments, embeddedExpressionRanges);
+  const jsxExpressionContainerMatches = matchOrderedRangesToSmallestContainers(comments, jsxExpressionContainers);
 
   if (comments.length === 0) {
     return { jsxBlockCommentRewrites: [], text };
@@ -62,6 +64,7 @@ export async function wrapCommentsWithMetadata<T>(
   const tabWidth = getTabWidth(options);
   const printerLayout = getPrinterLayout(text, commentEntries, jsxExpressionContainers, printerLayoutSource, tabWidth);
   let blockCommentIndex = -1;
+  let ignoredLineRangeIndex = 0;
 
   for (let index = 0; index < comments.length; index += 1) {
     const comment = comments[index];
@@ -71,7 +74,18 @@ export async function wrapCommentsWithMetadata<T>(
       blockCommentIndex += 1;
     }
 
-    if (comment === undefined || isCommentInIgnoredLineRange(comment, ignoredLineRanges)) {
+    if (comment === undefined) {
+      continue;
+    }
+
+    let ignoredLineRange = ignoredLineRanges[ignoredLineRangeIndex];
+
+    while (ignoredLineRange !== undefined && ignoredLineRange.end <= comment.start) {
+      ignoredLineRangeIndex += 1;
+      ignoredLineRange = ignoredLineRanges[ignoredLineRangeIndex];
+    }
+
+    if (isCommentInIgnoredLineRange(comment, ignoredLineRange)) {
       continue;
     }
 
@@ -84,7 +98,7 @@ export async function wrapCommentsWithMetadata<T>(
         text,
         comment,
         comments[index - 1],
-        jsxExpressionContainers,
+        jsxExpressionContainerMatches[index],
         tabWidth,
         outputCommentLayout,
         printerLayout.jsxCommentMarkerColumns,
@@ -106,7 +120,8 @@ export async function wrapCommentsWithMetadata<T>(
         text,
         comment,
         comments[index + 1],
-        embeddedExpressionRanges,
+        embeddedExpressionRangeMatches[index]?.range,
+        embeddedExpressionRangeMatches[index + 1]?.range,
       );
 
       if (Array.isArray(replacement)) {
@@ -139,9 +154,10 @@ export async function wrapCommentsWithMetadata<T>(
         continue;
       }
 
-      const embeddedMove = getEmbeddedTrailingLineCommentMove(text, comment, embeddedExpressionRanges);
+      const embeddedExpressionRange = embeddedExpressionRangeMatches[index]?.range;
+      const embeddedMove = getEmbeddedTrailingLineCommentMove(text, comment, embeddedExpressionRange);
 
-      if (embeddedMove === undefined && isCommentInEmbeddedExpression(comment, embeddedExpressionRanges)) {
+      if (embeddedMove === undefined && embeddedExpressionRange !== undefined) {
         continue;
       }
 
