@@ -1,6 +1,6 @@
 import { format } from 'prettier';
 
-import { isBlankLine } from './source-lines.js';
+import { isBlankLine, normalizeLineTerminators } from './source-lines.js';
 import { getTabWidth } from './wrap-options.js';
 import type { WrapOptions } from './wrap-options.js';
 
@@ -9,7 +9,7 @@ export async function formatMarkdownLines(
   printWidth: number,
   options: WrapOptions,
 ): Promise<string[]> {
-  const normalized = trimBlankEdges(markdown.replace(/\r\n?/g, '\n'));
+  const normalized = trimBlankEdges(normalizeLineTerminators(markdown));
 
   try {
     const formatted = await format(normalized, {

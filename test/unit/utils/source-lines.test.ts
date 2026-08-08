@@ -6,6 +6,7 @@ import {
   getLineStart,
   getPreferredNewline,
   isBlankLine,
+  normalizeLineTerminators,
 } from '../../../src/utils/source-lines.js';
 import { createWrapOptions } from '../support/wrap-options.js';
 
@@ -21,6 +22,17 @@ describe('getPreferredNewline', () => {
     expect(getPreferredNewline(crlfThenLfText, createWrapOptions({ endOfLine: 'auto' }))).toBe('\r\n');
     expect(getPreferredNewline(crThenLfText, createWrapOptions({ endOfLine: 'auto' }))).toBe('\r');
     expect(getPreferredNewline('single line', createWrapOptions({ endOfLine: 'auto' }))).toBe('\n');
+  });
+});
+
+describe('normalizeLineTerminators', () => {
+  it('normalizes every supported JavaScript line terminator', () => {
+    expect(normalizeLineTerminators(['alpha', 'beta', 'gamma', 'delta', 'epsilon'].join('\n'))).toBe(
+      ['alpha', 'beta', 'gamma', 'delta', 'epsilon'].join('\n'),
+    );
+    expect(normalizeLineTerminators('alpha\r\nbeta\rgamma\u2028delta\u2029epsilon')).toBe(
+      ['alpha', 'beta', 'gamma', 'delta', 'epsilon'].join('\n'),
+    );
   });
 });
 

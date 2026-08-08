@@ -45,6 +45,14 @@ describe('normalizeBlockCommentBody', () => {
     );
   });
 
+  it('normalizes JavaScript Unicode line separators', () => {
+    for (const separator of ['\u2028', '\u2029']) {
+      expect(normalizeBlockCommentBody(['/*', ' * First line', ' * Second line', ' */'].join(separator))).toBe(
+        ['First line', 'Second line'].join('\n'),
+      );
+    }
+  });
+
   it('normalizes single-line and empty block comments', () => {
     expect(normalizeBlockCommentBody('/* alpha */')).toBe('alpha');
     expect(normalizeBlockCommentBody('/**/')).toBe('');

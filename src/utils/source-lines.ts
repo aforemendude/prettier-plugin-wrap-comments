@@ -1,5 +1,9 @@
 import type { WrapOptions } from './wrap-options.js';
 
+export function normalizeLineTerminators(text: string): string {
+  return text.replace(/\r\n|[\r\u2028\u2029]/gu, '\n');
+}
+
 export function getPreferredNewline(text: string, options: WrapOptions): string {
   if (options.endOfLine === 'crlf') {
     return '\r\n';

@@ -15,23 +15,6 @@
 
 ## Findings
 
-### 7. Unicode block-comment line separators are not normalized before Markdown parsing
-
-- **Severity:** Medium
-- **References:** `src/comments/comment-body.ts:18-20`, `src/comments/comment-body.ts:34-47`,
-  `src/comments/wrap-block-comment.ts:39-46`, `src/utils/source-lines.ts:25-47`
-- **Problem:** Source-line utilities consistently recognize U+2028 and U+2029 as JavaScript line terminators, but
-  block-body normalization converts only CR/CRLF before splitting exclusively on `\n`. A conventional star-prefixed
-  block containing either Unicode separator is therefore treated as one logical body line: only the outer trim runs, and
-  per-line indentation/star removal never occurs before the text is passed to Markdown.
-- **Impact:** Formatting corrupts comment structure and content. In focused Babel probes at `printWidth: 30`, a two-line
-  `Alpha`/`Beta` conventional block joined with U+2028 or U+2029 was rewritten with `Alpha` as a Markdown list item,
-  retained the second raw `*` prefix and Unicode separator inside a generated line, and wrapped `Beta` as list
-  continuation text. This contradicts the pipeline's otherwise explicit Unicode-line-separator support.
-- **Recommendation:** Normalize `\r\n`, lone `\r`, U+2028, and U+2029 to `\n` before splitting and per-line star
-  removal. Use the same shared line-terminator normalization in Markdown input preparation so supported separators
-  cannot take divergent paths.
-
 ### 8. Valid non-space JavaScript indentation makes wrapping non-idempotent
 
 - **Severity:** Low

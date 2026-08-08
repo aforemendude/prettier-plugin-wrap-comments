@@ -1,5 +1,5 @@
 import type { CommentRange } from './comment-ranges.js';
-import { isBlankLine } from '../utils/source-lines.js';
+import { isBlankLine, normalizeLineTerminators } from '../utils/source-lines.js';
 
 export function getCommentBody(text: string, comment: CommentRange): string {
   const raw = text.slice(comment.start, comment.end);
@@ -16,7 +16,7 @@ export function normalizeLineCommentBody(rawBody: string): string {
 }
 
 export function normalizeBlockCommentBody(rawComment: string): string {
-  const body = rawComment.slice(2, -2).replace(/\r\n?/g, '\n');
+  const body = normalizeLineTerminators(rawComment.slice(2, -2));
   const lines = body.split('\n');
 
   if (lines.length === 1) {

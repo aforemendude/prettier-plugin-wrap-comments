@@ -71,6 +71,23 @@ describe('wrapBlockComment', () => {
     });
   });
 
+  it('normalizes conventional blocks with JavaScript Unicode line separators', async () => {
+    const lines = ['/*', ' * Alpha alpha alpha alpha.', ' * Beta beta beta beta.', ' */'];
+    const expectedText = lines.join('\n');
+
+    for (const separator of ['\u2028', '\u2029']) {
+      const text = lines.join(separator);
+
+      await expect(
+        wrapBlockComment(text, createCommentRange(text, text), createWrapOptions({ printWidth: 30 })),
+      ).resolves.toEqual({
+        end: text.length,
+        start: 0,
+        text: expectedText,
+      });
+    }
+  });
+
   it('uses configured newline sequences in multiline replacements', async () => {
     const text = '/* Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda. */';
     const comment = { end: text.length, kind: 'block' as const, start: 0 };

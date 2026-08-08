@@ -27,6 +27,18 @@ describe('formatMarkdownLines', () => {
     ]);
   });
 
+  it('normalizes JavaScript Unicode line separators', async () => {
+    for (const separator of ['\u2028', '\u2029']) {
+      const markdown = ['', 'First paragraph.', '', 'Second paragraph.', ''].join(separator);
+
+      await expect(formatMarkdownLines(markdown, 80, createWrapOptions({}))).resolves.toEqual([
+        'First paragraph.',
+        '',
+        'Second paragraph.',
+      ]);
+    }
+  });
+
   it('returns normalized input lines when Markdown formatting fails', async () => {
     const markdown = ['', 'Alpha beta.', 'Gamma delta.', ''].join('\r');
 
