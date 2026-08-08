@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  hasFlowCommentTypeMarker,
   hasPreserveCommentMarker,
   shouldSkipBlockComment,
   shouldSkipLineComment,
@@ -23,6 +24,9 @@ describe('shouldSkipBlockComment', () => {
   it.each([
     ['/** documentation */', true],
     ['/*! preserved license */', true],
+    ['/*:: type Alias = string; */', true],
+    ['/*flow-include type Alias = string; */', true],
+    ['/*: string */', true],
     ['/* */', true],
     ['/* @license package license */', true],
     ['/* ordinary prose */', false],
@@ -37,5 +41,30 @@ describe('hasPreserveCommentMarker', () => {
     expect(hasPreserveCommentMarker('//! @license text')).toBe(true);
     expect(hasPreserveCommentMarker('/* ! @license text */')).toBe(false);
     expect(hasPreserveCommentMarker('// ! @license text')).toBe(false);
+  });
+});
+
+describe('hasFlowCommentTypeMarker', () => {
+  it.each([
+    '/*: string */',
+    '/* : string */',
+    '/*\t: string */',
+    '/*:: type Alias = string; */',
+    '/* :: type Alias = string; */',
+    '/*\t:: type Alias = string; */',
+    '/*flow-include type Alias = string; */',
+    '/* flow-include type Alias = string; */',
+    '/*\tflow-include type Alias = string; */',
+  ])('recognizes %s', (rawComment) => {
+    expect(hasFlowCommentTypeMarker(rawComment)).toBe(true);
+  });
+
+  it.each([
+    '/* ordinary prose */',
+    '/* flow include type Alias = string; */',
+    '/* Flow-include type Alias = string; */',
+    ['/*', ':: type Alias = string;', '*/'].join('\n'),
+  ])('rejects %s', (rawComment) => {
+    expect(hasFlowCommentTypeMarker(rawComment)).toBe(false);
   });
 });

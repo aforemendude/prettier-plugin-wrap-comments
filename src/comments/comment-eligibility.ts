@@ -15,7 +15,7 @@ export function shouldSkipLineComment(text: string, comment: CommentRange): bool
 export function shouldSkipBlockComment(text: string, comment: CommentRange): boolean {
   const raw = text.slice(comment.start, comment.end);
 
-  if (raw.startsWith('/**') || hasPreserveCommentMarker(raw)) {
+  if (raw.startsWith('/**') || hasPreserveCommentMarker(raw) || hasFlowCommentTypeMarker(raw)) {
     return true;
   }
 
@@ -26,4 +26,8 @@ export function shouldSkipBlockComment(text: string, comment: CommentRange): boo
 
 export function hasPreserveCommentMarker(rawComment: string): boolean {
   return rawComment.startsWith('/*!') || rawComment.startsWith('//!');
+}
+
+export function hasFlowCommentTypeMarker(rawComment: string): boolean {
+  return /^\/\*[ \t]*(?::|flow-include)/u.test(rawComment);
 }

@@ -15,24 +15,6 @@
 
 ## Findings
 
-### 11. Multiline wrapping silently disables Flow type-include comments
-
-- **Severity:** Medium
-- **References:** `src/comments/comment-eligibility.ts:15-24`, `src/comments/comment-body.ts:18-47`,
-  `src/comments/wrap-block-comment.ts:35-46`, `src/comments/wrap-block-comment.ts:67-129`
-- **Problem:** Flow's `/*:: ... */` and `/*flow-include ... */` forms contain type syntax that Flow includes in the
-  checked program while JavaScript treats it as a comment
-  ([Flow comment types](https://flow.org/en/docs/types/comments/)). Eligibility does not preserve either raw prefix.
-  When a standalone include is long enough to expand, the generated conventional block inserts `*` before
-  `::`/`flow-include`, so Flow no longer recognizes the include.
-- **Impact:** In a Flow-checked file, formatting can silently remove declarations from Flow's view and weaken type
-  checking while leaving runtime JavaScript valid. In focused probes at `printWidth: 35`, explicit `babel-flow` parsing
-  of each original long include produced a `TypeAlias` plus the runtime declaration; parsing the plugin output produced
-  only the runtime declaration. The output gave no error or warning that the type alias had disappeared.
-- **Recommendation:** Raw-prefix-skip all accepted Flow comment-type forms before Markdown normalization, including the
-  single-colon annotation shorthand, double-colon includes, and `flow-include` (with the whitespace variants Flow
-  accepts). These comments must remain byte-structurally compatible with Flow rather than merely readable as prose.
-
 ### 12. Same-line replacements make the precomputed trailing-comment layout stale
 
 - **Severity:** Medium

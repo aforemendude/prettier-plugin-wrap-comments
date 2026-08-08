@@ -149,6 +149,8 @@ The plugin leaves these comments unchanged:
 - JSDoc comments that start with `/**`
 - bang-preserved comments that start with `/*!` or `//!`
 - TypeScript-style triple-slash line comments that start with `///`
+- Flow type annotations and includes that start with `/*:`, `/*::`, or `/*flow-include`, including Flow's supported
+  spaces or tabs before the marker
 - empty comment bodies
 - `prettier-ignore` markers themselves
 - other directive comments such as `@license`, `@preserve`, JSX, TypeScript, and Flow pragmas, Flow error suppressions,

@@ -1,0 +1,13 @@
+/*:: type DirectInclude = { alpha: string, beta: number, gamma: boolean }; */
+
+/* :: type SpacedInclude = { alpha: string, beta: number, gamma: boolean }; */
+
+/*flow-include type NamedInclude = { alpha: string, beta: number, gamma: boolean }; */
+
+/* flow-include type SpacedNamedInclude = { alpha: string, beta: number, gamma: boolean }; */
+
+function size(
+  value /*: string*/,
+) /* : number*/ {
+  return value.length;
+}
