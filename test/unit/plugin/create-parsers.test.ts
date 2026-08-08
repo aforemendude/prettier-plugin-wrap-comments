@@ -158,7 +158,9 @@ describe('createParsers', () => {
     expect(preprocess).toHaveBeenCalledTimes(1);
     expect(preprocess).toHaveBeenCalledWith(source, options);
     expect(mocks.babelParser.parse).toHaveBeenCalledTimes(1);
-    expect(mocks.babelParser.parse).toHaveBeenCalledWith(preprocessedSource, options);
+    expect(mocks.babelParser.parse.mock.calls[0]?.[0]).toBe(preprocessedSource);
+    expect(mocks.babelParser.parse.mock.calls[0]?.[1]).toMatchObject({ parser: 'babel' });
+    expect(mocks.babelParser.parse.mock.calls[0]?.[1]).not.toBe(options);
     expect(mocks.collectAstComments).toHaveBeenCalledTimes(1);
     expect(mocks.collectAstComments).toHaveBeenCalledWith(ast);
     expect(mocks.getPrinterLayoutSource).toHaveBeenCalledTimes(1);
@@ -203,6 +205,34 @@ describe('createParsers', () => {
     expect(isRewrittenJsxBlockComment(finalComment)).toBe(true);
   });
 
+  it('isolates speculative parser option mutations from the real Babel parse', async () => {
+    const source = ['// @flow', 'const value: number = 1;'].join('\n');
+    const options = createParserOptions('babel');
+    const analysisAst = { comments: [] };
+    const finalAst = { comments: [] };
+    mocks.babelParser.parse
+      .mockImplementationOnce((_source, analysisOptions) => {
+        expect(analysisOptions.parser).toBe('babel');
+        expect(analysisOptions).not.toBe(options);
+
+        analysisOptions.parser = 'babel-flow';
+
+        return analysisAst;
+      })
+      .mockResolvedValueOnce(finalAst);
+    mocks.collectAstComments.mockReturnValue([]);
+    mocks.neutralizePrettierIgnoreForIgnoredComments.mockReturnValue(finalAst);
+    const parser = getParser(createParsers(), 'babel');
+
+    await expect(callPreprocess(parser, source, options)).resolves.toBe(source);
+    expect(options.parser).toBe('babel');
+    expect(mocks.babelParser.parse.mock.calls[0]?.[1]).toEqual({ ...options, parser: 'babel-flow' });
+    expect(mocks.babelParser.parse.mock.calls[0]?.[1]).not.toBe(options);
+
+    await expect(parser.parse(source, options)).resolves.toBe(finalAst);
+    expect(mocks.babelParser.parse.mock.calls[1]).toEqual([source, options]);
+  });
+
   it.each(parserCases)('skips analysis for comment-free $parserName source', async ({ baseParser, parserName }) => {
     const source = `const ${parserName.replace('-', '')} = true;`;
     const options = createParserOptions(parserName);
@@ -228,7 +258,11 @@ describe('createParsers', () => {
 
     await expect(callPreprocess(parser, source, options)).resolves.toBe(preprocessedSource);
     expect(preprocess).toHaveBeenCalledWith(source, options);
-    expect(mocks.typescriptParser.parse).toHaveBeenCalledWith(preprocessedSource, options);
+    expect(mocks.typescriptParser.parse).toHaveBeenCalledWith(preprocessedSource, {
+      ...options,
+      parser: 'typescript',
+    });
+    expect(mocks.typescriptParser.parse.mock.calls[0]?.[1]).not.toBe(options);
     expect(mocks.collectAstComments).toHaveBeenCalledWith(ast);
     expect(mocks.getPrinterLayoutSource).not.toHaveBeenCalled();
     expect(mocks.wrapCommentsWithMetadata).not.toHaveBeenCalled();
@@ -268,7 +302,8 @@ describe('createParsers', () => {
     expect(preprocess).toHaveBeenCalledTimes(1);
     expect(preprocess).toHaveBeenCalledWith(source, options);
     expect(mocks.babelTsParser.parse).toHaveBeenCalledTimes(1);
-    expect(mocks.babelTsParser.parse).toHaveBeenCalledWith(preprocessedSource, options);
+    expect(mocks.babelTsParser.parse).toHaveBeenCalledWith(preprocessedSource, { ...options, parser: 'babel-ts' });
+    expect(mocks.babelTsParser.parse.mock.calls[0]?.[1]).not.toBe(options);
     expect(mocks.collectAstComments).not.toHaveBeenCalled();
     expect(mocks.getPrinterLayoutSource).not.toHaveBeenCalled();
     expect(mocks.wrapCommentsWithMetadata).not.toHaveBeenCalled();

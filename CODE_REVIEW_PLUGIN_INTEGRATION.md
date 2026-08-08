@@ -14,28 +14,6 @@ current source and, where useful, focused execution against the current committe
 
 ## Findings
 
-### 4. Speculative Babel parsing corrupts the real parser selection for Flow files
-
-- **Severity:** High
-- **Reference:** `src/plugin/create-parsers.ts:31-35` and `src/plugin/create-parsers.ts:50-54`; the same shared-options
-  risk recurs at `src/plugin/get-printer-layout-source.ts:34`
-- **Problem:** The wrapper's preprocessing analysis calls the native Babel parser with Prettier's live `ParserOptions`
-  object. When the Babel parser detects an `@flow` pragma, it mutates `options.parser` from `babel` to `babel-flow` as
-  part of its native delegation behavior. That mutation escapes the speculative parse. The later real wrapper parse
-  still calls the parser object captured for `babel`, but now with `options.parser === 'babel-flow'`; the native parser
-  no longer takes its auto-delegation branch and instead rejects Flow-only syntax. The explicit formatted-output reparse
-  in `getPrinterLayoutSource` also receives the shared outer options and would reintroduce this bug whenever native
-  formatting changes the text, even if the first analysis parse were isolated.
-- **Impact:** Valid Flow source formatted through the advertised `babel` parser fails completely. With the current
-  build, native Prettier successfully formats both `// @flow\nconst value: number = 1;` and
-  `/* @flow */\nconst value: number = 1;`, while adding this plugin throws `Unexpected token (2:12)` for each. This
-  breaks a major established Babel-parser workflow rather than merely changing comment layout.
-- **Recommendation:** Give every analysis-only call to `parser.parse` its own shallow-cloned options object whose
-  `parser` is reset to the wrapper's `parserName`; do this both in `createWrappedParser.preprocess` and for the explicit
-  reparse in `getPrinterLayoutSource`. Do not suppress or roll back the mutation made during the later real parse: that
-  invocation should start with `parserName` and retain the native parser's normal option-mutation/delegation semantics
-  for the rest of Prettier's actual formatting pass.
-
 ### 5. CR-only multiline JSX comments bypass the printer override
 
 - **Severity:** Medium

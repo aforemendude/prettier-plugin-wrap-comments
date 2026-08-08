@@ -95,6 +95,18 @@ describe('prettier-ignore comment targets', () => {
   });
 });
 
+describe('Babel Flow parser delegation', () => {
+  it.each([
+    { name: 'line', pragma: '// @flow' },
+    { name: 'block', pragma: '/* @flow */' },
+  ])('preserves native parsing for a $name pragma', async ({ pragma }) => {
+    const original = [pragma, 'const value: number = 1;', ''].join('\n');
+    const options: Options = { parser: 'babel', plugins: [plugin] };
+
+    await expect(format(original, options)).resolves.toBe(original);
+  });
+});
+
 function getFixtureExtension(fixtureFiles: string[]): FixtureExtension {
   const originalFixtureFiles = fixtureFiles.filter((file) => /^original\.(?:js|jsx|ts|tsx)\.txt$/u.test(file));
 

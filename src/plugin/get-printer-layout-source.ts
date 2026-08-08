@@ -40,7 +40,7 @@ export async function getPrinterLayoutSource<T>(
       return { ast, text };
     }
 
-    const formattedAst = await parser.parse(formattedText, options);
+    const formattedAst = await parser.parse(formattedText, { ...options, parser: parserName });
 
     return {
       ast: formattedAst,

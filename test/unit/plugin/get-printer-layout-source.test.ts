@@ -56,7 +56,14 @@ describe('getPrinterLayoutSource', () => {
       printWidth: 72,
     } as ParserOptions<LayoutAst>;
     mocks.format.mockResolvedValue(formattedSource);
-    parse.mockResolvedValue(formattedAst);
+    parse.mockImplementation((_source, analysisOptions) => {
+      expect(analysisOptions.parser).toBe('babel');
+      expect(analysisOptions).not.toBe(options);
+
+      analysisOptions.parser = 'babel-flow';
+
+      return formattedAst;
+    });
 
     await expect(getPrinterLayoutSource(source, ast, 'babel', parser, options)).resolves.toEqual({
       ast: formattedAst,
@@ -81,7 +88,9 @@ describe('getPrinterLayoutSource', () => {
       ],
     });
     expect(parse).toHaveBeenCalledTimes(1);
-    expect(parse).toHaveBeenCalledWith(formattedSource, options);
+    expect(parse.mock.calls[0]?.[0]).toBe(formattedSource);
+    expect(parse.mock.calls[0]?.[1]).toMatchObject({ parser: 'babel-flow' });
+    expect(options.parser).toBe('typescript');
   });
 
   it('neutralizes a freshly parsed layout AST without mutating the outer AST', async () => {
@@ -153,7 +162,8 @@ describe('getPrinterLayoutSource', () => {
 
     await expect(getPrinterLayoutSource(source, ast, 'typescript', parser, options)).resolves.toBeUndefined();
     expect(parse).toHaveBeenCalledTimes(1);
-    expect(parse).toHaveBeenCalledWith(formattedSource, options);
+    expect(parse).toHaveBeenCalledWith(formattedSource, { ...options, parser: 'typescript' });
+    expect(parse.mock.calls[0]?.[1]).not.toBe(options);
   });
 });
 

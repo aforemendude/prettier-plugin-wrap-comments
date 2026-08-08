@@ -54,7 +54,7 @@ function createWrappedParser<T>(parserName: SupportedParserName, parser: Parser<
       let ast: T;
 
       try {
-        ast = await parser.parse(preprocessed, options);
+        ast = await parser.parse(preprocessed, { ...options, parser: parserName });
       } catch {
         return preprocessed;
       }
