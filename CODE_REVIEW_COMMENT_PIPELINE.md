@@ -15,24 +15,6 @@
 
 ## Findings
 
-### 4. Trailing comments after removable root parentheses require two formatting passes
-
-- **Severity:** Medium
-- **References:** `src/comments/embedded-expression-ranges.ts:55-72`, `src/comments/wrap-comments.ts:142-148`
-- **Problem:** An embedded trailing line comment is movable only when the source slice from the AST expression's `end`
-  to the comment is whitespace. Prettier's Babel AST can give the inner expression range for redundant parentheses, so a
-  source such as `{(value) // ...\n}` has `)` in that slice and is conservatively skipped. Native printing removes the
-  redundant parentheses, leaving `{value // ...\n}`; only a second plugin pass then recognizes and moves the same
-  comment.
-- **Impact:** Formatting is not idempotent for a common parenthesized-root form. In a focused Babel/JSX probe at
-  `printWidth: 50`, the first pass emitted an unchanged 104-column trailing comment after `value`, while the second pass
-  moved it above `value` and wrapped it to three lines. Editor format-on-save and CI can therefore disagree depending on
-  how many formatting passes have occurred. The same range rule is shared with template interpolations.
-- **Recommendation:** Account for transparent parenthesized wrappers when determining whether a comment trails the root
-  expression (using parser parenthesis metadata or a bounded source check that validates only matching outer
-  parentheses), or base this decision on a normalized/native-printer range mapping. Add an explicit one-pass idempotence
-  check for parenthesized JSX and template roots.
-
 ### 5. JSX-form `prettier-ignore` markers do not protect comments inside the ignored child
 
 - **Severity:** Medium

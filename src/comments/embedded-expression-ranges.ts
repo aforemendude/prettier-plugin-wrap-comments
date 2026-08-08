@@ -3,6 +3,7 @@ import { getAstNodeRange, visitAstNodes } from '../utils/ast.js';
 import type { SourceRange } from '../utils/ast.js';
 import { getLineEnd } from '../utils/source-lines.js';
 import { isRecord, numberOrUndefined } from '../utils/type-guards.js';
+import { skipWhitespace, trimWhitespaceEnd } from '../utils/whitespace.js';
 
 const JSX_EMBEDDED_EXPRESSION_TYPES = new Set(['JSXExpressionContainer', 'JSXSpreadAttribute', 'JSXSpreadChild']);
 
@@ -55,15 +56,13 @@ export function getEmbeddedTrailingLineCommentMove(
 ): EmbeddedTrailingLineCommentMove | undefined {
   const expression = range?.expression;
 
-  if (
-    expression === undefined ||
-    expression.end > comment.start ||
-    !/^[\t ]*$/u.test(text.slice(expression.end, comment.start))
-  ) {
+  if (range === undefined || expression === undefined) {
     return undefined;
   }
 
-  return { insertAt: expression.start, removeStart: expression.end };
+  const rootExpression = getRootExpressionRangeBefore(text, expression, comment.start, range.start);
+
+  return rootExpression === undefined ? undefined : { insertAt: rootExpression.start, removeStart: rootExpression.end };
 }
 
 export function doesBlockCommentSeparateEmbeddedTrailingLineComment(
@@ -83,15 +82,62 @@ export function doesBlockCommentSeparateEmbeddedTrailingLineComment(
   }
 
   const expression = range?.expression;
+  const rootExpression =
+    range === undefined || expression === undefined
+      ? undefined
+      : getRootExpressionRangeBefore(text, expression, blockComment.start, range.start);
 
   return (
     range !== undefined &&
     range === nextRange &&
-    expression !== undefined &&
-    expression.end <= blockComment.start &&
-    /^[\t ]*$/u.test(text.slice(expression.end, blockComment.start)) &&
+    rootExpression !== undefined &&
     /^[\t ]*$/u.test(text.slice(blockComment.end, nextComment.start))
   );
+}
+
+function getRootExpressionRangeBefore(
+  text: string,
+  expression: SourceRange,
+  before: number,
+  containerStart: number,
+): SourceRange | undefined {
+  if (expression.end > before) {
+    return undefined;
+  }
+
+  let cursor = expression.end;
+  let expandedEnd = expression.end;
+  let parenthesisCount = 0;
+
+  while (cursor < before) {
+    cursor = skipWhitespace(text, cursor);
+
+    if (cursor >= before) {
+      break;
+    }
+
+    if (text[cursor] !== ')') {
+      return undefined;
+    }
+
+    cursor += 1;
+    expandedEnd = cursor;
+    parenthesisCount += 1;
+  }
+
+  let expandedStart = expression.start;
+
+  for (let index = 0; index < parenthesisCount; index += 1) {
+    expandedStart = trimWhitespaceEnd(text, containerStart, expandedStart);
+
+    if (expandedStart <= containerStart || text[expandedStart - 1] !== '(') {
+      return undefined;
+    }
+
+    expandedStart -= 1;
+  }
+
+  return { end: expandedEnd, start: expandedStart };
 }
 
 function collectTemplateInterpolationRanges(

@@ -18,3 +18,22 @@ ${
   // exceeds the print width.
   value
 }`;
+
+const parenthesizedView = (
+  <span>
+    {
+      // This parenthesized trailing JSX comment
+      // must move before the root and wrap in
+      // one formatting pass.
+      value
+    }
+  </span>
+);
+
+const parenthesizedMessage = `prefix
+${
+  // This parenthesized trailing template
+  // comment must move before the root and wrap
+  // in one formatting pass.
+  value
+}`;

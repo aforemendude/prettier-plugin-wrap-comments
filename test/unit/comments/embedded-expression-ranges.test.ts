@@ -91,6 +91,18 @@ describe('getEmbeddedTrailingLineCommentMove', () => {
     });
   });
 
+  it('includes transparent root parentheses in the trailing comment move', () => {
+    const text = ['<span>{(( value ) ) // long comment', '}</span>'].join('\n');
+    const comment = createCommentRange(text, '// long comment');
+    const expression = { end: text.indexOf('value') + 'value'.length, start: text.indexOf('value') };
+    const range = { end: text.indexOf('}') + 1, expression, start: text.indexOf('{') };
+
+    expect(getEmbeddedTrailingLineCommentMove(text, comment, range)).toEqual({
+      insertAt: text.indexOf('('),
+      removeStart: text.lastIndexOf(')', comment.start) + 1,
+    });
+  });
+
   it('does not move nested, separated, or spread comments', () => {
     const nestedText = ['<span>{{ value: item, // nested comment', '}}</span>'].join('\n');
     const nestedComment = createCommentRange(nestedText, '// nested comment');

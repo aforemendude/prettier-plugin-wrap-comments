@@ -8,3 +8,10 @@ const view = (
 const message = `prefix
 ${value // This trailing comment must stay inside its template interpolation even though it exceeds the print width.
 }`;
+
+const parenthesizedView = <span>{(value) // This parenthesized trailing JSX comment must move before the root and wrap in one formatting pass.
+}</span>;
+
+const parenthesizedMessage = `prefix
+${(value) // This parenthesized trailing template comment must move before the root and wrap in one formatting pass.
+}`;
