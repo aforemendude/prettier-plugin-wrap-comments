@@ -2,6 +2,14 @@
 
 ---
 
+## v1.2.0 (August 9, 2026)
+
+### Added Features
+
+- Compose with preceding parser plugins, including `prettier-plugin-jsdoc`
+
+---
+
 ## v1.1.1 (August 8, 2026)
 
 ### Performance Improvements
