@@ -31,6 +31,20 @@ Then run Prettier normally:
 npx prettier --write .
 ```
 
+### Use With `prettier-plugin-jsdoc`
+
+When using both plugins, `@aforemendude/prettier-plugin-wrap-comments` must be loaded after `prettier-plugin-jsdoc`:
+
+```json
+{
+  "plugins": ["prettier-plugin-jsdoc", "@aforemendude/prettier-plugin-wrap-comments"]
+}
+```
+
+This order is required regardless of `prettier-plugin-jsdoc`'s documentation saying that it should be the last plugin.
+With wrap-comments last, ordinary comments are handled here and parsing is delegated to the preceding JSDoc plugin, so
+JSDoc comments are formatted as well.
+
 ### Cache Repeated CLI Runs
 
 Prettier's CLI cache skips files that have not changed since a successful formatting pass. Enable it in package scripts
@@ -59,9 +73,10 @@ for cache keys, strategies, and custom cache locations.
 ## Behavior
 
 The plugin wraps comments for Prettier's `babel`, `babel-ts`, and `typescript` parsers. It runs during parser
-preprocessing: the underlying Prettier parser preprocesses and parses the source first, the plugin rewrites eligible
-comments from that parsed comment list, and Prettier then formats the rewritten source with its built-in JavaScript and
-TypeScript printers. If the parser cannot parse the preprocessed source, the plugin leaves the source unchanged.
+preprocessing: the nearest preceding plugin for the selected parser, or Prettier's built-in parser when there is none,
+preprocesses and parses the source first. This plugin rewrites eligible comments from that parsed comment list, and
+Prettier then formats the rewritten source with its built-in JavaScript and TypeScript printers. If the parser cannot
+parse the preprocessed source, the plugin leaves the source unchanged.
 
 Offset-sensitive formatting is conservative. Full-file `formatWithCursor` calls skip comment rewriting so Prettier can
 map the cursor from the original source. During range formatting, preprocessing does not rewrite text outside Prettier's

@@ -127,6 +127,42 @@ describe('createParsers', () => {
     },
   );
 
+  it('delegates final parsing to the nearest preceding matching plugin without exposing later plugins', async () => {
+    const source = 'const value = true;';
+    const options = createParserOptions('babel');
+    const precedingAst = { source: 'preceding parser' };
+    const neutralizedAst = { source: 'neutralized preceding parser' };
+    let delegatedPlugins: ParserOptions['plugins'] | undefined;
+    const precedingParse = vi.fn<Parser<unknown>['parse']>().mockImplementation((_text, delegatedOptions) => {
+      delegatedPlugins = delegatedOptions.plugins;
+
+      return precedingAst;
+    });
+    const followingParse = vi.fn<Parser<unknown>['parse']>().mockResolvedValue({ source: 'following parser' });
+    const precedingParser: Parser<unknown> = { ...mocks.babelParser, parse: precedingParse };
+    const followingParser: Parser<unknown> = { ...mocks.babelParser, parse: followingParse };
+    const parsers = createParsers();
+    const parser = getParser(parsers, 'babel');
+    const precedingPlugin = { name: 'preceding', parsers: { babel: precedingParser } };
+    const wrappedPlugin = {
+      name: '@aforemendude/prettier-plugin-wrap-comments',
+      parsers,
+    };
+    const followingPlugin = { name: 'following', parsers: { babel: followingParser } };
+
+    options.plugins = [precedingPlugin, wrappedPlugin, followingPlugin];
+    mocks.neutralizePrettierIgnoreForIgnoredComments.mockReturnValue(neutralizedAst);
+
+    await expect(parser.parse(source, options)).resolves.toBe(neutralizedAst);
+    expect(precedingParse).toHaveBeenCalledTimes(1);
+    expect(precedingParse.mock.calls[0]?.[0]).toBe(source);
+    expect(precedingParse.mock.calls[0]?.[1]).toBe(options);
+    expect(delegatedPlugins).toEqual([precedingPlugin]);
+    expect(options.plugins).toEqual([precedingPlugin, wrappedPlugin, followingPlugin]);
+    expect(followingParse).not.toHaveBeenCalled();
+    expect(mocks.babelParser.parse).not.toHaveBeenCalled();
+  });
+
   it('propagates parser failures without attempting to neutralize comments', async () => {
     const source = 'invalid source';
     const options = createParserOptions('babel');
@@ -172,6 +208,64 @@ describe('createParsers', () => {
       options,
     );
     expect(mocks.wrapCommentsWithMetadata).toHaveBeenCalledTimes(1);
+    expect(mocks.wrapCommentsWithMetadata).toHaveBeenCalledWith(preprocessedSource, ast, options, printerLayoutSource);
+  });
+
+  it('delegates preprocessing and analysis to the nearest preceding matching plugin', async () => {
+    const source = ['// original comment', 'const value = true;'].join('\n');
+    const preprocessedSource = ['// preceding comment', 'const value = false;'].join('\n');
+    const wrappedSource = '// wrapped';
+    const options = createParserOptions('typescript');
+    const ast = { comments: [{}] };
+    const printerLayoutSource = { ast: { formatted: true }, text: 'formatted source' };
+    let analysisPlugins: ParserOptions['plugins'] | undefined;
+    let preprocessPlugins: ParserOptions['plugins'] | undefined;
+    const preprocess = vi
+      .fn<NonNullable<Parser<unknown>['preprocess']>>()
+      .mockImplementation((_text, delegateOptions) => {
+        delegateOptions['normalizedByPrecedingPlugin'] = true;
+        preprocessPlugins = delegateOptions.plugins;
+
+        return preprocessedSource;
+      });
+    const parse = vi.fn<Parser<unknown>['parse']>().mockImplementation((_text, delegateOptions) => {
+      analysisPlugins = delegateOptions.plugins;
+
+      return ast;
+    });
+    const precedingParser: Parser<unknown> = { ...mocks.typescriptParser, parse, preprocess };
+    const parsers = createParsers();
+    const parser = getParser(parsers, 'typescript');
+    const precedingPlugin = { name: 'preceding', parsers: { typescript: precedingParser } };
+    const wrappedPlugin = {
+      name: '@aforemendude/prettier-plugin-wrap-comments',
+      parsers,
+    };
+
+    options.plugins = [precedingPlugin, wrappedPlugin];
+    mocks.collectAstComments.mockReturnValue(ast.comments);
+    mocks.getPrinterLayoutSource.mockResolvedValue(printerLayoutSource);
+    mocks.wrapCommentsWithMetadata.mockResolvedValue({ jsxBlockCommentRewrites: [], text: wrappedSource });
+
+    await expect(callPreprocess(parser, source, options)).resolves.toBe(wrappedSource);
+    expect(preprocess).toHaveBeenCalledTimes(1);
+    expect(preprocess.mock.calls[0]?.[0]).toBe(source);
+    expect(preprocess.mock.calls[0]?.[1]).toBe(options);
+    expect(preprocessPlugins).toEqual([precedingPlugin]);
+    expect(options['normalizedByPrecedingPlugin']).toBe(true);
+    expect(options.plugins).toEqual([precedingPlugin, wrappedPlugin]);
+    expect(parse).toHaveBeenCalledTimes(1);
+    expect(parse.mock.calls[0]?.[0]).toBe(preprocessedSource);
+    expect(parse.mock.calls[0]?.[1]).not.toBe(options);
+    expect(analysisPlugins).toEqual([precedingPlugin]);
+    expect(mocks.typescriptParser.parse).not.toHaveBeenCalled();
+    expect(mocks.getPrinterLayoutSource).toHaveBeenCalledWith(
+      preprocessedSource,
+      ast,
+      'typescript',
+      precedingParser,
+      expect.objectContaining({ plugins: [precedingPlugin] }),
+    );
     expect(mocks.wrapCommentsWithMetadata).toHaveBeenCalledWith(preprocessedSource, ast, options, printerLayoutSource);
   });
 

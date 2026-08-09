@@ -7,6 +7,7 @@
   "devDependencies": {
     "@types/node": "20.19.43",
     "prettier": "3.9.6",
+    "prettier-plugin-jsdoc": "1.8.1",
     "prettier-plugin-wrap-comments-stable": "npm:@aforemendude/prettier-plugin-wrap-comments@1.0.6",
     "typescript": "7.0.2",
     "vite": "8.2.0",
