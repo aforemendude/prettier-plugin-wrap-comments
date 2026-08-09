@@ -16,9 +16,19 @@ export function generateBenchmarkFiles(): BenchmarkFile[] {
       source: generateJavaScript(),
     },
     {
+      name: 'code-heavy JavaScript with sparse comments',
+      parser: 'babel',
+      source: generateJavaScript(10),
+    },
+    {
       name: 'comment-heavy TypeScript',
       parser: 'typescript',
       source: generateTypeScript(),
+    },
+    {
+      name: 'preformatted comment-heavy TypeScript',
+      parser: 'typescript',
+      source: generateFormattedTypeScript(),
     },
     {
       name: 'JSX-comment-heavy TSX',
@@ -28,10 +38,14 @@ export function generateBenchmarkFiles(): BenchmarkFile[] {
   ];
 }
 
-function generateJavaScript(): string {
+function generateJavaScript(commentInterval?: number): string {
   const lines = ['export const generatedValues=[];'];
 
   for (let index = 0; index < sectionCount; index += 1) {
+    if (commentInterval !== undefined && index % commentInterval === 0) {
+      lines.push(`// Calculate the generated values for section ${index}.`);
+    }
+
     lines.push(
       `export function calculate${index}(items,multiplier){`,
       `const weighted=items.map((item,itemIndex)=>({itemIndex,value:item*multiplier+${index}}));`,
@@ -43,6 +57,37 @@ function generateJavaScript(): string {
   }
 
   lines.push('');
+
+  return lines.join('\n');
+}
+
+function generateFormattedTypeScript(): string {
+  const lines = [
+    'export type FormattedGeneratedSummary = {',
+    '  name: string;',
+    '  total: number;',
+    '  values: readonly number[];',
+    '};',
+    '',
+  ];
+
+  for (let index = 0; index < sectionCount; index += 1) {
+    lines.push(
+      `// Summarize every supplied value for generated section ${index}.`,
+      `export function summarizeFormatted${index}(`,
+      '  items: readonly number[],',
+      '  multiplier: number,',
+      '): FormattedGeneratedSummary {',
+      `  const offset = ${index}; // Preserve the generated section offset.`,
+      '  /* Keep generated values in input order. */',
+      '  const values = items.map((item, itemIndex) => item * multiplier + itemIndex + offset);',
+      '  // Add every generated value to the summary total.',
+      '  const total = values.reduce((sum, value) => sum + value, 0);',
+      `  return { name: "summary-${index}", total, values };`,
+      '}',
+      '',
+    );
+  }
 
   return lines.join('\n');
 }
