@@ -31,6 +31,31 @@ Then run Prettier normally:
 npx prettier --write .
 ```
 
+### Cache Repeated CLI Runs
+
+Prettier's CLI cache skips files that have not changed since a successful formatting pass. Enable it in package scripts
+so contributors use it consistently. This repository uses the faster `metadata` strategy for local formatting:
+
+```json
+{
+  "scripts": {
+    "format": "prettier --write --cache --cache-strategy metadata .",
+    "format:check": "prettier --check --cache --cache-strategy metadata .",
+    "format:nocache": "prettier --write ."
+  }
+}
+```
+
+The first cached run still processes every file; later runs skip files whose relevant metadata and other cache keys have
+not changed. Omit `--cache-strategy metadata` to use the default `content` strategy when workflows such as Git
+operations frequently change timestamps without changing file contents.
+
+By default, Prettier stores the cache under `node_modules/.cache/prettier/`, which is normally excluded from version
+control with `node_modules`. Prettier does not include plugin versions or implementations in its cache keys, so run the
+uncached command once after updating this plugin or another Prettier plugin. Running Prettier without `--cache`, as the
+`format:nocache` script does, also removes the default cache. See [Prettier's CLI cache documentation][prettier-cache]
+for cache keys, strategies, and custom cache locations.
+
 ## Behavior
 
 The plugin wraps comments for Prettier's `babel`, `babel-ts`, and `typescript` parsers. It runs during parser
@@ -163,6 +188,28 @@ The plugin leaves these comments unchanged:
 - `babel-ts`
 - `typescript`
 
+## Performance
+
+`npm run benchmark` compares uncached, in-memory `prettier.format()` calls with and without the plugin across five
+generated files. Lower times are better. The plugin/plain column divides the plugin mean by the plain Prettier mean.
+
+These results are from a representative run on August 8, 2026, using Linux 6.8, an Intel Core i7-10750H, Node.js
+24.18.0, Prettier 3.9.6, and Vitest 4.1.10. The suite was configured with `time: 500`, `iterations: 10`,
+`warmupTime: 100`, and `warmupIterations: 2` for each case.
+
+| Generated workload                         | Characters | Plain Prettier mean |        Plugin mean | Plugin/plain |
+| ------------------------------------------ | ---------: | ------------------: | -----------------: | -----------: |
+| Comment-free JavaScript                    |     29,995 |  54.78 ms (±10.09%) |  45.59 ms (±5.82%) |        0.83× |
+| Code-heavy JavaScript with sparse comments |     30,494 |   44.05 ms (±3.22%) | 135.66 ms (±3.81%) |        3.08× |
+| Comment-heavy TypeScript                   |     64,432 |  56.75 ms (±11.82%) | 327.61 ms (±2.67%) |        5.77× |
+| Preformatted comment-heavy TypeScript      |     54,467 |   54.54 ms (±2.47%) | 279.65 ms (±2.50%) |        5.13× |
+| JSX-comment-heavy TSX                      |     40,575 |   57.52 ms (±6.87%) | 263.67 ms (±3.83%) |        4.58× |
+
+The comment-free case takes the plugin's early exit after scanning for comment delimiters. Its apparent speedup should
+be treated as benchmark variation, not as an expected optimization over plain Prettier. In this run, sparse comments
+took about 3.08× the plain formatting time, while comment-heavy inputs took 4.58–5.77×. These measurements isolate
+formatter work on changed files; enabling the CLI cache above skips that work for unchanged files.
+
 ## Development
 
 Source files are organized by responsibility. `src/plugin/` contains parser and printer integration,
@@ -187,3 +234,5 @@ cleanup script, and `npm run verify` runs formatting, type checking, the build, 
 are generated in memory by the files under `test/benchmark`, so large benchmark fixtures are not stored in the
 repository. Benchmarks use Vitest's separate benchmark mode and do not run as part of `npm run test` or
 `npm run verify`.
+
+[prettier-cache]: https://prettier.io/docs/cli#--cache
