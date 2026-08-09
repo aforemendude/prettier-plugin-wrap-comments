@@ -172,6 +172,7 @@ concerns and source file names wherever practical.
 
 ```sh
 npm install
+npm run benchmark
 npm run format:check
 npm run typecheck
 npm run test
@@ -181,3 +182,8 @@ npm run build
 `npm run test` runs the TypeScript unit and fixture-based integration suites with Vitest. Use `npm run test:unit` or
 `npm run test:integration` to run one suite. `npm run build` removes and recreates `dist` using a cross-platform Node
 cleanup script, and `npm run verify` runs formatting, type checking, the build, and both test suites.
+
+`npm run benchmark` compares plain Prettier with Prettier using the plugin. Its JavaScript, TypeScript, and TSX inputs
+are generated in memory by the files under `test/benchmark`, so large benchmark fixtures are not stored in the
+repository. Benchmarks use Vitest's separate benchmark mode and do not run as part of `npm run test` or
+`npm run verify`.

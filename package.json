@@ -52,6 +52,7 @@
     "url": "git+https://github.com/aforemendude/prettier-plugin-wrap-comments.git"
   },
   "scripts": {
+    "benchmark": "vitest bench --run",
     "build": "npm run clean && tsc -p tsconfig.build.json",
     "clean": "node scripts/clean.mjs",
     "format": "prettier --write --cache --cache-strategy metadata .",
