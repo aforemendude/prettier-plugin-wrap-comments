@@ -1,0 +1,12 @@
+// ***
+// paragraph words
+// ***
+
+const lineValue=1;
+
+/*
+ * ***
+ * paragraph words
+ * ***
+ */
+const blockValue=2;
