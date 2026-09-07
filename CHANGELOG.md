@@ -2,6 +2,14 @@
 
 ---
 
+## Unreleased
+
+### Breaking Changes
+
+- Require Prettier `>=3.9.0 <4.0.0` instead of `>=3.0.0 <4.0.0`
+
+---
+
 ## v1.2.0 (August 9, 2026)
 
 ### Added Features
