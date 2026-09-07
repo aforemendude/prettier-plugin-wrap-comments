@@ -2,7 +2,7 @@
 
 ---
 
-## Unreleased
+## v2.0.0 (September 7, 2026)
 
 ### Breaking Changes
 
