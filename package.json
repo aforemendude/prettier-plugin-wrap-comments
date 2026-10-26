@@ -11,7 +11,7 @@
     "prettier-plugin-wrap-comments-stable": "npm:@aforemendude/prettier-plugin-wrap-comments@1.2.0",
     "typescript": "7.0.2",
     "vite": "8.2.2",
-    "vitest": "4.1.11"
+    "vitest": "4.1.12"
   },
   "devEngines": {
     "runtime": {
